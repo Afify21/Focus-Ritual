@@ -31,27 +31,68 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ className }) => {
                 formData.append('pdf', selectedFile);
 
                 console.log('Uploading file:', selectedFile.name);
+                console.log('File size:', selectedFile.size);
+                console.log('File type:', selectedFile.type);
+                console.log('Upload URL:', `${API_URL}/upload`);
+
                 const response = await fetch(`${API_URL}/upload`, {
                     method: 'POST',
                     body: formData,
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                    credentials: 'include'
                 });
 
+                console.log('Response status:', response.status);
+                console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Failed to upload PDF');
+                    let errorMessage;
+                    try {
+                        const errorData = await response.json();
+                        console.error('Server error response:', errorData);
+                        errorMessage = errorData.error || 'Failed to upload PDF';
+                    } catch (jsonError) {
+                        console.error('Error parsing error response:', jsonError);
+                        errorMessage = `Server error: ${response.status} ${response.statusText}`;
+                    }
+                    throw new Error(errorMessage);
                 }
 
                 const data = await response.json();
                 console.log('Upload response:', data);
 
-                const newPdfUrl = `${API_URL}/${data.file.filename}`;
+                const newPdfUrl = `http://localhost:5001/uploads/${data.file.filename}`;
                 console.log('Setting PDF URL:', newPdfUrl);
+
+                try {
+                    const pdfResponse = await fetch(newPdfUrl);
+                    if (!pdfResponse.ok) {
+                        throw new Error(`PDF file not accessible: ${pdfResponse.status} ${pdfResponse.statusText}`);
+                    }
+                    console.log('PDF file is accessible');
+                } catch (pdfError) {
+                    console.error('Error accessing PDF file:', pdfError);
+                    throw new Error('PDF file is not accessible after upload');
+                }
+
                 setPdfUrl(newPdfUrl);
                 setFile(selectedFile);
                 setPageNumber(1);
-            } catch (err) {
-                console.error('Upload error:', err);
-                setError(err instanceof Error ? err.message : 'Error uploading PDF. Please try again.');
+            } catch (error: unknown) {
+                console.error('Upload error:', error);
+                if (error instanceof Error) {
+                    console.error('Error details:', {
+                        name: error.name,
+                        message: error.message,
+                        stack: error.stack
+                    });
+                    setError(error.message);
+                } else {
+                    console.error('Unknown error:', error);
+                    setError('Error uploading PDF. Please try again.');
+                }
             } finally {
                 setLoading(false);
             }
@@ -68,6 +109,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ className }) => {
 
     const onDocumentLoadError = (error: Error) => {
         console.error('Error loading PDF:', error);
+        console.error('PDF URL:', pdfUrl);
         setError('Error loading PDF. Please try another file.');
         setLoading(false);
     };
@@ -119,6 +161,10 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ className }) => {
                             </div>
                         }
                         className="max-w-full"
+                        options={{
+                            cMapUrl: 'https://unpkg.com/pdfjs-dist@2.16.105/cmaps/',
+                            cMapPacked: true,
+                        }}
                     >
                         <Page
                             pageNumber={pageNumber}

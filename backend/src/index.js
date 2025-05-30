@@ -18,11 +18,19 @@ app.use(cors({
     maxAge: 86400 // 24 hours
 }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Increase payload size limit for file uploads
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Serve static files from uploads directory
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
+    setHeaders: (res, path) => {
+        if (path.endsWith('.pdf')) {
+            res.set('Content-Type', 'application/pdf');
+            res.set('Content-Disposition', 'inline');
+        }
+    }
+}));
 
 // Serve PDF.js worker file
 app.get('/pdf.worker.min.js', (req, res) => {

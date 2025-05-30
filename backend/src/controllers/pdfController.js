@@ -37,31 +37,80 @@ const uploadPDF = (req, res) => {
     console.log('Upload request received');
     console.log('Request headers:', req.headers);
     console.log('Request body:', req.body);
+    console.log('Request files:', req.files);
 
     upload(req, res, function (err) {
         if (err instanceof multer.MulterError) {
             console.error('Multer error:', err);
+            console.error('Multer error code:', err.code);
+            console.error('Multer error field:', err.field);
+            console.error('Multer error message:', err.message);
+
             if (err.code === 'LIMIT_FILE_SIZE') {
-                return res.status(400).json({ error: 'File size exceeds 10MB limit' });
+                return res.status(400).json({
+                    error: 'File size exceeds 10MB limit',
+                    details: {
+                        code: err.code,
+                        field: err.field,
+                        message: err.message
+                    }
+                });
             }
-            return res.status(400).json({ error: err.message });
+            return res.status(400).json({
+                error: err.message,
+                details: {
+                    code: err.code,
+                    field: err.field
+                }
+            });
         } else if (err) {
             console.error('Upload error:', err);
-            return res.status(400).json({ error: err.message });
+            console.error('Error stack:', err.stack);
+            return res.status(400).json({
+                error: err.message,
+                details: {
+                    name: err.name,
+                    stack: err.stack
+                }
+            });
         }
 
         if (!req.file) {
             console.error('No file received');
-            return res.status(400).json({ error: 'No file uploaded' });
+            return res.status(400).json({
+                error: 'No file uploaded',
+                details: {
+                    headers: req.headers,
+                    body: req.body
+                }
+            });
+        }
+
+        // Verify file exists after upload
+        const filePath = path.join(__dirname, '../../uploads', req.file.filename);
+        if (!fs.existsSync(filePath)) {
+            console.error('File not found after upload:', filePath);
+            return res.status(500).json({
+                error: 'File upload failed',
+                details: {
+                    path: filePath,
+                    file: req.file
+                }
+            });
         }
 
         console.log('File uploaded successfully:', req.file);
+        console.log('File path:', filePath);
+        console.log('File exists:', fs.existsSync(filePath));
+        console.log('File size:', fs.statSync(filePath).size);
+
         res.json({
             message: 'File uploaded successfully',
             file: {
                 filename: req.file.filename,
                 path: `/uploads/${req.file.filename}`,
-                size: req.file.size
+                size: req.file.size,
+                mimetype: req.file.mimetype
             }
         });
     });
