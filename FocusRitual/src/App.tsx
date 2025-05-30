@@ -8,6 +8,9 @@ import QuoteGenerator from './components/QuoteGenerator';
 import { PlayCircleIcon, ArrowsPointingOutIcon, XMarkIcon, MusicalNoteIcon } from '@heroicons/react/24/solid';
 import Callback from './pages/Callback';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useTheme } from './context/ThemeContext';
+import { ThemeSelector } from './components/ThemeSelector';
+import { BackgroundManager } from './components/BackgroundManager';
 
 const App: React.FC = () => {
     const [selectedTime, setSelectedTime] = useState(25);
@@ -22,6 +25,9 @@ const App: React.FC = () => {
         completedSessions: 0,
         hasStarted: false
     });
+    const [showThemeSelector, setShowThemeSelector] = useState(false);
+
+    const { currentTheme } = useTheme();
 
     const handleTimeSelect = (minutes: number) => {
         setSelectedTime(minutes);
@@ -56,14 +62,48 @@ const App: React.FC = () => {
         setTimerState(newState);
     };
 
+    const mainBackgroundStyle = currentTheme.id === 'harry-potter'
+        ? {
+            backgroundImage: 'url(/themes/harry-potter/backgrounds/fireplaceharry.jpg)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+        }
+        : {};
+
+    const mainBackgroundClass = currentTheme.id !== 'harry-potter'
+        ? "bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900"
+        : "";
+
     return (
         <Router>
             <Routes>
                 <Route path="/callback" element={<Callback />} />
                 <Route path="/" element={
-                    <div className="min-h-screen bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900 text-white p-4">
+                    <div className={`min-h-screen text-white p-4 ${mainBackgroundClass}`}
+                        style={mainBackgroundStyle}
+                    >
+                        <BackgroundManager
+                            isFocusMode={isFocusMode}
+                            isPlaying={timerState.isRunning}
+                            isBreak={timerState.isBreak}
+                        />
                         <div className={`max-w-4xl mx-auto space-y-6 transition-all duration-300 ${isFocusMode ? 'mr-[50%]' : ''}`}>
-                            <h1 className="text-4xl font-bold text-center mb-8">FocusRitual</h1>
+                            <div className="flex justify-between items-center mb-8">
+                                <h1 className="text-4xl font-bold">FocusRitual</h1>
+                                <button
+                                    onClick={() => setShowThemeSelector(!showThemeSelector)}
+                                    className="px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors"
+                                >
+                                    {showThemeSelector ? 'Hide Themes' : 'Show Themes'}
+                                </button>
+                            </div>
+
+                            {showThemeSelector && (
+                                <div className="mb-6">
+                                    <ThemeSelector />
+                                </div>
+                            )}
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-6">

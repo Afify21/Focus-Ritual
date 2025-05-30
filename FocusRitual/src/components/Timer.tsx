@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { PlayIcon, PauseIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
 
 interface TimerProps {
@@ -20,16 +20,14 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange }) => {
     const [isBreak, setIsBreak] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
     const [completedSessions, setCompletedSessions] = useState(0);
-    const [timerId, setTimerId] = useState<NodeJS.Timeout | null>(null);
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
 
     const handleTimerComplete = useCallback(() => {
-        setIsRunning(false);
-        setHasStarted(false);
-        setIsPaused(false);
-        if (timerId) {
-            clearInterval(timerId);
-            setTimerId(null);
+        if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
         }
+
         if (!isBreak) {
             setIsBreak(true);
             setTimeLeft(300); // 5-minute break
@@ -38,11 +36,15 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange }) => {
             setIsBreak(false);
             setTimeLeft(duration);
         }
-    }, [timerId, isBreak, duration]);
+
+        setIsRunning(false);
+        setHasStarted(false);
+        setIsPaused(false);
+    }, [isBreak, duration]);
 
     useEffect(() => {
         if (isRunning && timeLeft > 0) {
-            const id = setInterval(() => {
+            timerRef.current = setInterval(() => {
                 setTimeLeft(prev => {
                     if (prev <= 1) {
                         handleTimerComplete();
@@ -51,12 +53,15 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange }) => {
                     return prev - 1;
                 });
             }, 1000);
-            setTimerId(id);
-            return () => {
-                if (id) clearInterval(id);
-            };
         }
-    }, [isRunning, timeLeft, handleTimerComplete]);
+
+        return () => {
+            if (timerRef.current) {
+                clearInterval(timerRef.current);
+                timerRef.current = null;
+            }
+        };
+    }, [isRunning, handleTimerComplete]);
 
     useEffect(() => {
         if (onStateChange) {
@@ -75,14 +80,15 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange }) => {
         if (!hasStarted) {
             setHasStarted(true);
         }
-        setIsRunning(!isRunning);
-        setIsPaused(!isRunning);
+        const newIsRunning = !isRunning;
+        setIsRunning(newIsRunning);
+        setIsPaused(!newIsRunning);
     };
 
     const resetTimer = () => {
-        if (timerId) {
-            clearInterval(timerId);
-            setTimerId(null);
+        if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
         }
         setIsRunning(false);
         setHasStarted(false);
@@ -100,7 +106,7 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange }) => {
     const progress = ((duration - timeLeft) / duration) * 100;
 
     return (
-        <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6">
+        <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 shadow-xl border border-white/10">
             <div className="flex flex-col items-center">
                 <div className="relative w-48 h-48 mb-6">
                     <svg className="w-full h-full" viewBox="0 0 100 100">
@@ -127,40 +133,40 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange }) => {
                         />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-4xl font-bold">{formatTime(timeLeft)}</span>
+                        <span className="text-4xl font-bold text-white">{formatTime(timeLeft)}</span>
                     </div>
                 </div>
                 <div className="flex space-x-4">
                     <button
                         onClick={toggleTimer}
-                        className="flex items-center space-x-2 px-6 py-3 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors"
+                        className="flex items-center space-x-2 px-6 py-3 rounded-lg bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-500 hover:to-slate-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                     >
                         {!hasStarted ? (
                             <>
-                                <PlayIcon className="h-6 w-6" />
-                                <span>Start</span>
+                                <PlayIcon className="h-6 w-6 text-white" />
+                                <span className="text-white font-medium">Start</span>
                             </>
                         ) : isPaused ? (
                             <>
-                                <PlayIcon className="h-6 w-6" />
-                                <span>Resume</span>
+                                <PlayIcon className="h-6 w-6 text-white" />
+                                <span className="text-white font-medium">Resume</span>
                             </>
                         ) : (
                             <>
-                                <PauseIcon className="h-6 w-6" />
-                                <span>Pause</span>
+                                <PauseIcon className="h-6 w-6 text-white" />
+                                <span className="text-white font-medium">Pause</span>
                             </>
                         )}
                     </button>
                     <button
                         onClick={resetTimer}
-                        className="flex items-center space-x-2 px-6 py-3 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors"
+                        className="flex items-center space-x-2 px-6 py-3 rounded-lg bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-500 hover:to-slate-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                     >
-                        <ArrowPathIcon className="h-6 w-6" />
-                        <span>Reset</span>
+                        <ArrowPathIcon className="h-6 w-6 text-white" />
+                        <span className="text-white font-medium">Reset</span>
                     </button>
                 </div>
-                <div className="mt-4 text-slate-400">
+                <div className="mt-4 text-slate-300 font-medium">
                     {isBreak ? 'Break Time' : 'Focus Time'}
                 </div>
                 <div className="mt-2 text-slate-400">

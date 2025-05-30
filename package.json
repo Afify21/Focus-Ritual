@@ -1,0 +1,9 @@
+{
+    "name": "focus-ritual",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "start": "cd FocusRitual && npm start",
+        "install-all": "cd FocusRitual && npm install"
+    }
+}
