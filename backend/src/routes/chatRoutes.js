@@ -11,20 +11,22 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
 router.post('/', async (req, res) => {
     try {
-        const { message } = req.body;
+        const { message, history } = req.body;
 
-        // Create chat context
+        // Use the provided history if available, otherwise use the default initial prompt
+        const chatHistory = history && history.length > 0 ? history : [
+            {
+                role: "user",
+                parts: [{ text: "You are a helpful study assistant. Your role is to help students with their studies by providing clear, accurate, and concise explanations. You should focus on educational content and maintain a professional, encouraging tone." }],
+            },
+            {
+                role: "model",
+                parts: [{ text: "I understand. I will act as a helpful study assistant, providing clear and accurate explanations while maintaining a professional and encouraging tone. I'll focus on educational content and help students understand their subjects better." }],
+            },
+        ];
+
         const chat = model.startChat({
-            history: [
-                {
-                    role: "user",
-                    parts: [{ text: "You are a helpful study assistant. Your role is to help students with their studies by providing clear, accurate, and concise explanations. You should focus on educational content and maintain a professional, encouraging tone." }],
-                },
-                {
-                    role: "model",
-                    parts: [{ text: "I understand. I will act as a helpful study assistant, providing clear and accurate explanations while maintaining a professional and encouraging tone. I'll focus on educational content and help students understand their subjects better." }],
-                },
-            ],
+            history: chatHistory,
         });
 
         // Send message and get response
