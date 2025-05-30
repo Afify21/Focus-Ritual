@@ -4,8 +4,10 @@ import Soundscape from './components/Soundscape';
 import RitualBuilder from './components/RitualBuilder';
 import YouTubePlayer from './components/YouTubePlayer';
 import SpotifyPlayer from './components/SpotifyPlayer';
+import CloudinaryPlayer from './components/CloudinaryPlayer';
+import ChatAssistant from './components/ChatAssistant';
 import QuoteGenerator from './components/QuoteGenerator';
-import { PlayCircleIcon, ArrowsPointingOutIcon, XMarkIcon, MusicalNoteIcon } from '@heroicons/react/24/solid';
+import { PlayCircleIcon, ArrowsPointingOutIcon, XMarkIcon, MusicalNoteIcon, VideoCameraIcon } from '@heroicons/react/24/solid';
 import Callback from './pages/Callback';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useTheme } from './context/ThemeContext';
@@ -16,6 +18,7 @@ const App: React.FC = () => {
     const [selectedTime, setSelectedTime] = useState(25);
     const [showYouTube, setShowYouTube] = useState(false);
     const [showSpotify, setShowSpotify] = useState(false);
+    const [showCloudinary, setShowCloudinary] = useState(false);
     const [isFocusMode, setIsFocusMode] = useState(false);
     const [timerState, setTimerState] = useState({
         timeLeft: selectedTime * 60,
@@ -56,6 +59,10 @@ const App: React.FC = () => {
 
     const handleCloseSpotify = () => {
         setShowSpotify(false);
+    };
+
+    const handleCloseCloudinary = () => {
+        setShowCloudinary(false);
     };
 
     const handleTimerStateChange = useCallback((newState: typeof timerState) => {
@@ -164,6 +171,13 @@ const App: React.FC = () => {
                                                 <MusicalNoteIcon className="h-5 w-5" />
                                                 <span>{showSpotify ? 'Hide Spotify' : 'Show Spotify'}</span>
                                             </button>
+                                            <button
+                                                onClick={() => setShowCloudinary(!showCloudinary)}
+                                                className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors"
+                                            >
+                                                <VideoCameraIcon className="h-5 w-5" />
+                                                <span>{showCloudinary ? 'Hide Video' : 'Show Video'}</span>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -206,6 +220,14 @@ const App: React.FC = () => {
                                         />
                                     </div>
                                 )}
+                                {showCloudinary && (
+                                    <div className="bg-slate-800 rounded-xl overflow-hidden shadow-lg">
+                                        <CloudinaryPlayer
+                                            videoUrl="https://player.cloudinary.com/embed/?cloud_name=dmouna8ru&public_id=farbxkn09n4we5zlnvev&profile=cld-looping"
+                                            title="Focus Video"
+                                        />
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -221,6 +243,13 @@ const App: React.FC = () => {
                                 isFocusMode={isFocusMode}
                             />
                         )}
+                        {!isFocusMode && showCloudinary && (
+                            <CloudinaryPlayer
+                                videoUrl="https://res.cloudinary.com/dmouna8ru/video/upload/farbxkn09n4we5zlnvev"
+                                title="Focus Video"
+                            />
+                        )}
+                        <ChatAssistant />
                     </div>
                 } />
             </Routes>

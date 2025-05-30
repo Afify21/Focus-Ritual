@@ -9,8 +9,8 @@ interface Sound {
 }
 
 const sounds: Sound[] = [
-    { id: 'rain', name: 'Rain', icon: '🌧️', audioUrl: 'http://localhost:5002/audio/rain.mp3' },
-    { id: 'fireplace', name: 'Fireplace', icon: '🔥', audioUrl: 'http://localhost:5002/audio/fireplace.mp3' },
+    { id: 'rain', name: 'Rain', icon: '🌧️', audioUrl: 'https://res.cloudinary.com/dnnrlzzue/video/upload/v1748633966/ppmavnnnswhp9ehmqkny.mp3' },
+    { id: 'fireplace', name: 'Fireplace', icon: '🔥', audioUrl: 'https://res.cloudinary.com/dnnrlzzue/video/upload/v1748633495/l6wuyl6gyaa9mt2difkz.mp3' },
     { id: 'lofi', name: 'Lo-fi Beats', icon: '🎵', audioUrl: 'http://localhost:5002/audio/lofi-beats.mp3' },
     { id: 'library', name: 'Library', icon: '📚', audioUrl: 'http://localhost:5002/audio/library sounds.mp3' },
 ];

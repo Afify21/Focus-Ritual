@@ -1,9 +1,9 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const audioRoutes = require('./routes/audioRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 
 const app = express();
 
@@ -16,11 +16,7 @@ app.use('/audio', express.static(path.join(__dirname, '../public/audio')));
 
 // Routes
 app.use('/api/audio', audioRoutes);
-
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/focus-ritual')
-    .then(() => console.log('Connected to MongoDB'))
-    .catch((err) => console.error('MongoDB connection error:', err));
+app.use('/api/chat', chatRoutes);
 
 // Start server
 const PORT = process.env.PORT || 5002;
