@@ -75,6 +75,7 @@ const Soundscape: React.FC = () => {
                 setError('Failed to play audio. Please try again.');
             });
 
+            await audio.load();
             await audio.play();
             audioRef.current = audio;
             setSelectedSound(soundId);

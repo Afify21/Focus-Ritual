@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import Timer from './components/Timer';
 import Soundscape from './components/Soundscape';
 import RitualBuilder from './components/RitualBuilder';
@@ -58,9 +58,9 @@ const App: React.FC = () => {
         setShowSpotify(false);
     };
 
-    const handleTimerStateChange = (newState: typeof timerState) => {
+    const handleTimerStateChange = useCallback((newState: typeof timerState) => {
         setTimerState(newState);
-    };
+    }, []);
 
     const mainBackgroundStyle = currentTheme.id === 'harry-potter'
         ? {

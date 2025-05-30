@@ -43,14 +43,15 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange }) => {
     }, [isBreak, duration]);
 
     useEffect(() => {
-        if (isRunning && timeLeft > 0) {
+        if (isRunning) {
             timerRef.current = setInterval(() => {
                 setTimeLeft(prev => {
-                    if (prev <= 1) {
+                    const newTimeLeft = prev - 1;
+                    if (newTimeLeft <= 0) {
                         handleTimerComplete();
                         return 0;
                     }
-                    return prev - 1;
+                    return newTimeLeft;
                 });
             }, 1000);
         }
