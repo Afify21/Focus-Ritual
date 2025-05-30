@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { XMarkIcon, PlayCircleIcon } from '@heroicons/react/24/solid';
+import { XMarkIcon, PlayCircleIcon, MusicalNoteIcon } from '@heroicons/react/24/solid';
 
 interface SpotifyPlayerProps {
     onClose: () => void;
@@ -70,8 +70,8 @@ interface Track {
 }
 
 // Replace this with your Spotify Client ID from https://developer.spotify.com/dashboard
-const CLIENT_ID = '48cf29a596a04ac28e2a7755277510a7'; // Add your Client ID here
-const REDIRECT_URI = 'http://localhost:3000'; // Make sure this matches your Spotify app settings
+const CLIENT_ID = '48cf29a596a04ac28e2a7755277510a7';
+const REDIRECT_URI = process.env.REACT_APP_REDIRECT_URI || 'http://localhost:3000/callback';
 const SCOPES = [
     'streaming',
     'user-read-email',
@@ -84,12 +84,13 @@ const SCOPES = [
 
 const SpotifyPlayer: React.FC<SpotifyPlayerProps> = ({ onClose, isFocusMode }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    const [playlistUrl, setPlaylistUrl] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [accessToken, setAccessToken] = useState<string | null>(null);
     const [player, setPlayer] = useState<SpotifyPlayer | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [userPlaylists, setUserPlaylists] = useState<any[]>([]);
+    const [selectedPlaylist, setSelectedPlaylist] = useState<string | null>(null);
 
     useEffect(() => {
         // Check if we have a token in the URL (after redirect)
@@ -107,7 +108,9 @@ const SpotifyPlayer: React.FC<SpotifyPlayerProps> = ({ onClose, isFocusMode }) =
         if (hash.access_token) {
             setAccessToken(hash.access_token);
             setIsAuthenticated(true);
+            localStorage.setItem('spotify_access_token', hash.access_token);
             window.history.pushState('', document.title, window.location.pathname);
+            fetchUserPlaylists(hash.access_token);
         }
 
         // Check if we have a token in localStorage
@@ -115,16 +118,30 @@ const SpotifyPlayer: React.FC<SpotifyPlayerProps> = ({ onClose, isFocusMode }) =
         if (storedToken) {
             setAccessToken(storedToken);
             setIsAuthenticated(true);
+            fetchUserPlaylists(storedToken);
         }
     }, []);
+
+    const fetchUserPlaylists = async (token: string) => {
+        try {
+            const response = await fetch('https://api.spotify.com/v1/me/playlists', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+            setUserPlaylists(data.items);
+        } catch (err) {
+            setError('Failed to fetch playlists');
+        }
+    };
 
     const handleConnect = () => {
         const authUrl = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=${SCOPES.join('%20')}&response_type=token&show_dialog=true`;
         window.location.href = authUrl;
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handlePlaylistSelect = async (playlistId: string) => {
         if (!accessToken) {
             setError('Please connect your Spotify account first');
             return;
@@ -132,14 +149,9 @@ const SpotifyPlayer: React.FC<SpotifyPlayerProps> = ({ onClose, isFocusMode }) =
 
         setIsLoading(true);
         setError(null);
+        setSelectedPlaylist(playlistId);
 
         try {
-            // Extract playlist ID from URL
-            const playlistId = playlistUrl.split('/').pop()?.split('?')[0];
-            if (!playlistId) {
-                throw new Error('Invalid playlist URL');
-            }
-
             // Initialize Spotify Web Playback SDK
             const script = document.createElement('script');
             script.src = 'https://sdk.scdn.co/spotify-player.js';
@@ -181,9 +193,17 @@ const SpotifyPlayer: React.FC<SpotifyPlayerProps> = ({ onClose, isFocusMode }) =
         }
     };
 
+    const handleLogout = () => {
+        localStorage.removeItem('spotify_access_token');
+        setAccessToken(null);
+        setIsAuthenticated(false);
+        setPlayer(null);
+        setUserPlaylists([]);
+        setSelectedPlaylist(null);
+    };
+
     return (
-        <div className={`bg-slate-800 rounded-xl overflow-hidden shadow-lg transition-all duration-300 ${isExpanded ? 'w-full' : 'w-full'
-            }`}>
+        <div className={`bg-slate-800 rounded-xl overflow-hidden shadow-lg transition-all duration-300 ${isExpanded ? 'w-full' : 'w-full'}`}>
             <div className="p-4 bg-slate-700 flex justify-between items-center">
                 <h3 className="text-lg font-semibold">Spotify Player</h3>
                 <div className="flex space-x-2">
@@ -201,45 +221,70 @@ const SpotifyPlayer: React.FC<SpotifyPlayerProps> = ({ onClose, isFocusMode }) =
                     </button>
                 </div>
             </div>
+
             <div className="p-4">
+                {!isAuthenticated ? (
+                    <div className="text-center">
+                        <p className="mb-4">Connect your Spotify account to play your playlists</p>
+                        <button
+                            onClick={handleConnect}
+                            className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg flex items-center justify-center space-x-2 mx-auto"
+                        >
+                            <MusicalNoteIcon className="h-5 w-5" />
+                            <span>Connect Spotify</span>
+                        </button>
+                    </div>
+                ) : (
+                    <div>
+                        {userPlaylists.length > 0 ? (
+                            <div className="space-y-4">
+                                <h4 className="font-semibold mb-2">Your Playlists</h4>
+                                <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto">
+                                    {userPlaylists.map((playlist) => (
+                                        <button
+                                            key={playlist.id}
+                                            onClick={() => handlePlaylistSelect(playlist.id)}
+                                            className={`p-2 rounded-lg text-left hover:bg-slate-700 transition-colors ${selectedPlaylist === playlist.id ? 'bg-slate-700' : ''
+                                                }`}
+                                        >
+                                            <div className="flex items-center space-x-2">
+                                                {playlist.images[0] && (
+                                                    <img
+                                                        src={playlist.images[0].url}
+                                                        alt={playlist.name}
+                                                        className="w-10 h-10 rounded"
+                                                    />
+                                                )}
+                                                <div>
+                                                    <div className="font-medium">{playlist.name}</div>
+                                                    <div className="text-sm text-slate-400">
+                                                        {playlist.tracks.total} tracks
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                                <button
+                                    onClick={handleLogout}
+                                    className="text-slate-400 hover:text-white text-sm"
+                                >
+                                    Disconnect Spotify
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="text-center">
+                                <p>Loading your playlists...</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {error && (
-                    <div className="mb-4 p-3 bg-red-500/20 text-red-400 rounded-lg">
+                    <div className="mt-4 p-2 bg-red-500/20 text-red-500 rounded-lg text-sm">
                         {error}
                     </div>
                 )}
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label htmlFor="playlist" className="block text-sm font-medium text-slate-300 mb-2">
-                            Enter Spotify Playlist URL
-                        </label>
-                        <input
-                            type="text"
-                            id="playlist"
-                            value={playlistUrl}
-                            onChange={(e) => setPlaylistUrl(e.target.value)}
-                            placeholder="https://open.spotify.com/playlist/..."
-                            className="w-full px-4 py-2 rounded-lg bg-slate-700 border border-slate-600 focus:outline-none focus:border-slate-500"
-                        />
-                    </div>
-                    <button
-                        type="submit"
-                        disabled={isLoading || !isAuthenticated}
-                        className="w-full px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 transition-colors disabled:opacity-50"
-                    >
-                        {isLoading ? 'Loading...' : 'Load Playlist'}
-                    </button>
-                </form>
-                <div className="mt-4 text-center text-slate-400">
-                    <p>{isAuthenticated ? 'Connected to Spotify' : 'Connect your Spotify account to play music'}</p>
-                    {!isAuthenticated && (
-                        <button
-                            onClick={handleConnect}
-                            className="mt-2 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 transition-colors"
-                        >
-                            Connect Spotify
-                        </button>
-                    )}
-                </div>
             </div>
         </div>
     );
