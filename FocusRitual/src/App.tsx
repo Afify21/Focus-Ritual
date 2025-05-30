@@ -87,7 +87,6 @@ const App: React.FC = () => {
                         {!isFocusMode && (
                             <Timer
                                 duration={selectedTime * 60}
-                                initialState={timerState}
                                 onStateChange={handleTimerStateChange}
                             />
                         )}
@@ -143,7 +142,6 @@ const App: React.FC = () => {
                     </div>
                     <Timer
                         duration={selectedTime * 60}
-                        initialState={timerState}
                         onStateChange={handleTimerStateChange}
                     />
                     {showYouTube && (

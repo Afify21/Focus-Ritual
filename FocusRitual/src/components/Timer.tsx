@@ -11,23 +11,16 @@ interface TimerProps {
         completedSessions: number;
         hasStarted: boolean;
     }) => void;
-    initialState?: {
-        timeLeft: number;
-        isRunning: boolean;
-        isBreak: boolean;
-        isPaused: boolean;
-        completedSessions: number;
-        hasStarted: boolean;
-    };
 }
 
-const Timer: React.FC<TimerProps> = ({ duration, onStateChange, initialState }) => {
-    const [timeLeft, setTimeLeft] = useState(initialState?.timeLeft ?? duration);
-    const [isRunning, setIsRunning] = useState(initialState?.isRunning ?? false);
-    const [isBreak, setIsBreak] = useState(initialState?.isBreak ?? false);
-    const [isPaused, setIsPaused] = useState(initialState?.isPaused ?? false);
-    const [completedSessions, setCompletedSessions] = useState(initialState?.completedSessions ?? 0);
-    const [hasStarted, setHasStarted] = useState(initialState?.hasStarted ?? false);
+const Timer: React.FC<TimerProps> = ({ duration, onStateChange }) => {
+    const [timeLeft, setTimeLeft] = useState(duration);
+    const [isRunning, setIsRunning] = useState(false);
+    const [isBreak, setIsBreak] = useState(false);
+    const [isPaused, setIsPaused] = useState(false);
+    const [completedSessions, setCompletedSessions] = useState(0);
+    const [hasStarted, setHasStarted] = useState(false);
+
     const timerRef = useRef<NodeJS.Timeout | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const durationRef = useRef(duration);
@@ -43,34 +36,24 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange, initialState }) 
     // Update durationRef when duration prop changes
     useEffect(() => {
         durationRef.current = duration;
-    }, [duration]);
-
-    // Reset timer when duration changes
-    useEffect(() => {
-        if (!isRunning && !isPaused) {
+        if (!isRunning && !hasStarted) {
             setTimeLeft(duration);
-            setIsBreak(false);
-            setHasStarted(false);
-            setCompletedSessions(0);
         }
     }, [duration, isRunning, isPaused]);
 
     const handleTimerComplete = useCallback(() => {
         if (!isBreak) {
             setIsBreak(true);
-            setTimeLeft(300); // 5 minutes break
+            setTimeLeft(300); // 5-minute break
             setCompletedSessions(prev => prev + 1);
-            if (audioRef.current) {
-                audioRef.current.play().catch(console.error);
-            }
         } else {
             setIsBreak(false);
             setTimeLeft(durationRef.current);
         }
         setIsRunning(false);
+        setIsPaused(false);
     }, [isBreak]);
 
-    // Timer effect
     useEffect(() => {
         if (isRunning && timeLeft > 0) {
             timerRef.current = setInterval(() => {
@@ -84,6 +67,7 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange, initialState }) 
                 });
             }, 1000);
         }
+
         return () => {
             if (timerRef.current) {
                 clearInterval(timerRef.current);
@@ -103,23 +87,30 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange, initialState }) 
         };
     }, [timeLeft, isRunning, isBreak, isPaused, completedSessions, hasStarted]);
 
-    // State change effect
     useEffect(() => {
-        if (onStateChange) {
-            onStateChange(stateRef.current);
-        }
-    }, [onStateChange]);
+        onStateChange?.({
+            timeLeft,
+            isRunning,
+            isBreak,
+            isPaused,
+            completedSessions,
+            hasStarted
+        });
+    }, [timeLeft, isRunning, isBreak, isPaused, completedSessions, hasStarted, onStateChange]);
 
     const toggleTimer = () => {
         if (!hasStarted) {
             setHasStarted(true);
-            setIsRunning(true);
-        } else if (isPaused) {
-            setIsPaused(false);
-            setIsRunning(true);
-        } else {
-            setIsPaused(true);
+        }
+        if (isRunning) {
             setIsRunning(false);
+            setIsPaused(true);
+            if (timerRef.current) {
+                clearInterval(timerRef.current);
+            }
+        } else {
+            setIsRunning(true);
+            setIsPaused(false);
         }
     };
 
@@ -128,14 +119,13 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange, initialState }) 
         setIsPaused(false);
         setIsBreak(false);
         setHasStarted(false);
-        setTimeLeft(durationRef.current);
-        setCompletedSessions(0);
+        setTimeLeft(duration);
         if (timerRef.current) {
             clearInterval(timerRef.current);
         }
     };
 
-    const formatTime = (seconds: number) => {
+    const formatTime = (seconds: number): string => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
@@ -211,7 +201,6 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange, initialState }) 
                     Completed Sessions: {completedSessions}
                 </div>
             </div>
-            <audio ref={audioRef} src="/sounds/notification.mp3" />
         </div>
     );
 };
