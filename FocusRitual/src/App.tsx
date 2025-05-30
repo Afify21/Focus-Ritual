@@ -5,7 +5,8 @@ import RitualBuilder from './components/RitualBuilder';
 import YouTubePlayer from './components/YouTubePlayer';
 import SpotifyPlayer from './components/SpotifyPlayer';
 import QuoteGenerator from './components/QuoteGenerator';
-import { PlayCircleIcon, ArrowsPointingOutIcon, XMarkIcon, MusicalNoteIcon } from '@heroicons/react/24/solid';
+import PDFViewer from './components/PDFViewer';
+import { PlayCircleIcon, ArrowsPointingOutIcon, XMarkIcon, MusicalNoteIcon, DocumentIcon } from '@heroicons/react/24/solid';
 import Callback from './pages/Callback';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useTheme } from './context/ThemeContext';
@@ -16,6 +17,7 @@ const App: React.FC = () => {
     const [selectedTime, setSelectedTime] = useState(25);
     const [showYouTube, setShowYouTube] = useState(false);
     const [showSpotify, setShowSpotify] = useState(false);
+    const [showPDF, setShowPDF] = useState(false);
     const [isFocusMode, setIsFocusMode] = useState(false);
     const [timerState, setTimerState] = useState({
         timeLeft: selectedTime * 60,
@@ -56,6 +58,10 @@ const App: React.FC = () => {
 
     const handleCloseSpotify = () => {
         setShowSpotify(false);
+    };
+
+    const handleClosePDF = () => {
+        setShowPDF(false);
     };
 
     const handleTimerStateChange = useCallback((newState: typeof timerState) => {
@@ -164,6 +170,13 @@ const App: React.FC = () => {
                                                 <MusicalNoteIcon className="h-5 w-5" />
                                                 <span>{showSpotify ? 'Hide Spotify' : 'Show Spotify'}</span>
                                             </button>
+                                            <button
+                                                onClick={() => setShowPDF(!showPDF)}
+                                                className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors"
+                                            >
+                                                <DocumentIcon className="h-5 w-5" />
+                                                <span>{showPDF ? 'Hide PDF' : 'Show PDF'}</span>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -206,6 +219,11 @@ const App: React.FC = () => {
                                         />
                                     </div>
                                 )}
+                                {showPDF && (
+                                    <div className="bg-slate-800 rounded-xl overflow-hidden shadow-lg p-4">
+                                        <PDFViewer />
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -220,6 +238,13 @@ const App: React.FC = () => {
                                 onClose={handleCloseSpotify}
                                 isFocusMode={isFocusMode}
                             />
+                        )}
+                        {!isFocusMode && showPDF && (
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+                                <div className="bg-slate-800 rounded-xl overflow-hidden shadow-lg p-4 w-full max-w-4xl">
+                                    <PDFViewer />
+                                </div>
+                            </div>
                         )}
                     </div>
                 } />

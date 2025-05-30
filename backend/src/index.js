@@ -4,26 +4,48 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const audioRoutes = require('./routes/audioRoutes');
+const pdfRoutes = require('./routes/pdfRoutes');
 
 const app = express();
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// CORS configuration
+app.use(cors({
+    origin: ['http://localhost:3000', 'http://localhost:3001'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Content-Length', 'X-Requested-With'],
+    exposedHeaders: ['Content-Length', 'Content-Type'],
+    credentials: true,
+    maxAge: 86400 // 24 hours
+}));
 
-// Serve static files from the public directory
-app.use('/audio', express.static(path.join(__dirname, '../public/audio')));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Serve PDF.js worker file
+app.get('/pdf.worker.min.js', (req, res) => {
+    res.sendFile(path.join(__dirname, '../node_modules/pdfjs-dist/build/pdf.worker.min.js'));
+});
 
 // Routes
 app.use('/api/audio', audioRoutes);
+app.use('/api/pdf', pdfRoutes);
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/focus-ritual')
     .then(() => console.log('Connected to MongoDB'))
     .catch((err) => console.error('MongoDB connection error:', err));
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Something went wrong!' });
+});
+
 // Start server
-const PORT = process.env.PORT || 5002;
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
     console.log(`Please open http://localhost:${PORT} in your browser`);
