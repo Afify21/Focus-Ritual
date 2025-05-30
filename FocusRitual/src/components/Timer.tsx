@@ -3,7 +3,14 @@ import { PlayIcon, PauseIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
 
 interface TimerProps {
     duration: number;
-    onStateChange?: (state: { isRunning: boolean; timeLeft: number }) => void;
+    onStateChange?: (state: {
+        timeLeft: number;
+        isRunning: boolean;
+        isBreak: boolean;
+        isPaused: boolean;
+        completedSessions: number;
+        hasStarted: boolean;
+    }) => void;
 }
 
 const Timer: React.FC<TimerProps> = ({ duration, onStateChange }) => {
@@ -11,11 +18,14 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange }) => {
     const [isRunning, setIsRunning] = useState(false);
     const [hasStarted, setHasStarted] = useState(false);
     const [isBreak, setIsBreak] = useState(false);
+    const [isPaused, setIsPaused] = useState(false);
+    const [completedSessions, setCompletedSessions] = useState(0);
     const [timerId, setTimerId] = useState<NodeJS.Timeout | null>(null);
 
     const handleTimerComplete = useCallback(() => {
         setIsRunning(false);
         setHasStarted(false);
+        setIsPaused(false);
         if (timerId) {
             clearInterval(timerId);
             setTimerId(null);
@@ -23,6 +33,7 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange }) => {
         if (!isBreak) {
             setIsBreak(true);
             setTimeLeft(300); // 5-minute break
+            setCompletedSessions(prev => prev + 1);
         } else {
             setIsBreak(false);
             setTimeLeft(duration);
@@ -49,15 +60,23 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange }) => {
 
     useEffect(() => {
         if (onStateChange) {
-            onStateChange({ isRunning, timeLeft });
+            onStateChange({
+                timeLeft,
+                isRunning,
+                isBreak,
+                isPaused,
+                completedSessions,
+                hasStarted
+            });
         }
-    }, [isRunning, timeLeft, onStateChange]);
+    }, [timeLeft, isRunning, isBreak, isPaused, completedSessions, hasStarted, onStateChange]);
 
     const toggleTimer = () => {
         if (!hasStarted) {
             setHasStarted(true);
         }
         setIsRunning(!isRunning);
+        setIsPaused(!isRunning);
     };
 
     const resetTimer = () => {
@@ -68,6 +87,7 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange }) => {
         setIsRunning(false);
         setHasStarted(false);
         setIsBreak(false);
+        setIsPaused(false);
         setTimeLeft(duration);
     };
 
