@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { XMarkIcon, PlayCircleIcon, MusicalNoteIcon } from '@heroicons/react/24/solid';
+import { XMarkIcon, PlayCircleIcon, MusicalNoteIcon, PauseIcon, PlayIcon } from '@heroicons/react/24/solid';
 
 interface SpotifyPlayerProps {
     onClose: () => void;
@@ -90,6 +90,7 @@ const SpotifyPlayer: React.FC<SpotifyPlayerProps> = ({ onClose, isFocusMode }) =
     const [error, setError] = useState<string | null>(null);
     const [userPlaylists, setUserPlaylists] = useState<any[]>([]);
     const [selectedPlaylist, setSelectedPlaylist] = useState<string | null>(null);
+    const [isPlaying, setIsPlaying] = useState(false);
 
     useEffect(() => {
         // Check if we have a token in the URL (after redirect)
@@ -180,8 +181,14 @@ const SpotifyPlayer: React.FC<SpotifyPlayerProps> = ({ onClose, isFocusMode }) =
                                 player.play({
                                     uris: uris
                                 });
+                                setIsPlaying(true);
                             });
                     }
+                });
+
+                // Add event listeners
+                player.addListener('player_state_changed', state => {
+                    setIsPlaying(!state.paused);
                 });
             };
 
@@ -190,13 +197,28 @@ const SpotifyPlayer: React.FC<SpotifyPlayerProps> = ({ onClose, isFocusMode }) =
         }
     };
 
+    const togglePlayback = async () => {
+        if (spotifyPlayer) {
+            try {
+                await spotifyPlayer.togglePlay();
+                setIsPlaying(!isPlaying);
+            } catch (err) {
+                setError('Failed to toggle playback');
+            }
+        }
+    };
+
     const handleLogout = () => {
+        if (spotifyPlayer) {
+            spotifyPlayer.disconnect();
+        }
         localStorage.removeItem('spotify_access_token');
         setAccessToken(null);
         setIsAuthenticated(false);
         setSpotifyPlayer(null);
         setUserPlaylists([]);
         setSelectedPlaylist(null);
+        setIsPlaying(false);
     };
 
     return (
@@ -204,6 +226,18 @@ const SpotifyPlayer: React.FC<SpotifyPlayerProps> = ({ onClose, isFocusMode }) =
             <div className="p-4 bg-slate-700 flex justify-between items-center">
                 <h3 className="text-lg font-semibold">Spotify Player</h3>
                 <div className="flex space-x-2">
+                    {spotifyPlayer && (
+                        <button
+                            onClick={togglePlayback}
+                            className="p-2 hover:bg-slate-600 rounded-lg transition-colors"
+                        >
+                            {isPlaying ? (
+                                <PauseIcon className="h-5 w-5" />
+                            ) : (
+                                <PlayIcon className="h-5 w-5" />
+                            )}
+                        </button>
+                    )}
                     <button
                         onClick={() => setIsExpanded(!isExpanded)}
                         className="p-2 hover:bg-slate-600 rounded-lg transition-colors"
