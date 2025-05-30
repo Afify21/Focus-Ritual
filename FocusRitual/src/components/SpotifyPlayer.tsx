@@ -7,7 +7,7 @@ interface SpotifyPlayerProps {
 }
 
 // Spotify Web Playback SDK Types
-interface SpotifyPlayer {
+interface SpotifyPlayerInstance {
     connect(): Promise<boolean>;
     disconnect(): void;
     addListener(event: string, callback: (state: any) => void): void;
@@ -84,10 +84,9 @@ const SCOPES = [
 
 const SpotifyPlayer: React.FC<SpotifyPlayerProps> = ({ onClose, isFocusMode }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [accessToken, setAccessToken] = useState<string | null>(null);
-    const [player, setPlayer] = useState<SpotifyPlayer | null>(null);
+    const [spotifyPlayer, setSpotifyPlayer] = useState<SpotifyPlayerInstance | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [userPlaylists, setUserPlaylists] = useState<any[]>([]);
     const [selectedPlaylist, setSelectedPlaylist] = useState<string | null>(null);
@@ -147,7 +146,7 @@ const SpotifyPlayer: React.FC<SpotifyPlayerProps> = ({ onClose, isFocusMode }) =
             return;
         }
 
-        setIsLoading(true);
+        setIsAuthenticated(true);
         setError(null);
         setSelectedPlaylist(playlistId);
 
@@ -168,7 +167,7 @@ const SpotifyPlayer: React.FC<SpotifyPlayerProps> = ({ onClose, isFocusMode }) =
                 player.connect().then((success: boolean) => {
                     if (success) {
                         console.log('Successfully connected to Spotify!');
-                        setPlayer(player);
+                        setSpotifyPlayer(player);
                         // Start playing the playlist
                         fetch(`https://api.spotify.com/v1/playlists/${playlistId}`, {
                             headers: {
@@ -188,8 +187,6 @@ const SpotifyPlayer: React.FC<SpotifyPlayerProps> = ({ onClose, isFocusMode }) =
 
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to load playlist');
-        } finally {
-            setIsLoading(false);
         }
     };
 
@@ -197,7 +194,7 @@ const SpotifyPlayer: React.FC<SpotifyPlayerProps> = ({ onClose, isFocusMode }) =
         localStorage.removeItem('spotify_access_token');
         setAccessToken(null);
         setIsAuthenticated(false);
-        setPlayer(null);
+        setSpotifyPlayer(null);
         setUserPlaylists([]);
         setSelectedPlaylist(null);
     };
@@ -298,7 +295,7 @@ declare global {
                 name: string;
                 getOAuthToken: (cb: (token: string) => void) => void;
                 volume?: number;
-            }) => SpotifyPlayer;
+            }) => SpotifyPlayerInstance;
         };
         onSpotifyWebPlaybackSDKReady: () => void;
     }
