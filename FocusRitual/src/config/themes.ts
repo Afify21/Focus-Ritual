@@ -102,32 +102,32 @@ export const themes: Theme[] = [
             focus: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748653360/Harry_study_music_trwccg.m4a',
             break: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748653127/sound1_d8ibyu.mov'
         },
-        colors: { // Harry Potter theme colors for chat (example)
-            chatWindowBg: 'bg-[#F5ECCE] dark:bg-[#1E222A]', // Parchment light / Dark common room
-            chatHeaderBg: 'bg-[#7F0909] dark:bg-[#5D0A0A]', // Gryffindor red
-            chatHeaderText: 'text-[#FFD700]', // Gold text
+        colors: {
+            chatWindowBg: 'bg-[#F5ECCE]/70 dark:bg-[#1E222A]/70',
+            chatHeaderBg: 'bg-[#7F0909]/80 dark:bg-[#5D0A0A]/80',
+            chatHeaderText: 'text-[#FFD700]',
             chatHeaderIcon: 'text-[#FFD700]/80',
-            chatHeaderIconHoverBg: 'hover:bg-[#A00C0C] dark:hover:bg-[#4B0808]',
-            chatMessageListBg: 'bg-[#E8D9B5] dark:bg-[#2A2F37]', // Lighter parchment / Slightly lighter common room
-            chatInputAreaBg: 'bg-[#F5ECCE] dark:bg-[#1E222A]',
-            chatInputBorder: 'border-[#B8860B] dark:border-[#DAA520]', // DarkGoldenRod / Goldenrod
-            chatInputBg: 'bg-[#FFF8DC] dark:bg-[#3A3F47]', // Cornsilk / Darker grey
-            chatInputText: 'text-[#3A1F04] dark:text-[#EAEAEA]', // Dark brown / Light grey
+            chatHeaderIconHoverBg: 'hover:bg-[#A00C0C]/90 dark:hover:bg-[#4B0808]/90',
+            chatMessageListBg: 'bg-[#E8D9B5]/50 dark:bg-[#2A2F37]/50',
+            chatInputAreaBg: 'bg-[#F5ECCE]/70 dark:bg-[#1E222A]/70',
+            chatInputBorder: 'border-[#B8860B] dark:border-[#DAA520]',
+            chatInputBg: 'bg-[#FFF8DC]/80 dark:bg-[#3A3F47]/80',
+            chatInputText: 'text-[#3A1F04] dark:text-[#EAEAEA]',
             chatInputPlaceholderText: 'placeholder-[#7A5C35] dark:placeholder-[#A0A0A0]',
-            chatSendButtonBg: 'bg-[#3A1F04] dark:bg-[#AE8625]', // Dark brown / Brass
+            chatSendButtonBg: 'bg-[#3A1F04]/90 dark:bg-[#AE8625]/90',
             chatSendButtonText: 'text-[#FFD700]',
             chatSendButtonHoverBg: 'hover:bg-[#5C3A12] dark:hover:bg-[#D4AF37]',
             chatPromptButtonBg: 'bg-[#B8860B]/30 dark:bg-[#DAA520]/30',
             chatPromptButtonText: 'text-[#3A1F04] dark:text-[#FFD700]',
             chatPromptButtonHoverBg: 'hover:bg-[#B8860B]/50 dark:hover:bg-[#DAA520]/50',
-            userMessageBg: 'bg-[#0D6217] dark:bg-[#1A472A]', // Slytherin green
+            userMessageBg: 'bg-[#0D6217]/80 dark:bg-[#1A472A]/80',
             userMessageText: 'text-[#EAEAEA]',
-            assistantMessageBg: 'bg-[#0E1A40] dark:bg-[#27374D]', // Ravenclaw blue
+            assistantMessageBg: 'bg-[#0E1A40]/80 dark:bg-[#27374D]/80',
             assistantMessageText: 'text-[#EAEAEA]',
-            assistantMessageCodeBg: 'bg-[#D3D3D3] dark:bg-[#4A4F57]', // LightGrey / DarkerGrey for code
+            assistantMessageCodeBg: 'bg-[#D3D3D3]/80 dark:bg-[#4A4F57]/80',
             assistantMessageCodeText: 'text-[#1E1E1E] dark:text-[#F0F0F0]',
             scrollbarThumb: 'scrollbar-thumb-[#B8860B] dark:scrollbar-thumb-[#DAA520]',
-            scrollbarTrack: 'scrollbar-track-[#F5ECCE] dark:scrollbar-track-[#1E222A]',
+            scrollbarTrack: 'scrollbar-track-[#F5ECCE]/30 dark:scrollbar-track-[#1E222A]/30',
             messageTimestampText: 'opacity-70',
         }
     },
@@ -139,39 +139,39 @@ export const themes: Theme[] = [
             focus: [
                 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748656336/mylivewallpapers-com-Attack-on-Titans-QHD_fqhx3q.mp4',
                 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748656343/mylivewallpapers-com-Face-Off-Attack-on-Titans-4K_yhugus.mp4'
-            ] as any, // Use 'any' for now as the interface expects a single string
+            ] as any,
             break: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748656323/mylivewallpapers-com-See-You-Later-Eren-4K_jxifpf.mp4'
         },
         music: {
             focus: '',
             break: '',
         },
-        colors: { // Example colors, adjust as needed
-            chatWindowBg: 'bg-[#222831] dark:bg-[#1a202c]',
-            chatHeaderBg: 'bg-[#393E46] dark:bg-[#2d3748]',
+        colors: {
+            chatWindowBg: 'bg-[#222831]/70 dark:bg-[#1a202c]/70',
+            chatHeaderBg: 'bg-[#393E46]/80 dark:bg-[#2d3748]/80',
             chatHeaderText: 'text-[#00ADB5]',
             chatHeaderIcon: 'text-[#EEEEEE]',
-            chatHeaderIconHoverBg: 'hover:bg-[#505761] dark:hover:bg-[#4a5568]',
-            chatMessageListBg: 'bg-[#393E46]/50 dark:bg-[#2d3748]/50',
-            chatInputAreaBg: 'bg-[#222831] dark:bg-[#1a202c]',
+            chatHeaderIconHoverBg: 'hover:bg-[#505761]/90 dark:hover:bg-[#4a5568]/90',
+            chatMessageListBg: 'bg-[#393E46]/40 dark:bg-[#2d3748]/40',
+            chatInputAreaBg: 'bg-[#222831]/70 dark:bg-[#1a202c]/70',
             chatInputBorder: 'border-[#00ADB5]',
-            chatInputBg: 'bg-[#EEEEEE] dark:bg-[#2d3748]',
+            chatInputBg: 'bg-[#EEEEEE]/80 dark:bg-[#2d3748]/80',
             chatInputText: 'text-[#222831] dark:text-[#EEEEEE]',
             chatInputPlaceholderText: 'placeholder-[#505761] dark:placeholder-[#a0aec0]',
-            chatSendButtonBg: 'bg-[#00ADB5]',
+            chatSendButtonBg: 'bg-[#00ADB5]/90',
             chatSendButtonText: 'text-[#222831]',
             chatSendButtonHoverBg: 'hover:bg-[#00FFFF]',
             chatPromptButtonBg: 'bg-[#00ADB5]/30 dark:bg-[#00ADB5]/20',
             chatPromptButtonText: 'text-[#EEEEEE]',
             chatPromptButtonHoverBg: 'hover:bg-[#00ADB5]/50 dark:hover:bg-[#00ADB5]/40',
-            userMessageBg: 'bg-[#FF2E63]',
+            userMessageBg: 'bg-[#FF2E63]/80',
             userMessageText: 'text-[#EEEEEE]',
-            assistantMessageBg: 'bg-[#FFD369]',
+            assistantMessageBg: 'bg-[#FFD369]/80',
             assistantMessageText: 'text-[#222831]',
-            assistantMessageCodeBg: 'bg-[#EEEEEE] dark:bg-[#4A4F57]',
+            assistantMessageCodeBg: 'bg-[#EEEEEE]/80 dark:bg-[#4A4F57]/80',
             assistantMessageCodeText: 'text-[#222831] dark:text-[#F0F0F0]',
             scrollbarThumb: 'scrollbar-thumb-[#00ADB5] dark:scrollbar-thumb-[#00ADB5]',
-            scrollbarTrack: 'scrollbar-track-[#222831] dark:scrollbar-track-[#1a202c]',
+            scrollbarTrack: 'scrollbar-track-[#222831]/30 dark:scrollbar-track-[#1a202c]/30',
             messageTimestampText: 'opacity-70',
         }
     }

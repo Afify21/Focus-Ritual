@@ -269,7 +269,7 @@ export const BackgroundManager: React.FC<BackgroundManagerProps> = ({
                 ref={videoRef}
                 className="absolute inset-0 w-full h-full object-cover"
                 loop={true}
-                muted
+                muted // Mute by default to comply with autoplay policies, volume is controlled by slider
                 playsInline
                 preload="auto"
             />
