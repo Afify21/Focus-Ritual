@@ -169,15 +169,13 @@ export const BackgroundManager: React.FC<BackgroundManagerProps> = ({
                 videoRef.current.load();
             }
 
-            // Handle play/pause
+            // Attempt to play video if user has interacted
             if (hasUserInteracted) {
-                if (isPlaying) {
-                    videoRef.current.play().catch(error => {
-                        console.log('Video playback failed:', error);
-                    });
-                } else {
-                    videoRef.current.pause();
-                }
+                videoRef.current.play().catch(error => {
+                    console.log('Video playback failed:', error);
+                    // Autoplay might be blocked, user interaction needed.
+                    // The play promise rejection should be handled.
+                });
             }
         } else if (isImage && imgRef.current) { // Handle image background
             // Hide video if it was previously shown
