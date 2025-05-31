@@ -117,13 +117,13 @@ const Soundscape: React.FC = () => {
                     <button
                         key={sound.id}
                         onClick={() => handleSoundSelect(sound.id)}
-                        className={`flex flex-col items-center justify-center p-4 rounded-lg transition-all duration-200 ${selectedSound === sound.id
-                            ? 'bg-blue-500/20 text-blue-400'
-                            : 'bg-slate-700/50 hover:bg-slate-600/50'
+                        className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 ${selectedSound === sound.id
+                                ? 'bg-blue-500/20 text-blue-400'
+                                : 'bg-slate-700/50 hover:bg-slate-600/50'
                             }`}
                     >
-                        <span className="text-2xl mb-2">{sound.icon}</span>
-                        <span className="text-sm">{sound.name}</span>
+                        <span className="text-xl mb-1">{sound.icon}</span>
+                        <span className="text-xs">{sound.name}</span>
                     </button>
                 ))}
             </div>

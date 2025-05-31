@@ -191,27 +191,6 @@ export const BackgroundManager: React.FC<BackgroundManagerProps> = ({
                 preload="auto"
             />
 
-            {/* Volume Slider */}
-            <div className="fixed top-4 right-4 bg-black/70 p-4 rounded-lg backdrop-blur-sm z-50">
-                <div className="flex items-center space-x-2">
-                    <span className="text-white text-sm">🔊</span>
-                    <input
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.01"
-                        value={volume}
-                        onChange={handleVolumeChange}
-                        className="w-32 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                        style={{
-                            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${volume * 100}%, #4b5563 ${volume * 100}%, #4b5563 100%)`,
-                            WebkitAppearance: 'none',
-                            MozAppearance: 'none'
-                        }}
-                    />
-                    <span className="text-white text-sm min-w-[3rem]">{Math.round(volume * 100)}%</span>
-                </div>
-            </div>
         </div>
     );
 };

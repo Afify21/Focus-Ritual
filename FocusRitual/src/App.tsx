@@ -55,7 +55,6 @@ const App: React.FC = () => {
 
     const handleCloseYouTube = () => {
         setShowYouTube(false);
-        setIsFocusMode(false);
     };
 
     const handleCloseSpotify = () => {
