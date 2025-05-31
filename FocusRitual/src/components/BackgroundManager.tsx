@@ -9,17 +9,6 @@ interface BackgroundManagerProps {
     isReset: boolean;
 }
 
-const FOCUS_AUDIO = 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748653360/Harry_study_music_trwccg.m4a';
-const BREAK_AUDIO = 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748653127/sound1_d8ibyu.mov';
-
-const HARRY_POTTER_BACKGROUNDS = {
-    focus: [
-        'https://res.cloudinary.com/dmouna8ru/video/upload/v1748661256/background1_luqfku.mp4',
-        'https://res.cloudinary.com/dmouna8ru/video/upload/v1748661258/background2_ecc2xj.mp4'
-    ],
-    break: 'https://res.cloudinary.com/dmouna8ru/image/upload/v1748655258/ariel-j-night-hog-lib_cnunj1.jpg'
-};
-
 const VIDEO_ROTATION_INTERVAL = 10 * 60 * 1000; // 10 minutes in milliseconds
 
 export const BackgroundManager: React.FC<BackgroundManagerProps> = ({
@@ -31,6 +20,7 @@ export const BackgroundManager: React.FC<BackgroundManagerProps> = ({
     const { currentTheme } = useTheme();
     const videoRef = useRef<HTMLVideoElement>(null);
     const audioRef = useRef<HTMLAudioElement>(null);
+    const imgRef = useRef<HTMLImageElement>(null); // Add ref for image element
     const [hasUserInteracted, setHasUserInteracted] = useState(false);
     const [currentFocusBackgroundIndex, setCurrentFocusBackgroundIndex] = useState(0);
     const [volume, setVolume] = useState(0.3); // Default volume at 30%
@@ -110,14 +100,10 @@ export const BackgroundManager: React.FC<BackgroundManagerProps> = ({
 
     // Update volume when it changes
     useEffect(() => {
-        console.log('Volume state changed:', volume);
         if (audioRef.current) {
-            console.log('Setting audio volume to:', volume);
             audioRef.current.volume = volume;
-        } else {
-            console.log('audioRef.current is not available when volume state changes.');
         }
-    }, [volume, audioRef.current]);
+    }, [volume]);
 
     // Handle background rotation every 10 minutes for themes with multiple focus videos
     useEffect(() => {
@@ -133,153 +119,115 @@ export const BackgroundManager: React.FC<BackgroundManagerProps> = ({
             // Reset index when not in a rotating video theme or not playing/on break
             setCurrentFocusBackgroundIndex(0);
         }
-    }, [isBreak, isPlaying, currentTheme.backgrounds.focus]); // Depend on isPlaying, isBreak, and the focus backgrounds array
+    }, [isBreak, isPlaying, currentTheme.backgrounds.focus]);
 
-    // Handle audio source and play/pause based on timer state and theme
+    // Handle audio source and play/pause based on timer state and theme changes (not background index changes)
     useEffect(() => {
         if (audioRef.current) {
-            // Set audio source based on break state and theme, but only if different from current source
             const newAudioSrc = isBreak ? currentTheme.music.break : currentTheme.music.focus;
-            if (audioRef.current.src !== (newAudioSrc || '')) { // Use || '' to handle empty strings correctly
-                audioRef.current.src = newAudioSrc || ''; // Set source to empty string if no music
+
+            // Only update source if it's different or if it's a reset (to ensure load and play from beginning)
+            if (audioRef.current.src !== (newAudioSrc || '') || isReset) {
+                audioRef.current.src = newAudioSrc || '';
                 audioRef.current.load(); // Load the new source
-            }
-
-            // Handle play/pause
-            if (hasUserInteracted && newAudioSrc) { // Only attempt to play if user interacted and there's a music source
-                if (isPlaying) {
-                    audioRef.current.play().catch(error => {
-                        console.log('Audio playback failed:', error);
-                    });
-                } else {
-                    audioRef.current.pause();
+                if (isReset) {
+                    audioRef.current.currentTime = 0; // Reset to beginning on timer reset
                 }
-            } else if (audioRef.current.src) {
-                // If no music for theme or no user interaction, pause if source is set
-                audioRef.current.pause();
             }
-        }
-    }, [isBreak, isPlaying, hasUserInteracted, currentTheme.music]); // Depend on relevant states and music URLs
 
-    // Handle audio reset when timer is reset (and there's music for the theme)
-    useEffect(() => {
-        if (isReset && audioRef.current && hasUserInteracted && (currentTheme.music.focus || currentTheme.music.break)) {
-            const musicPath = isBreak ? currentTheme.music.break : currentTheme.music.focus;
-            audioRef.current.src = musicPath;
-            audioRef.current.load();
-            audioRef.current.currentTime = 0; // Reset to beginning
-            if (isPlaying) {
+            // Handle play/pause based on isPlaying and user interaction
+            if (hasUserInteracted && newAudioSrc && isPlaying) {
                 audioRef.current.play().catch(error => {
                     console.log('Audio playback failed:', error);
                 });
             } else {
                 audioRef.current.pause();
             }
-        } else if (isReset && audioRef.current) {
-            // If timer is reset in a theme with no music, ensure audio is paused and reset
-            audioRef.current.pause();
-            audioRef.current.currentTime = 0;
         }
-    }, [isReset, isBreak, isPlaying, hasUserInteracted, currentTheme.music]); // Depend on relevant states and music URLs
+    }, [isBreak, isPlaying, hasUserInteracted, currentTheme.music, isReset]); // Depend on relevant states and music URLs, and isReset
 
     // Update background when break state, playing state, or theme changes
     useEffect(() => {
-        let backgroundSource: string | undefined;
+        let backgroundSource = isPlaying
+            ? (Array.isArray(currentTheme.backgrounds.focus) ? currentTheme.backgrounds.focus[currentFocusBackgroundIndex] : currentTheme.backgrounds.focus)
+            : currentTheme.backgrounds.break;
 
-        // Determine the correct background source based on state and theme
-        if (isPlaying) {
-            if (Array.isArray(currentTheme.backgrounds.focus)) {
-                backgroundSource = currentTheme.backgrounds.focus[currentFocusBackgroundIndex];
-            } else {
-                backgroundSource = currentTheme.backgrounds.focus;
+        const isVideo = typeof backgroundSource === 'string' && (backgroundSource.endsWith('.mp4') || backgroundSource.endsWith('.mov'));
+        const isImage = typeof backgroundSource === 'string' && !isVideo && backgroundSource !== '';
+
+        // Handle video background
+        if (isVideo && videoRef.current) {
+            // Hide image if it was previously shown
+            if (imgRef.current) {
+                imgRef.current.style.display = 'none';
             }
-        } else {
-            // When paused or not playing, or on break, show the break background
-            backgroundSource = currentTheme.backgrounds.break;
-        }
 
-        // Clear previous background/video before setting the new one
-        if (videoRef.current) {
-            videoRef.current.pause(); // Pause current video if any
-            videoRef.current.src = ''; // Clear video source
-        }
-        document.body.style.backgroundImage = ''; // Clear body background image
-
-        if (backgroundSource) { // Ensure there is a background source defined for the current state
-            const isVideo = backgroundSource.endsWith('.mp4') || backgroundSource.endsWith('.mov');
-
-            if (isVideo) {
-                if (videoRef.current) {
-                    videoRef.current.style.display = 'block';
-                    videoRef.current.src = backgroundSource;
-                    if (isPlaying && hasUserInteracted) {
-                        videoRef.current.load(); // Load the new video source
-                        videoRef.current.play().catch(error => {
-                            console.log('Video playback failed:', error);
-                        });
-                    } else if (!isPlaying) {
-                        videoRef.current.pause();
-                    }
-                }
-            } else { // It's an image
-                if (videoRef.current) {
-                    videoRef.current.style.display = 'none'; // Hide video element for images
-                }
-                document.body.style.backgroundImage = `url(${backgroundSource})`;
-                document.body.style.backgroundSize = 'cover';
-                document.body.style.backgroundPosition = 'center';
-                document.body.style.backgroundRepeat = 'no-repeat';
+            videoRef.current.style.display = 'block';
+            // Only update source if it's different
+            if (videoRef.current.src !== backgroundSource) {
+                videoRef.current.src = backgroundSource;
+                videoRef.current.load();
             }
-        } else { // No background source defined for this state/theme, clear everything
+
+            // Handle play/pause
+            if (hasUserInteracted) {
+                if (isPlaying) {
+                    videoRef.current.play().catch(error => {
+                        console.log('Video playback failed:', error);
+                    });
+                } else {
+                    videoRef.current.pause();
+                }
+            }
+        } else if (isImage && imgRef.current) { // Handle image background
+            // Hide video if it was previously shown
             if (videoRef.current) {
                 videoRef.current.style.display = 'none';
+                videoRef.current.pause(); // Pause video when hidden
+            }
+
+            imgRef.current.style.display = 'block';
+            imgRef.current.src = backgroundSource as string;
+
+        } else { // No background source or default theme, hide both
+            if (videoRef.current) {
+                videoRef.current.style.display = 'none';
+                videoRef.current.pause();
                 videoRef.current.src = '';
             }
-            document.body.style.backgroundImage = '';
-        }
-
-    }, [isBreak, currentTheme, isPlaying, hasUserInteracted, currentFocusBackgroundIndex]);
-
-    // Handle play/pause for audio (only if music is available for the theme)
-    useEffect(() => {
-        if (hasUserInteracted && audioRef.current && (currentTheme.music.focus || currentTheme.music.break)) {
-            if (isPlaying) {
-                audioRef.current.play().catch(error => {
-                    console.log('Audio playback failed:', error);
-                });
-            } else {
-                audioRef.current.pause();
+            if (imgRef.current) {
+                imgRef.current.style.display = 'none';
+                imgRef.current.src = '';
             }
-        } else if (audioRef.current && audioRef.current.src) { // Pause if no music for theme but audio source is set
-            audioRef.current.pause();
         }
-    }, [isPlaying, hasUserInteracted, currentTheme.music]); // Depend on relevant states and music URLs
 
-    const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newVolume = parseFloat(e.target.value);
-        console.log('Slider value changed to:', newVolume);
-        setVolume(newVolume);
-        // The useEffect hook will handle setting the volume on the audio element
-    };
+    }, [isBreak, isPlaying, hasUserInteracted, currentTheme.backgrounds, currentFocusBackgroundIndex]);
+
 
     return (
-        <div className={`fixed inset-0 -z-10 overflow-hidden ${currentTheme.id === 'default' ? 'bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900' : ''}`}>
-            {/* Background Video/Image */}
-            <video
-                ref={videoRef}
-                className="absolute inset-0 w-full h-full object-cover"
-                loop={true}
-                muted // Mute by default to comply with autoplay policies, volume is controlled by slider
-                playsInline
-                preload="auto"
-            />
-
-            {/* Background Music */}
-            <audio
-                ref={audioRef}
-                loop
-                preload="auto"
-            />
+        <div className="fixed inset-0 -z-10 overflow-hidden">
+            {currentTheme.id === 'default' ? (
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" />
+            ) : (
+                <>
+                    <video
+                        ref={videoRef}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        style={{ display: 'none' }} // Initially hide video
+                    />
+                    <img
+                        ref={imgRef}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        alt="Background"
+                        style={{ display: 'none' }} // Initially hide image
+                    />
+                </>
+            )}
+            <audio ref={audioRef} loop />
         </div>
     );
 };

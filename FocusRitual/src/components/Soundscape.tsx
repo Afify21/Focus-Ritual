@@ -104,7 +104,7 @@ const Soundscape: React.FC = () => {
     };
 
     return (
-        <div className={`backdrop-blur-lg rounded-xl p-6 ${currentTheme.id !== 'default' ? 'bg-white/30' : 'bg-white/5'}`}>
+        <div className="bg-white/10 backdrop-blur-md rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Ambient Sounds</h2>
                 <div className="flex items-center space-x-2">

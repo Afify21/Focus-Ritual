@@ -26,7 +26,7 @@ const RitualBuilder: React.FC = () => {
     };
 
     return (
-        <div className={`backdrop-blur-lg rounded-xl p-6 shadow-xl border border-white/10 ${currentTheme.id !== 'default' ? 'bg-white/30' : 'bg-white/10'}`}>
+        <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 shadow-xl border border-white/10">
             <h2 className="text-xl font-semibold mb-4">Ritual Builder</h2>
             <div className="space-y-4">
                 <div className="flex space-x-2">

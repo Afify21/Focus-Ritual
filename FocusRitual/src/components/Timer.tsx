@@ -122,7 +122,7 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange }) => {
     const progress = ((duration - timeLeft) / duration) * 100;
 
     return (
-        <div className={`backdrop-blur-lg rounded-xl p-6 shadow-xl border border-white/10 ${currentTheme.id !== 'default' ? 'bg-white/30' : 'bg-white/5'}`}>
+        <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 shadow-xl border border-white/10">
             <div className="flex flex-col items-center">
                 <div className="relative w-48 h-48 mb-6">
                     <svg className="w-full h-full" viewBox="0 0 100 100">

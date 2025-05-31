@@ -202,7 +202,7 @@ const QuoteGenerator: React.FC = () => {
     }, []);
 
     return (
-        <div className={`backdrop-blur-lg rounded-xl p-6 shadow-xl border border-white/10 ${currentTheme.id !== 'default' ? 'bg-white/30' : 'bg-white/5'}`}>
+        <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 shadow-xl border border-white/10">
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Daily Inspiration</h2>
                 <button
