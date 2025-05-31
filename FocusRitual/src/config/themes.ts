@@ -3,7 +3,7 @@ export interface Theme {
     name: string;
     description: string;
     backgrounds: {
-        focus: string;  // path to focus background (mp4/gif/image)
+        focus: string | string[];  // Allow focus background to be a string or an array of strings
         break: string;  // path to break background
     };
     music: {
@@ -92,12 +92,15 @@ export const themes: Theme[] = [
         name: 'Harry Potter',
         description: 'Immerse yourself in the magical world of Hogwarts',
         backgrounds: {
-            focus: '/themes/harry-potter/backgrounds/start.mp4',
-            break: '/themes/harry-potter/backgrounds/ariel-j-night-hog-lib.jpg'
+            focus: [
+                'https://res.cloudinary.com/dmouna8ru/video/upload/v1748661256/background1_luqfku.mp4',
+                'https://res.cloudinary.com/dmouna8ru/video/upload/v1748661258/background2_ecc2xj.mp4'
+            ],
+            break: 'https://res.cloudinary.com/dmouna8ru/image/upload/v1748655258/ariel-j-night-hog-lib_cnunj1.jpg'
         },
         music: {
-            focus: '/themes/harry-potter/music/focus.mp3',
-            break: '/themes/harry-potter/music/break.mp3'
+            focus: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748653360/Harry_study_music_trwccg.m4a',
+            break: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748653127/sound1_d8ibyu.mov'
         },
         colors: { // Harry Potter theme colors for chat (example)
             chatWindowBg: 'bg-[#F5ECCE] dark:bg-[#1E222A]', // Parchment light / Dark common room
@@ -125,6 +128,50 @@ export const themes: Theme[] = [
             assistantMessageCodeText: 'text-[#1E1E1E] dark:text-[#F0F0F0]',
             scrollbarThumb: 'scrollbar-thumb-[#B8860B] dark:scrollbar-thumb-[#DAA520]',
             scrollbarTrack: 'scrollbar-track-[#F5ECCE] dark:scrollbar-track-[#1E222A]',
+            messageTimestampText: 'opacity-70',
+        }
+    },
+    {
+        id: 'attack-on-titans',
+        name: 'Attack on Titans',
+        description: 'Enter the world of the Survey Corps',
+        backgrounds: {
+            focus: [
+                'https://res.cloudinary.com/dmouna8ru/video/upload/v1748656336/mylivewallpapers-com-Attack-on-Titans-QHD_fqhx3q.mp4',
+                'https://res.cloudinary.com/dmouna8ru/video/upload/v1748656343/mylivewallpapers-com-Face-Off-Attack-on-Titans-4K_yhugus.mp4'
+            ] as any, // Use 'any' for now as the interface expects a single string
+            break: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748656323/mylivewallpapers-com-See-You-Later-Eren-4K_jxifpf.mp4'
+        },
+        music: {
+            focus: '',
+            break: '',
+        },
+        colors: { // Example colors, adjust as needed
+            chatWindowBg: 'bg-[#222831] dark:bg-[#1a202c]',
+            chatHeaderBg: 'bg-[#393E46] dark:bg-[#2d3748]',
+            chatHeaderText: 'text-[#00ADB5]',
+            chatHeaderIcon: 'text-[#EEEEEE]',
+            chatHeaderIconHoverBg: 'hover:bg-[#505761] dark:hover:bg-[#4a5568]',
+            chatMessageListBg: 'bg-[#393E46]/50 dark:bg-[#2d3748]/50',
+            chatInputAreaBg: 'bg-[#222831] dark:bg-[#1a202c]',
+            chatInputBorder: 'border-[#00ADB5]',
+            chatInputBg: 'bg-[#EEEEEE] dark:bg-[#2d3748]',
+            chatInputText: 'text-[#222831] dark:text-[#EEEEEE]',
+            chatInputPlaceholderText: 'placeholder-[#505761] dark:placeholder-[#a0aec0]',
+            chatSendButtonBg: 'bg-[#00ADB5]',
+            chatSendButtonText: 'text-[#222831]',
+            chatSendButtonHoverBg: 'hover:bg-[#00FFFF]',
+            chatPromptButtonBg: 'bg-[#00ADB5]/30 dark:bg-[#00ADB5]/20',
+            chatPromptButtonText: 'text-[#EEEEEE]',
+            chatPromptButtonHoverBg: 'hover:bg-[#00ADB5]/50 dark:hover:bg-[#00ADB5]/40',
+            userMessageBg: 'bg-[#FF2E63]',
+            userMessageText: 'text-[#EEEEEE]',
+            assistantMessageBg: 'bg-[#FFD369]',
+            assistantMessageText: 'text-[#222831]',
+            assistantMessageCodeBg: 'bg-[#EEEEEE] dark:bg-[#4A4F57]',
+            assistantMessageCodeText: 'text-[#222831] dark:text-[#F0F0F0]',
+            scrollbarThumb: 'scrollbar-thumb-[#00ADB5] dark:scrollbar-thumb-[#00ADB5]',
+            scrollbarTrack: 'scrollbar-track-[#222831] dark:scrollbar-track-[#1a202c]',
             messageTimestampText: 'opacity-70',
         }
     }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { SparklesIcon } from '@heroicons/react/24/solid';
+import { useTheme } from '../context/ThemeContext';
 
 interface Sound {
     id: string;
@@ -40,6 +41,16 @@ const Soundscape: React.FC = () => {
     const [volume, setVolume] = useState(0.5);
     const [error, setError] = useState<string | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const { currentTheme } = useTheme();
+
+    // Preload ambient sounds
+    useEffect(() => {
+        sounds.forEach(sound => {
+            const audio = document.createElement('audio');
+            audio.preload = 'auto';
+            audio.src = sound.audioUrl;
+        });
+    }, []); // Empty dependency array means this runs once on mount
 
     useEffect(() => {
         return () => {
@@ -93,7 +104,7 @@ const Soundscape: React.FC = () => {
     };
 
     return (
-        <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6">
+        <div className={`backdrop-blur-lg rounded-xl p-6 ${currentTheme.id !== 'default' ? 'bg-white/30' : 'bg-white/5'}`}>
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Ambient Sounds</h2>
                 <div className="flex items-center space-x-2">
@@ -118,8 +129,8 @@ const Soundscape: React.FC = () => {
                         key={sound.id}
                         onClick={() => handleSoundSelect(sound.id)}
                         className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 ${selectedSound === sound.id
-                                ? 'bg-blue-500/20 text-blue-400'
-                                : 'bg-slate-700/50 hover:bg-slate-600/50'
+                            ? 'bg-blue-500/20 text-blue-400'
+                            : 'bg-slate-700/50 hover:bg-slate-600/50'
                             }`}
                     >
                         <span className="text-xl mb-1">{sound.icon}</span>

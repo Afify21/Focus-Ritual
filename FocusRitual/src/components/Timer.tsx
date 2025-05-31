@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { PlayIcon, PauseIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
+import { useTheme } from '../context/ThemeContext';
 
 interface TimerProps {
     duration: number;
@@ -23,6 +24,7 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange }) => {
     const [completedSessions, setCompletedSessions] = useState(0);
     const [isReset, setIsReset] = useState(false);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const { currentTheme } = useTheme();
 
     const handleTimerComplete = useCallback(() => {
         if (timerRef.current) {
@@ -120,7 +122,7 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange }) => {
     const progress = ((duration - timeLeft) / duration) * 100;
 
     return (
-        <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 shadow-xl border border-white/10">
+        <div className={`backdrop-blur-lg rounded-xl p-6 shadow-xl border border-white/10 ${currentTheme.id !== 'default' ? 'bg-white/30' : 'bg-white/5'}`}>
             <div className="flex flex-col items-center">
                 <div className="relative w-48 h-48 mb-6">
                     <svg className="w-full h-full" viewBox="0 0 100 100">

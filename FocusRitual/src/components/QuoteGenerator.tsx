@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SparklesIcon } from '@heroicons/react/24/solid';
+import { useTheme } from '../context/ThemeContext';
 
 const quotes = [
     // Motivational Quotes
@@ -185,6 +186,7 @@ const quotes = [
 const QuoteGenerator: React.FC = () => {
     const [currentQuote, setCurrentQuote] = useState(quotes[0]);
     const [isAnimating, setIsAnimating] = useState(false);
+    const { currentTheme } = useTheme();
 
     const generateNewQuote = () => {
         setIsAnimating(true);
@@ -200,7 +202,7 @@ const QuoteGenerator: React.FC = () => {
     }, []);
 
     return (
-        <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6">
+        <div className={`backdrop-blur-lg rounded-xl p-6 shadow-xl border border-white/10 ${currentTheme.id !== 'default' ? 'bg-white/30' : 'bg-white/5'}`}>
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Daily Inspiration</h2>
                 <button

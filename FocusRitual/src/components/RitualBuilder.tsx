@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/solid';
+import { useTheme } from '../context/ThemeContext';
 
 const RitualBuilder: React.FC = () => {
     const [rituals, setRituals] = useState<string[]>([]);
     const [newRitual, setNewRitual] = useState('');
+    const { currentTheme } = useTheme();
 
     const handleAddRitual = () => {
         if (newRitual.trim()) {
@@ -24,8 +26,8 @@ const RitualBuilder: React.FC = () => {
     };
 
     return (
-        <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4">
-            <h2 className="text-xl font-semibold mb-4">Study Ritual</h2>
+        <div className={`backdrop-blur-lg rounded-xl p-6 shadow-xl border border-white/10 ${currentTheme.id !== 'default' ? 'bg-white/30' : 'bg-white/10'}`}>
+            <h2 className="text-xl font-semibold mb-4">Ritual Builder</h2>
             <div className="space-y-4">
                 <div className="flex space-x-2">
                     <input
