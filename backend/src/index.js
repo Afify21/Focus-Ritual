@@ -11,6 +11,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error('Server error:', err);
+    res.status(500).json({
+        error: 'Internal server error',
+        details: err.message
+    });
+});
+
 // Serve static files from the public directory
 app.use('/audio', express.static(path.join(__dirname, '../public/audio')));
 

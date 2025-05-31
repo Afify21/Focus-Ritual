@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { SpeakerWaveIcon } from '@heroicons/react/24/solid';
+import { SparklesIcon } from '@heroicons/react/24/solid';
 
 interface Sound {
     id: string;
@@ -9,10 +9,30 @@ interface Sound {
 }
 
 const sounds: Sound[] = [
-    { id: 'rain', name: 'Rain', icon: '🌧️', audioUrl: '' },
-    { id: 'fireplace', name: 'Fireplace', icon: '🔥', audioUrl: '' },
-    { id: 'lofi', name: 'Lo-fi Beats', icon: '🎵', audioUrl: '' },
-    { id: 'library', name: 'Library', icon: '📚', audioUrl: '' },
+    {
+        id: 'rain',
+        name: 'Rain',
+        icon: '🌧️',
+        audioUrl: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748658330/rain.mp3_yyqqdk.mov'
+    },
+    {
+        id: 'fireplace',
+        name: 'Fireplace',
+        icon: '🔥',
+        audioUrl: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748658326/Fireplace_hztxh2.mov'
+    },
+    {
+        id: 'night',
+        name: 'Night',
+        icon: '🌙',
+        audioUrl: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748658654/night_qnkzkz.mov'
+    },
+    {
+        id: 'library',
+        name: 'Library',
+        icon: '📚',
+        audioUrl: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748658336/librarysounds_caxbfr.mov'
+    }
 ];
 
 const Soundscape: React.FC = () => {
@@ -20,20 +40,8 @@ const Soundscape: React.FC = () => {
     const [volume, setVolume] = useState(0.5);
     const [error, setError] = useState<string | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
-    const audioContextRef = useRef<AudioContext | null>(null);
-
-    const initAudio = async () => {
-        try {
-            if (!audioContextRef.current) {
-                audioContextRef.current = new AudioContext();
-            }
-        } catch (err) {
-            setError('Failed to initialize audio. Please check your browser settings.');
-        }
-    };
 
     useEffect(() => {
-        initAudio();
         return () => {
             if (audioRef.current) {
                 audioRef.current.pause();
@@ -75,7 +83,6 @@ const Soundscape: React.FC = () => {
                 setError('Failed to play audio. Please try again.');
             });
 
-            await audio.load();
             await audio.play();
             audioRef.current = audio;
             setSelectedSound(soundId);
@@ -86,40 +93,43 @@ const Soundscape: React.FC = () => {
     };
 
     return (
-        <div className="bg-white/5 backdrop-blur-lg rounded-xl p-4">
-            <h2 className="text-xl font-semibold mb-4">Soundscape</h2>
-            {error && (
-                <div className="text-red-400 text-sm mb-4">{error}</div>
-            )}
-            <div className="grid grid-cols-4 gap-2">
+        <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6">
+            <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">Ambient Sounds</h2>
+                <div className="flex items-center space-x-2">
+                    <span className="text-white text-sm">🔊</span>
+                    <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.01"
+                        value={volume}
+                        onChange={(e) => setVolume(parseFloat(e.target.value))}
+                        className="w-32 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                        style={{
+                            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${volume * 100}%, #4b5563 ${volume * 100}%, #4b5563 100%)`
+                        }}
+                    />
+                </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
                 {sounds.map((sound) => (
                     <button
                         key={sound.id}
                         onClick={() => handleSoundSelect(sound.id)}
-                        className={`p-1.5 rounded-lg flex flex-col items-center justify-center transition-colors ${selectedSound === sound.id
-                            ? 'bg-slate-600'
-                            : 'bg-slate-700 hover:bg-slate-600'
+                        className={`flex flex-col items-center justify-center p-4 rounded-lg transition-all duration-200 ${selectedSound === sound.id
+                            ? 'bg-blue-500/20 text-blue-400'
+                            : 'bg-slate-700/50 hover:bg-slate-600/50'
                             }`}
                     >
-                        <span className="text-lg mb-0.5">{sound.icon}</span>
-                        <span className="text-[10px]">{sound.name}</span>
+                        <span className="text-2xl mb-2">{sound.icon}</span>
+                        <span className="text-sm">{sound.name}</span>
                     </button>
                 ))}
             </div>
-            {selectedSound && (
-                <div className="mt-4">
-                    <div className="flex items-center space-x-2">
-                        <SpeakerWaveIcon className="h-5 w-5 text-slate-300" />
-                        <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.1"
-                            value={volume}
-                            onChange={(e) => setVolume(parseFloat(e.target.value))}
-                            className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
-                        />
-                    </div>
+            {error && (
+                <div className="mt-4 text-red-400 text-sm text-center">
+                    {error}
                 </div>
             )}
         </div>

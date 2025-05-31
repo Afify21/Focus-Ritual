@@ -10,6 +10,7 @@ interface TimerProps {
         isPaused: boolean;
         completedSessions: number;
         hasStarted: boolean;
+        isReset: boolean;
     }) => void;
 }
 
@@ -20,6 +21,7 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange }) => {
     const [isBreak, setIsBreak] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
     const [completedSessions, setCompletedSessions] = useState(0);
+    const [isReset, setIsReset] = useState(false);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
 
     const handleTimerComplete = useCallback(() => {
@@ -72,14 +74,22 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange }) => {
                 isBreak,
                 isPaused,
                 completedSessions,
-                hasStarted
+                hasStarted,
+                isReset
             });
         }
-    }, [timeLeft, isRunning, isBreak, isPaused, completedSessions, hasStarted, onStateChange]);
+    }, [timeLeft, isRunning, isBreak, isPaused, completedSessions, hasStarted, isReset, onStateChange]);
+
+    // Reset timer when duration changes
+    useEffect(() => {
+        resetTimer();
+    }, [duration]);
 
     const toggleTimer = () => {
         if (!hasStarted) {
             setHasStarted(true);
+            setIsReset(true);
+            setTimeout(() => setIsReset(false), 100);
         }
         const newIsRunning = !isRunning;
         setIsRunning(newIsRunning);
@@ -96,6 +106,9 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange }) => {
         setIsBreak(false);
         setIsPaused(false);
         setTimeLeft(duration);
+        setIsReset(true);
+        // Reset the isReset flag after a short delay
+        setTimeout(() => setIsReset(false), 100);
     };
 
     const formatTime = (seconds: number): string => {

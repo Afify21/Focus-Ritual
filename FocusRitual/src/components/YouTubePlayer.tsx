@@ -26,7 +26,7 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ onClose, isFocusMode }) =
     };
 
     return (
-        <div className={`fixed ${isFocusMode ? 'right-0 top-0 h-full w-1/2' : 'bottom-4 right-4 w-80'} z-50 transition-all duration-300`}>
+        <div className={`fixed ${isFocusMode ? 'right-0 top-0 h-full w-1/2' : 'bottom-4 left-4 w-80'} z-50 transition-all duration-300`}>
             <div className={`relative ${isFocusMode ? 'h-full' : ''} bg-slate-800 rounded-xl overflow-hidden shadow-lg`}>
                 <div className="absolute top-4 right-4 z-10 flex space-x-2">
                     {!isFocusMode && (

@@ -11,7 +11,16 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
 router.post('/', async (req, res) => {
     try {
+        console.log('Received chat request:', req.body);
         const { message, history } = req.body;
+
+        if (!process.env.GEMINI_API_KEY) {
+            console.error('GEMINI_API_KEY is not set in environment variables');
+            return res.status(500).json({
+                error: 'AI configuration error',
+                details: 'AI service is not properly configured'
+            });
+        }
 
         // Use the provided history if available, otherwise use the default initial prompt
         const chatHistory = history && history.length > 0 ? history : [
@@ -25,20 +34,22 @@ router.post('/', async (req, res) => {
             },
         ];
 
+        console.log('Starting chat with history:', chatHistory);
         const chat = model.startChat({
             history: chatHistory,
         });
 
-        // Send message and get response
+        console.log('Sending message to Gemini:', message);
         const result = await chat.sendMessage(message);
         const response = result.response.text();
+        console.log('Received response from Gemini:', response);
 
         res.json({ response });
     } catch (error) {
         console.error('Chat error:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             error: 'Failed to process chat request',
-            details: error.message 
+            details: error.message
         });
     }
 });

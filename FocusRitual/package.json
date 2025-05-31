@@ -2,6 +2,7 @@
     "name": "focus-ritual",
     "version": "0.1.0",
     "private": true,
+    "proxy": "http://localhost:5002",
     "dependencies": {
         "@heroicons/react": "^2.2.0",
         "@types/node": "^16.18.0",

@@ -60,20 +60,27 @@ const ChatAssistant: React.FC = () => {
         }));
 
         try {
-            const response = await fetch('http://localhost:5002/api/chat', {
+            console.log('Sending chat request to:', '/api/chat');
+            const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify({ message: inputMessage, history: historyForBackend }),
             });
 
+            console.log('Response status:', response.status);
+            console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}))
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Server response:', response.status, errorData);
                 throw new Error(errorData.details || `Server error: ${response.status}`);
             }
 
             const data = await response.json();
+            console.log('Chat response data:', data);
 
             if (data.error) {
                 throw new Error(data.details || data.error);
@@ -93,7 +100,7 @@ const ChatAssistant: React.FC = () => {
             setError(typedError.message || 'Failed to connect. Please try again.');
             setMessages(currentMessages => [...currentMessages, {
                 id: (Date.now() + 2).toString(),
-                text: `Sorry, I encountered an error: ${typedError.message || 'Please check server & try again.'}`, 
+                text: `Sorry, I encountered an error: ${typedError.message || 'Please check server & try again.'}`,
                 sender: 'assistant',
                 timestamp: new Date(),
             }]);
@@ -135,7 +142,7 @@ const ChatAssistant: React.FC = () => {
             w-screen h-screen 
             top-0 left-0 right-0 bottom-0 
             rounded-none
-        `; 
+        `;
     } else { // Default floating window state
         chatWindowDynamicClasses = `
             w-full sm:w-[450px] md:w-[500px] 
@@ -151,8 +158,7 @@ const ChatAssistant: React.FC = () => {
         ${colors.chatHeaderBg} 
         ${colors.chatHeaderText} 
         p-4 sm:p-5 rounded-t-xl 
-        ${
-            isFullScreen ? 'sm:rounded-t-none' : 'sm:rounded-t-lg'
+        ${isFullScreen ? 'sm:rounded-t-none' : 'sm:rounded-t-lg'
         }
         flex justify-between items-center 
         border-b ${colors.chatInputBorder} 
@@ -216,7 +222,7 @@ const ChatAssistant: React.FC = () => {
         ${colors.assistantMessageText} 
         border ${colors.chatInputBorder} 
     `;
-    
+
     const assistantMarkdownProseClasses = `
         prose prose-sm max-w-none leading-relaxed 
         ${colors.assistantMessageText} 
@@ -252,8 +258,8 @@ const ChatAssistant: React.FC = () => {
                         </button>
                     )}
                     {!isFullScreen && (
-                         <button
-                            onClick={() => setIsMinimized(!isMinimized)} 
+                        <button
+                            onClick={() => setIsMinimized(!isMinimized)}
                             className={headerButtonClasses}
                             aria-label={isMinimized ? "Restore" : "Minimize"}
                         >
@@ -291,16 +297,14 @@ const ChatAssistant: React.FC = () => {
                         {messages.map((message) => (
                             <div
                                 key={message.id}
-                                className={`flex ${
-                                    message.sender === 'user' ? 'justify-end' : 'justify-start'
-                                }`}
+                                className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'
+                                    }`}
                             >
                                 <div
-                                    className={`max-w-[85%] rounded-xl sm:rounded-2xl py-2 px-3.5 sm:py-2.5 sm:px-4 shadow-md break-words ${
-                                        message.sender === 'user'
-                                            ? userMessageBubbleClasses 
-                                            : assistantMessageBubbleClasses 
-                                    }`}
+                                    className={`max-w-[85%] rounded-xl sm:rounded-2xl py-2 px-3.5 sm:py-2.5 sm:px-4 shadow-md break-words ${message.sender === 'user'
+                                        ? userMessageBubbleClasses
+                                        : assistantMessageBubbleClasses
+                                        }`}
                                 >
                                     {message.sender === 'assistant' ? (
                                         <div className={assistantMarkdownProseClasses}>
@@ -311,9 +315,8 @@ const ChatAssistant: React.FC = () => {
                                     ) : (
                                         <p className={`text-sm whitespace-pre-wrap leading-relaxed ${colors.userMessageText}`}>{message.text}</p>
                                     )}
-                                    <span className={`text-xs mt-1.5 block ${colors.messageTimestampText} ${
-                                        message.sender === 'user' ? `${colors.userMessageText}/80 text-right` : `${colors.assistantMessageText}/80`
-                                    }`}>
+                                    <span className={`text-xs mt-1.5 block ${colors.messageTimestampText} ${message.sender === 'user' ? `${colors.userMessageText}/80 text-right` : `${colors.assistantMessageText}/80`
+                                        }`}>
                                         {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                 </div>
@@ -323,9 +326,9 @@ const ChatAssistant: React.FC = () => {
                             <div className="flex justify-start">
                                 <div className={`${assistantMessageBubbleClasses} py-2.5 px-3.5 sm:px-4`}>
                                     <div className="flex space-x-1.5 items-center">
-                                        <div className={`w-2 h-2 ${colors.chatSendButtonBg || 'bg-blue-500'} rounded-full animate-bounce`} style={{animationDelay: '0s'}} />
-                                        <div className={`w-2 h-2 ${colors.chatSendButtonBg || 'bg-blue-500'} rounded-full animate-bounce`} style={{animationDelay: '0.15s'}}/>
-                                        <div className={`w-2 h-2 ${colors.chatSendButtonBg || 'bg-blue-500'} rounded-full animate-bounce`} style={{animationDelay: '0.3s'}} />
+                                        <div className={`w-2 h-2 ${colors.chatSendButtonBg || 'bg-blue-500'} rounded-full animate-bounce`} style={{ animationDelay: '0s' }} />
+                                        <div className={`w-2 h-2 ${colors.chatSendButtonBg || 'bg-blue-500'} rounded-full animate-bounce`} style={{ animationDelay: '0.15s' }} />
+                                        <div className={`w-2 h-2 ${colors.chatSendButtonBg || 'bg-blue-500'} rounded-full animate-bounce`} style={{ animationDelay: '0.3s' }} />
                                     </div>
                                 </div>
                             </div>

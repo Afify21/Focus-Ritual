@@ -26,7 +26,8 @@ const App: React.FC = () => {
         isBreak: false,
         isPaused: false,
         completedSessions: 0,
-        hasStarted: false
+        hasStarted: false,
+        isReset: false
     });
     const [showThemeSelector, setShowThemeSelector] = useState(false);
 
@@ -69,31 +70,17 @@ const App: React.FC = () => {
         setTimerState(newState);
     }, []);
 
-    const mainBackgroundStyle = currentTheme.id === 'harry-potter'
-        ? {
-            backgroundImage: 'url(/themes/harry-potter/backgrounds/fireplaceharry.jpg)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-        }
-        : {};
-
-    const mainBackgroundClass = currentTheme.id !== 'harry-potter'
-        ? "bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900"
-        : "";
-
     return (
         <Router>
             <Routes>
                 <Route path="/callback" element={<Callback />} />
                 <Route path="/" element={
-                    <div className={`min-h-screen text-white p-4 ${mainBackgroundClass}`}
-                        style={mainBackgroundStyle}
-                    >
+                    <div className="min-h-screen text-white p-4">
                         <BackgroundManager
                             isFocusMode={isFocusMode}
                             isPlaying={timerState.isRunning}
                             isBreak={timerState.isBreak}
+                            isReset={timerState.isReset}
                         />
                         <div className={`max-w-4xl mx-auto space-y-6 transition-all duration-300 ${isFocusMode ? 'mr-[50%]' : ''}`}>
                             <div className="flex justify-between items-center mb-8">

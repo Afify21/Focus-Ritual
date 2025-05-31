@@ -5,18 +5,34 @@ interface BackgroundManagerProps {
     isFocusMode: boolean;
     isPlaying: boolean;
     isBreak: boolean;
+    isReset: boolean;
 }
+
+const FOCUS_AUDIO = 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748653360/Harry_study_music_trwccg.m4a';
+const BREAK_AUDIO = 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748653127/sound1_d8ibyu.mov';
+
+const HARRY_POTTER_BACKGROUNDS = {
+    focus: [
+        'https://res.cloudinary.com/dmouna8ru/video/upload/v1748656425/background1_z0nqdf.mov',
+        'https://res.cloudinary.com/dmouna8ru/video/upload/v1748656419/background2_ftbjyx.mov'
+    ],
+    break: 'https://res.cloudinary.com/dmouna8ru/image/upload/v1748655258/ariel-j-night-hog-lib_cnunj1.jpg'
+};
+
+const VIDEO_ROTATION_INTERVAL = 10 * 60 * 1000; // 10 minutes in milliseconds
 
 export const BackgroundManager: React.FC<BackgroundManagerProps> = ({
     isFocusMode,
     isPlaying,
     isBreak,
+    isReset,
 }) => {
     const { currentTheme } = useTheme();
     const videoRef = useRef<HTMLVideoElement>(null);
     const audioRef = useRef<HTMLAudioElement>(null);
     const [hasUserInteracted, setHasUserInteracted] = useState(false);
-    const [isThemeSelected, setIsThemeSelected] = useState(false);
+    const [currentFocusBackgroundIndex, setCurrentFocusBackgroundIndex] = useState(0);
+    const [volume, setVolume] = useState(0.3); // Default volume at 30%
 
     // Handle user interaction
     useEffect(() => {
@@ -35,10 +51,60 @@ export const BackgroundManager: React.FC<BackgroundManagerProps> = ({
         };
     }, []);
 
-    // Update background and music when break state changes
+    // Update volume when it changes
     useEffect(() => {
-        const backgroundPath = isBreak ? currentTheme.backgrounds.break : currentTheme.backgrounds.focus;
-        const musicPath = isBreak ? currentTheme.music.break : currentTheme.music.focus;
+        console.log('Volume state changed:', volume);
+        if (audioRef.current) {
+            console.log('Setting audio volume to:', volume);
+            audioRef.current.volume = volume;
+        } else {
+            console.log('audioRef.current is not available when volume state changes.');
+        }
+    }, [volume, audioRef.current]);
+
+    // Handle background rotation every 10 minutes
+    useEffect(() => {
+        if (!isBreak && currentTheme.id === 'harry-potter' && isPlaying) {
+            const interval = setInterval(() => {
+                setCurrentFocusBackgroundIndex((prevIndex) =>
+                    (prevIndex + 1) % HARRY_POTTER_BACKGROUNDS.focus.length
+                );
+            }, VIDEO_ROTATION_INTERVAL);
+
+            return () => clearInterval(interval);
+        }
+    }, [isBreak, currentTheme.id, isPlaying]);
+
+    // Handle audio reset when timer is reset
+    useEffect(() => {
+        if (isReset && audioRef.current && hasUserInteracted && currentTheme.id === 'harry-potter') {
+            const musicPath = isBreak ? BREAK_AUDIO : FOCUS_AUDIO;
+            audioRef.current.src = musicPath;
+            audioRef.current.load();
+            if (isPlaying) {
+                audioRef.current.play().catch(error => {
+                    console.log('Audio playback failed:', error);
+                });
+            }
+        }
+    }, [isReset, isBreak, isPlaying, hasUserInteracted, currentTheme.id]);
+
+    // Update background when break state changes
+    useEffect(() => {
+        let backgroundPath;
+
+        if (currentTheme.id === 'harry-potter') {
+            if (!isPlaying) {
+                // Show Hogwarts image when paused
+                backgroundPath = HARRY_POTTER_BACKGROUNDS.break;
+            } else {
+                backgroundPath = isBreak
+                    ? HARRY_POTTER_BACKGROUNDS.break
+                    : HARRY_POTTER_BACKGROUNDS.focus[currentFocusBackgroundIndex];
+            }
+        } else {
+            backgroundPath = isBreak ? currentTheme.backgrounds.break : currentTheme.backgrounds.focus;
+        }
 
         // Clear previous background/video before setting the new one
         if (videoRef.current) {
@@ -49,7 +115,7 @@ export const BackgroundManager: React.FC<BackgroundManagerProps> = ({
 
         if (videoRef.current) {
             // Check if the background is a video or image
-            const isVideo = backgroundPath.endsWith('.mp4');
+            const isVideo = backgroundPath.endsWith('.mov') || backgroundPath.endsWith('.mp4');
 
             if (isVideo) {
                 videoRef.current.style.display = 'block';
@@ -69,17 +135,7 @@ export const BackgroundManager: React.FC<BackgroundManagerProps> = ({
                 document.body.style.backgroundRepeat = 'no-repeat';
             }
         }
-
-        if (audioRef.current && isThemeSelected) {
-            audioRef.current.src = musicPath;
-            if (isPlaying && hasUserInteracted) {
-                audioRef.current.load(); // Load the new audio source
-                audioRef.current.play().catch(error => {
-                    console.log('Audio playback failed:', error);
-                });
-            }
-        }
-    }, [isBreak, currentTheme, isPlaying, hasUserInteracted, isThemeSelected]);
+    }, [isBreak, currentTheme, isPlaying, hasUserInteracted, currentFocusBackgroundIndex]);
 
     // Handle play/pause
     useEffect(() => {
@@ -94,7 +150,7 @@ export const BackgroundManager: React.FC<BackgroundManagerProps> = ({
                 }
             }
 
-            if (audioRef.current && isThemeSelected) {
+            if (audioRef.current && currentTheme.id === 'harry-potter') {
                 if (isPlaying) {
                     audioRef.current.play().catch(error => {
                         console.log('Audio playback failed:', error);
@@ -102,26 +158,27 @@ export const BackgroundManager: React.FC<BackgroundManagerProps> = ({
                 } else {
                     audioRef.current.pause();
                 }
+            } else if (audioRef.current) {
+                // If not Harry Potter theme, ensure audio is paused
+                audioRef.current.pause();
             }
         }
-    }, [isPlaying, hasUserInteracted, isThemeSelected]);
+    }, [isPlaying, hasUserInteracted, currentTheme.id]);
 
-    // Listen for theme selection
-    useEffect(() => {
-        if (currentTheme.id !== 'default') {
-            setIsThemeSelected(true);
-        } else {
-            setIsThemeSelected(false);
-        }
-    }, [currentTheme]);
+    const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newVolume = parseFloat(e.target.value);
+        console.log('Slider value changed to:', newVolume);
+        setVolume(newVolume);
+        // The useEffect hook will handle setting the volume on the audio element
+    };
 
     return (
-        <div className="fixed inset-0 -z-10 overflow-hidden">
+        <div className={`fixed inset-0 -z-10 overflow-hidden ${currentTheme.id !== 'harry-potter' ? 'bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900' : ''}`}>
             {/* Background Video/Image */}
             <video
                 ref={videoRef}
                 className="absolute inset-0 w-full h-full object-cover"
-                loop
+                loop={true}
                 muted
                 playsInline
                 preload="auto"
@@ -133,6 +190,28 @@ export const BackgroundManager: React.FC<BackgroundManagerProps> = ({
                 loop
                 preload="auto"
             />
+
+            {/* Volume Slider */}
+            <div className="fixed top-4 right-4 bg-black/70 p-4 rounded-lg backdrop-blur-sm z-50">
+                <div className="flex items-center space-x-2">
+                    <span className="text-white text-sm">🔊</span>
+                    <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.01"
+                        value={volume}
+                        onChange={handleVolumeChange}
+                        className="w-32 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                        style={{
+                            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${volume * 100}%, #4b5563 ${volume * 100}%, #4b5563 100%)`,
+                            WebkitAppearance: 'none',
+                            MozAppearance: 'none'
+                        }}
+                    />
+                    <span className="text-white text-sm min-w-[3rem]">{Math.round(volume * 100)}%</span>
+                </div>
+            </div>
         </div>
     );
-}; 
+};
