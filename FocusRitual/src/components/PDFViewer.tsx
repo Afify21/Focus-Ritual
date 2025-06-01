@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { PDFDocument, rgb } from 'pdf-lib';
 import PDFAnnotations from './PDFAnnotations';
+import { XMarkIcon } from '@heroicons/react/24/solid';
+import 'pdfjs-dist/web/pdf_viewer.css';
 
 // Set up PDF.js worker
 // We assume the worker file is copied to the public directory at /workers/
@@ -33,11 +35,17 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
     const [annotations, setAnnotations] = useState<Annotation[]>([]);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const pageContainerRef = useRef<HTMLDivElement>(null);
+    const textLayerRef = useRef<HTMLDivElement>(null);
+    const [isScrolling, setIsScrolling] = useState(false);
+    const scrollTimeoutRef = useRef<NodeJS.Timeout>();
+    const [scrollPosition, setScrollPosition] = useState(0);
+    const [totalHeight, setTotalHeight] = useState(0);
+    const [pageHeight, setPageHeight] = useState(0);
 
     const renderPage = useCallback(async (pageNum: number) => {
         console.log('Attempting to render page:', pageNum);
-        if (!pdfDoc || !canvasRef.current || !pageContainerRef.current) {
-            console.log('Rendering skipped: pdfDoc, canvasRef, or pageContainerRef not available');
+        if (!pdfDoc || !canvasRef.current || !pageContainerRef.current || !textLayerRef.current) {
+            console.log('Rendering skipped: pdfDoc, canvasRef, pageContainerRef, or textLayerRef not available');
             return;
         }
 
@@ -56,7 +64,10 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
             canvas.height = viewport.height;
             canvas.width = viewport.width;
 
-            // Set the container dimensions to match the canvas for correct annotation positioning
+            // Update page height for scroll calculations
+            setPageHeight(viewport.height);
+
+            // Set the container dimensions to match the canvas for correct annotation and text layer positioning
             pageContainerRef.current.style.width = `${viewport.width}px`;
             pageContainerRef.current.style.height = `${viewport.height}px`;
 
@@ -70,11 +81,55 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
             await page.render(renderContext).promise;
             console.log('Page rendered successfully:', pageNum);
 
+            // Update total height for scroll calculations
+            setTotalHeight(viewport.height * totalPages);
+
+            // Render text layer
+            const textContentSource = await page.getTextContent();
+            const textLayer = textLayerRef.current;
+
+            // Clear previous text layer
+            textLayer.innerHTML = '';
+            textLayer.style.setProperty('--scale-factor', scale.toString());
+
+            // Create text layer div
+            const textLayerDiv = document.createElement('div');
+            textLayerDiv.className = 'textLayer';
+            textLayerDiv.style.width = `${viewport.width}px`;
+            textLayerDiv.style.height = `${viewport.height}px`;
+            textLayer.appendChild(textLayerDiv);
+
+            // Render text content
+            const textContent = await page.getTextContent();
+            const textItems = textContent.items;
+
+            // Create text spans for each text item
+            textItems.forEach((item: any) => {
+                const tx = pdfjsLib.Util.transform(
+                    pdfjsLib.Util.transform(viewport.transform, item.transform),
+                    [1, 0, 0, -1, 0, 0]
+                );
+
+                const style = textContent.styles[item.fontName];
+                const fontSize = Math.sqrt((tx[0] * tx[0]) + (tx[1] * tx[1]));
+
+                const textSpan = document.createElement('span');
+                textSpan.textContent = item.str;
+                textSpan.style.left = `${tx[4]}px`;
+                textSpan.style.top = `${tx[5]}px`;
+                textSpan.style.fontSize = `${fontSize}px`;
+                textSpan.style.fontFamily = style.fontFamily;
+                textSpan.style.transform = `scaleX(${tx[0] / fontSize})`;
+                textSpan.style.transformOrigin = 'left';
+
+                textLayerDiv.appendChild(textSpan);
+            });
+
         } catch (error) {
             console.error('Error rendering page:', pageNum, error);
         }
 
-    }, [pdfDoc, scale]); // Depend on pdfDoc and scale
+    }, [pdfDoc, scale, totalPages]);
 
     useEffect(() => {
         console.log('pdfDoc or currentPage or scale changed. Running useEffect.');
@@ -149,6 +204,11 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
         setScale(prev => Math.max(prev - 0.2, 0.5));
     };
 
+    const handleZoomChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const newScale = parseFloat(event.target.value);
+        setScale(newScale);
+    };
+
     const handleAnnotationAdd = (annotation: Annotation) => {
         setAnnotations(prev => [...prev, annotation]);
     };
@@ -218,30 +278,119 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
         }
     };
 
+    const handleClosePDF = () => {
+        setPdfFile(null);
+        setPdfDoc(null);
+        setPdfLibDoc(null);
+        setTotalPages(0);
+        setCurrentPage(1);
+        setAnnotations([]);
+        if (onClose) {
+            onClose();
+        }
+    };
+
+    const handlePageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setCurrentPage(Number(event.target.value));
+    };
+
+    const handleWheel = useCallback((event: WheelEvent) => {
+        event.preventDefault();
+
+        if (!pageContainerRef.current || !totalHeight) return;
+
+        const delta = event.deltaY; // Removed the negative sign to reverse direction
+        const container = pageContainerRef.current;
+        const newPosition = container.scrollTop + delta;
+
+        // Calculate which page we're on based on scroll position
+        const currentPageNum = Math.floor(newPosition / pageHeight) + 1;
+        if (currentPageNum !== currentPage) {
+            setCurrentPage(currentPageNum);
+        }
+
+        // Update scroll position
+        container.scrollTop = newPosition;
+    }, [currentPage, pageHeight, totalHeight]);
+
+    const handleKeyDown = useCallback((event: KeyboardEvent) => {
+        if (isScrolling) return;
+
+        switch (event.key) {
+            case 'ArrowDown':
+            case 'PageDown':
+                event.preventDefault();
+                if (currentPage < totalPages) {
+                    setIsScrolling(true);
+                    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+                    setTimeout(() => setIsScrolling(false), 300);
+                }
+                break;
+            case 'ArrowUp':
+            case 'PageUp':
+                event.preventDefault();
+                if (currentPage > 1) {
+                    setIsScrolling(true);
+                    setCurrentPage(prev => Math.max(prev - 1, 1));
+                    setTimeout(() => setIsScrolling(false), 300);
+                }
+                break;
+        }
+    }, [currentPage, totalPages, isScrolling]);
+
+    useEffect(() => {
+        const container = pageContainerRef.current;
+        if (container) {
+            container.addEventListener('wheel', handleWheel, { passive: false });
+            window.addEventListener('keydown', handleKeyDown);
+            return () => {
+                container.removeEventListener('wheel', handleWheel);
+                window.removeEventListener('keydown', handleKeyDown);
+                if (scrollTimeoutRef.current) {
+                    clearTimeout(scrollTimeoutRef.current);
+                }
+            };
+        }
+    }, [handleWheel, handleKeyDown]);
+
     return (
         <div className="flex flex-col h-full">
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">PDF Viewer</h2>
-                <div className="flex space-x-2">
-                    <button
-                        onClick={zoomOut}
-                        className="px-3 py-1 rounded bg-slate-600 hover:bg-slate-700"
-                    >
-                        -
-                    </button>
-                    <button
-                        onClick={zoomIn}
-                        className="px-3 py-1 rounded bg-slate-600 hover:bg-slate-700"
-                    >
-                        +
-                    </button>
-                    {pdfFile && (
+                <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
                         <button
-                            onClick={saveAnnotatedPDF}
-                            className="px-3 py-1 rounded bg-green-600 hover:bg-green-700"
+                            onClick={zoomOut}
+                            className="px-3 py-1 rounded bg-slate-600 hover:bg-slate-700"
                         >
-                            Save PDF
+                            -
                         </button>
+                        <span className="text-sm w-12 text-center">
+                            {Math.round(scale * 100)}%
+                        </span>
+                        <button
+                            onClick={zoomIn}
+                            className="px-3 py-1 rounded bg-slate-600 hover:bg-slate-700"
+                        >
+                            +
+                        </button>
+                    </div>
+                    {pdfFile && (
+                        <>
+                            <button
+                                onClick={saveAnnotatedPDF}
+                                className="px-3 py-1 rounded bg-green-600 hover:bg-green-700"
+                            >
+                                Save PDF
+                            </button>
+                            <button
+                                onClick={handleClosePDF}
+                                className="p-1 rounded-full bg-red-600 hover:bg-red-700 text-white"
+                                aria-label="Close PDF"
+                            >
+                                <XMarkIcon className="h-5 w-5" />
+                            </button>
+                        </>
                     )}
                 </div>
             </div>
@@ -262,46 +411,49 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                     </label>
                 </div>
             ) : (
-                <div className="flex-1 flex flex-col">
-                    <div className="flex-1 overflow-auto bg-gray-200 rounded-lg relative flex items-start justify-center p-4">
+                <div className="flex-1 flex">
+                    <div
+                        ref={pageContainerRef}
+                        className="flex-1 overflow-auto bg-gray-200 rounded-lg relative flex items-start justify-center p-4 transition-all duration-300 ease-in-out cursor-default"
+                        style={{
+                            scrollBehavior: 'smooth',
+                            WebkitOverflowScrolling: 'touch',
+                            height: '100%'
+                        }}
+                    >
                         <div
-                            ref={pageContainerRef}
-                            className="relative shadow-lg"
-                        // The width and height will be set dynamically in renderPage
+                            className="relative shadow-lg transition-transform duration-300 ease-in-out"
+                            style={{
+                                transform: `scale(${scale})`,
+                                transformOrigin: 'top center',
+                                height: totalHeight
+                            }}
                         >
-                            {/* Canvas element for PDF rendering */}
-                            <canvas
-                                ref={canvasRef}
-                                className="block"
-                            />
-                            {/* Annotation layer */}
-                            <PDFAnnotations
-                                pdfDoc={pdfLibDoc}
-                                currentPage={currentPage}
-                                scale={scale}
-                                onAnnotationAdd={handleAnnotationAdd}
-                                onAnnotationRemove={handleAnnotationRemove}
-                            />
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                                <div key={pageNum} style={{ height: pageHeight }}>
+                                    <canvas
+                                        ref={pageNum === currentPage ? canvasRef : undefined}
+                                        className="block"
+                                    />
+                                    <div
+                                        ref={pageNum === currentPage ? textLayerRef : undefined}
+                                        className="textLayer absolute top-0 left-0 right-0 bottom-0 overflow-hidden pointer-events-auto"
+                                    />
+                                    <PDFAnnotations
+                                        pdfDoc={pdfLibDoc}
+                                        currentPage={pageNum}
+                                        scale={scale}
+                                        onAnnotationAdd={handleAnnotationAdd}
+                                        onAnnotationRemove={handleAnnotationRemove}
+                                    />
+                                </div>
+                            ))}
                         </div>
                     </div>
-                    <div className="flex justify-between items-center mt-4">
-                        <button
-                            onClick={prevPage}
-                            disabled={currentPage === 1}
-                            className="px-4 py-2 rounded bg-slate-600 hover:bg-slate-700 disabled:opacity-50"
-                        >
-                            Previous
-                        </button>
-                        <span className="text-sm">
-                            Page {currentPage} of {totalPages}
+                    <div className="w-8 flex flex-col items-center justify-center bg-gray-100 rounded-r-lg">
+                        <span className="text-sm font-medium text-gray-700">
+                            {currentPage}/{totalPages}
                         </span>
-                        <button
-                            onClick={nextPage}
-                            disabled={currentPage === totalPages}
-                            className="px-4 py-2 rounded bg-slate-600 hover:bg-slate-700 disabled:opacity-50"
-                        >
-                            Next
-                        </button>
                     </div>
                 </div>
             )}

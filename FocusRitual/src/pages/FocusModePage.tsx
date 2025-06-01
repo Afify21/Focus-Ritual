@@ -31,10 +31,12 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
 
                 <div className="grid grid-cols-1 md:grid-cols-[3fr_1fr] gap-6 h-[calc(100vh-90px)]">
                     {/* Left column for PDF viewer and YouTube player */}
-                    <div className="space-y-6">
-                        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 h-[calc(70%-12px)]">
+                    <div className="space-y-6 h-full">
+                        {/* PDF Viewer Container with fixed height and overflow hidden */}
+                        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 h-[calc(70%-12px)] overflow-hidden">
                             <PDFViewer />
                         </div>
+                        {/* YouTube Player Container with fixed height */}
                         <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 h-[calc(30%-12px)]">
                             <h2 className="text-xl font-semibold mb-4">YouTube Player</h2>
                             <div className="h-[calc(100%-3rem)]">
