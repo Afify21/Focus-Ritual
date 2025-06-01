@@ -41,6 +41,64 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
     const [scrollPosition, setScrollPosition] = useState(0);
     const [totalHeight, setTotalHeight] = useState(0);
     const [pageHeight, setPageHeight] = useState(0);
+    const [isHighlightMode, setIsHighlightMode] = useState(false);
+    const [selectedColor, setSelectedColor] = useState('#ffeb3b');
+
+    // State and handlers for text selection/highlighting
+    const [isSelecting, setIsSelecting] = useState(false);
+    const [selection, setSelection] = useState<{ startX: number; startY: number; endX: number; endY: number } | null>(null);
+
+    const handleAnnotationAdd = useCallback((annotation: Annotation) => {
+        setAnnotations(prev => [...prev, annotation]);
+    }, []);
+
+    const handleAnnotationRemove = useCallback((id: string) => {
+        setAnnotations(prev => prev.filter(a => a.id !== id));
+    }, []);
+
+    const handleMouseDown = useCallback((e: MouseEvent) => {
+        if (!isHighlightMode || !textLayerRef.current) return;
+
+        const rect = textLayerRef.current.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / scale;
+        const y = (e.clientY - rect.top) / scale;
+        setIsSelecting(true);
+        setSelection({ startX: x, startY: y, endX: x, endY: y });
+    }, [isHighlightMode, scale]);
+
+    const handleMouseMove = useCallback((e: MouseEvent) => {
+        if (!isSelecting || !textLayerRef.current || !selection) return;
+        const rect = textLayerRef.current.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / scale;
+        const y = (e.clientY - rect.top) / scale;
+        setSelection({ ...selection, endX: x, endY: y });
+    }, [isSelecting, selection, scale]);
+
+    const handleMouseUp = useCallback(() => {
+        if (!isSelecting || !selection) return;
+        setIsSelecting(false);
+
+        const width = Math.abs(selection.endX - selection.startX);
+        const height = Math.abs(selection.endY - selection.startY);
+        const x = Math.min(selection.startX, selection.endX);
+        const y = Math.min(selection.startY, selection.endY);
+
+        // Only add annotation if a significant area was selected
+        if (width > 5 && height > 5) {
+            const newAnnotation: Annotation = {
+                id: Date.now().toString(),
+                type: 'highlight',
+                page: currentPage,
+                x,
+                y,
+                width,
+                height,
+                color: selectedColor,
+            };
+            handleAnnotationAdd(newAnnotation);
+        }
+        setSelection(null);
+    }, [isSelecting, selection, currentPage, selectedColor, handleAnnotationAdd]);
 
     const renderPage = useCallback(async (pageNum: number) => {
         console.log('Attempting to render page:', pageNum);
@@ -97,6 +155,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
             textLayerDiv.className = 'textLayer';
             textLayerDiv.style.width = `${viewport.width}px`;
             textLayerDiv.style.height = `${viewport.height}px`;
+
+            // Append text layer div to the ref container
             textLayer.appendChild(textLayerDiv);
 
             // Render text content
@@ -140,6 +200,24 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
             console.log('pdfDoc is not available.');
         }
     }, [pdfDoc, currentPage, scale, renderPage]); // Add renderPage as a dependency
+
+    useEffect(() => {
+        const textLayer = textLayerRef.current;
+        if (textLayer) {
+            textLayer.addEventListener('mousedown', handleMouseDown as EventListener);
+            textLayer.addEventListener('mousemove', handleMouseMove as EventListener);
+            textLayer.addEventListener('mouseup', handleMouseUp as EventListener);
+            // Add event listeners to window as well, in case mouseup happens outside the text layer
+            window.addEventListener('mouseup', handleMouseUp as EventListener);
+
+            return () => {
+                textLayer.removeEventListener('mousedown', handleMouseDown as EventListener);
+                textLayer.removeEventListener('mousemove', handleMouseMove as EventListener);
+                textLayer.removeEventListener('mouseup', handleMouseUp as EventListener);
+                window.removeEventListener('mouseup', handleMouseUp as EventListener);
+            };
+        }
+    }, [handleMouseDown, handleMouseMove, handleMouseUp]);
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -207,14 +285,6 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
     const handleZoomChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newScale = parseFloat(event.target.value);
         setScale(newScale);
-    };
-
-    const handleAnnotationAdd = (annotation: Annotation) => {
-        setAnnotations(prev => [...prev, annotation]);
-    };
-
-    const handleAnnotationRemove = (id: string) => {
-        setAnnotations(prev => prev.filter(a => a.id !== id));
     };
 
     const saveAnnotatedPDF = async () => {
@@ -374,6 +444,24 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                         >
                             +
                         </button>
+                        {/* Highlight mode toggle and color picker */}
+                        <button
+                            onClick={() => setIsHighlightMode(!isHighlightMode)}
+                            className={`px-2 py-1 text-xs rounded ${isHighlightMode
+                                ? 'bg-blue-600 hover:bg-blue-700'
+                                : 'bg-gray-600 hover:bg-gray-700'
+                                } text-white`}
+                        >
+                            H
+                        </button>
+                        {isHighlightMode && (
+                            <input
+                                type="color"
+                                value={selectedColor}
+                                onChange={(e) => setSelectedColor(e.target.value)}
+                                className="w-6 h-6 rounded cursor-pointer"
+                            />
+                        )}
                     </div>
                     {pdfFile && (
                         <>
@@ -429,6 +517,21 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                                 height: totalHeight
                             }}
                         >
+                            {/* Selection rectangle */}
+                            {isSelecting && selection && (
+                                <div
+                                    className="absolute border-2 border-blue-500 bg-blue-500/20 pointer-events-none"
+                                    style={{
+                                        left: Math.min(selection.startX, selection.endX) * scale,
+                                        top: Math.min(selection.startY, selection.endY) * scale,
+                                        width: Math.abs(selection.endX - selection.startX) * scale,
+                                        height: Math.abs(selection.startY - selection.endY) * scale,
+                                        // Position relative to the start of the PDF content
+                                        transform: `translateY(${scrollPosition}px)`,
+                                    }}
+                                />
+                            )}
+
                             {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
                                 <div key={pageNum} style={{ height: pageHeight }}>
                                     <canvas
@@ -437,15 +540,22 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                                     />
                                     <div
                                         ref={pageNum === currentPage ? textLayerRef : undefined}
-                                        className="textLayer absolute top-0 left-0 right-0 bottom-0 overflow-hidden pointer-events-auto"
+                                        className="textLayer absolute top-0 left-0 right-0 bottom-0 overflow-hidden"
                                     />
+                                    {/* PDFAnnotations component now only renders existing annotations */}
                                     <PDFAnnotations
                                         pdfDoc={pdfLibDoc}
                                         currentPage={pageNum}
                                         scale={scale}
-                                        onAnnotationAdd={handleAnnotationAdd}
+                                        annotations={annotations.filter(a => a.page === pageNum)}
                                         onAnnotationRemove={handleAnnotationRemove}
                                     />
+                                    {pageNum < totalPages && (
+                                        <div
+                                            className="w-full h-px bg-black opacity-30"
+                                            style={{ marginTop: '1px' }}
+                                        />
+                                    )}
                                 </div>
                             ))}
                         </div>
