@@ -1,0 +1,59 @@
+import React from 'react';
+import YouTubePlayer from '../components/YouTubePlayer';
+import Timer from '../components/Timer';
+import PDFViewer from '../components/PDFViewer';
+import { XMarkIcon } from '@heroicons/react/24/solid';
+
+interface FocusModePageProps {
+    onExitFocusMode: () => void;
+    duration: number;
+    onStateChange: (newState: any) => void;
+}
+
+const FocusModePage: React.FC<FocusModePageProps> = ({
+    onExitFocusMode,
+    duration,
+    onStateChange,
+}) => {
+    return (
+        <div className="min-h-screen text-white p-4">
+            <div className="container mx-auto h-full">
+                <div className="flex justify-between items-center mb-4">
+                    <h1 className="text-2xl font-bold">Focus Mode</h1>
+                    <button
+                        onClick={onExitFocusMode}
+                        className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors"
+                    >
+                        <XMarkIcon className="h-5 w-5" />
+                        <span>Exit Focus Mode</span>
+                    </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-[3fr_1fr] gap-6 h-[calc(100vh-90px)]">
+                    {/* Left column for PDF viewer and YouTube player */}
+                    <div className="space-y-6">
+                        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 h-[calc(70%-12px)]">
+                            <PDFViewer />
+                        </div>
+                        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 h-[calc(30%-12px)]">
+                            <h2 className="text-xl font-semibold mb-4">YouTube Player</h2>
+                            <div className="h-[calc(100%-3rem)]">
+                                <YouTubePlayer onClose={() => { }} isFocusMode={true} />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right column for minimized Timer */}
+                    <div className="space-y-6">
+                        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4">
+                            <h2 className="text-xl font-semibold mb-4">Timer</h2>
+                            <Timer duration={duration} onStateChange={onStateChange} isMinimized={true} />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default FocusModePage; 

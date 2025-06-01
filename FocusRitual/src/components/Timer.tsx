@@ -13,9 +13,10 @@ interface TimerProps {
         hasStarted: boolean;
         isReset: boolean;
     }) => void;
+    isMinimized?: boolean;
 }
 
-const Timer: React.FC<TimerProps> = ({ duration, onStateChange }) => {
+const Timer: React.FC<TimerProps> = ({ duration, onStateChange, isMinimized = false }) => {
     const [timeLeft, setTimeLeft] = useState(duration);
     const [isRunning, setIsRunning] = useState(false);
     const [hasStarted, setHasStarted] = useState(false);
@@ -119,7 +120,40 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange }) => {
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
 
-    const progress = ((duration - timeLeft) / duration) * 100;
+    const progress = duration > 0 ? ((duration - timeLeft) / duration) * 100 : 0;
+
+    if (isMinimized) {
+        return (
+            <div className="bg-slate-800/70 backdrop-blur-md rounded-xl p-2 flex items-center justify-between text-xs">
+                <div className="flex items-center space-x-2">
+                    <span className="text-lg font-bold text-white">{formatTime(timeLeft)}</span>
+                    <div className="text-slate-300">
+                        {isBreak ? 'Break' : 'Focus'}
+                    </div>
+                </div>
+                <div className="flex space-x-0.5">
+                    <button
+                        onClick={toggleTimer}
+                        className="p-1 rounded-full bg-slate-600 hover:bg-slate-700 transition-colors"
+                    >
+                        {!isRunning && !isPaused ? (
+                            <PlayIcon className="h-3 w-3 text-white" />
+                        ) : isPaused ? (
+                            <PlayIcon className="h-3 w-3 text-white" />
+                        ) : (
+                            <PauseIcon className="h-3 w-3 text-white" />
+                        )}
+                    </button>
+                    <button
+                        onClick={resetTimer}
+                        className="p-1 rounded-full bg-slate-600 hover:bg-slate-700 transition-colors"
+                    >
+                        <ArrowPathIcon className="h-3 w-3 text-white" />
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 shadow-xl border border-white/10">

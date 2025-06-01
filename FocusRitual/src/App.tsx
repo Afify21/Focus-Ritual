@@ -8,7 +8,8 @@ import ChatAssistant from './components/ChatAssistant';
 import QuoteGenerator from './components/QuoteGenerator';
 import { PlayCircleIcon, ArrowsPointingOutIcon, XMarkIcon, MusicalNoteIcon } from '@heroicons/react/24/solid';
 import Callback from './pages/Callback';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import FocusModePage from './pages/FocusModePage';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import { useTheme } from './context/ThemeContext';
 import { ThemeSelector } from './components/ThemeSelector';
 import { BackgroundManager } from './components/BackgroundManager';
@@ -30,6 +31,7 @@ const App: React.FC = () => {
     const [showThemeSelector, setShowThemeSelector] = useState(false);
 
     const { currentTheme } = useTheme();
+    const navigate = useNavigate();
 
     const handleTimeSelect = (minutes: number) => {
         setSelectedTime(minutes);
@@ -47,7 +49,9 @@ const App: React.FC = () => {
         const newFocusMode = !isFocusMode;
         setIsFocusMode(newFocusMode);
         if (newFocusMode) {
-            setShowYouTube(true);
+            navigate('/focus');
+        } else {
+            navigate('/');
         }
     };
 
@@ -64,9 +68,16 @@ const App: React.FC = () => {
     }, []);
 
     return (
-        <Router>
+        <div className="min-h-screen text-white p-4">
+            <BackgroundManager
+                isFocusMode={isFocusMode}
+                isPlaying={timerState.isRunning}
+                isBreak={timerState.isBreak}
+                isReset={timerState.isReset}
+            />
             <Routes>
                 <Route path="/callback" element={<Callback />} />
+                <Route path="/focus" element={<FocusModePage onExitFocusMode={toggleFocusMode} duration={selectedTime * 60} onStateChange={handleTimerStateChange} />} />
                 <Route path="/" element={
                     <div className="min-h-screen text-white p-4">
                         <BackgroundManager
@@ -212,7 +223,7 @@ const App: React.FC = () => {
                     </div>
                 } />
             </Routes>
-        </Router>
+        </div>
     );
 };
 

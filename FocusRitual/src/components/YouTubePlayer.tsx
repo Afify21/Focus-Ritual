@@ -26,7 +26,7 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ onClose, isFocusMode }) =
     };
 
     return (
-        <div className={`fixed ${isFocusMode ? 'right-0 top-0 h-full w-1/2' : 'bottom-4 left-4 w-80'} z-50 transition-all duration-300`}>
+        <div className={`${isFocusMode ? 'h-full w-full' : 'fixed bottom-4 left-4 w-80'} z-50 transition-all duration-300`}>
             <div className={`relative ${isFocusMode ? 'h-full' : ''} bg-slate-800 rounded-xl overflow-hidden shadow-lg`}>
                 <div className="absolute top-4 right-4 z-10 flex space-x-2">
                     {!isFocusMode && (
@@ -59,12 +59,12 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ onClose, isFocusMode }) =
                             frameBorder="0"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowFullScreen
-                            className="rounded-xl"
+                            className="rounded-xl w-full h-full"
                         />
                     </div>
                 ) : (
-                    <div className="p-4">
-                        <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="p-4 h-full flex items-center justify-center">
+                        <form onSubmit={handleSubmit} className="space-y-4 w-full">
                             <input
                                 type="text"
                                 value={url}
