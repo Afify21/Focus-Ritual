@@ -133,9 +133,9 @@ const ChatAssistant: React.FC = () => {
     let chatWindowDynamicClasses = '';
     if (isMinimized) {
         chatWindowDynamicClasses = `
-            h-16 w-80 sm:w-96 
-            bottom-0 right-0 sm:bottom-5 sm:right-5 
-            rounded-t-xl sm:rounded-xl
+            h-12 w-12
+            bottom-4 right-4
+            rounded-full
         `;
     } else if (isFullScreen) {
         chatWindowDynamicClasses = `
@@ -145,10 +145,10 @@ const ChatAssistant: React.FC = () => {
         `;
     } else { // Default floating window state
         chatWindowDynamicClasses = `
-            w-full sm:w-[450px] md:w-[500px] 
-            h-[calc(100vh-40px)] sm:h-[650px] sm:max-h-[85vh] 
-            bottom-0 right-0 sm:bottom-5 sm:right-5 
-            rounded-t-xl sm:rounded-xl
+            w-[300px] sm:w-[350px]
+            h-[400px] sm:h-[450px]
+            bottom-4 right-4
+            rounded-xl
         `;
     }
     const chatWindowClasses = `${chatWindowBaseClasses} ${chatWindowDynamicClasses}`;
@@ -157,9 +157,8 @@ const ChatAssistant: React.FC = () => {
         chat-header 
         ${colors.chatHeaderBg} 
         ${colors.chatHeaderText} 
-        p-4 sm:p-5 rounded-t-xl 
-        ${isFullScreen ? 'sm:rounded-t-none' : 'sm:rounded-t-lg'
-        }
+        p-2 sm:p-3 rounded-t-xl 
+        ${isFullScreen ? 'sm:rounded-t-none' : 'sm:rounded-t-lg'}
         flex justify-between items-center 
         border-b ${colors.chatInputBorder} 
         cursor-move
@@ -169,24 +168,24 @@ const ChatAssistant: React.FC = () => {
         ${colors.chatHeaderIcon} 
         ${colors.chatHeaderIconHoverBg} 
         hover:text-white 
-        rounded-full p-1.5 transition-colors
+        rounded-full p-1 transition-colors
     `;
 
     const messageListClasses = `
-        flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 
+        flex-1 overflow-y-auto p-2 sm:p-3 space-y-2 
         ${colors.chatMessageListBg}
         ${colors.scrollbarThumb} ${colors.scrollbarTrack} 
         scrollbar-thin
     `;
 
     const inputAreaClasses = `
-        p-3 sm:p-4 border-t 
+        p-2 border-t 
         ${colors.chatInputBorder} 
         ${colors.chatInputAreaBg}
     `;
 
     const promptButtonClasses = (p: any) => `
-        px-3 py-1 text-xs sm:text-sm 
+        px-2 py-0.5 text-xs
         ${colors.chatPromptButtonBg} 
         ${colors.chatPromptButtonText} 
         ${colors.chatPromptButtonHoverBg} 
@@ -194,7 +193,7 @@ const ChatAssistant: React.FC = () => {
     `;
 
     const textareaClasses = `
-        flex-1 p-2.5 sm:p-3 border 
+        flex-1 p-2 border 
         ${colors.chatInputBorder} 
         rounded-lg resize-none 
         ${colors.chatInputBg} 
@@ -207,7 +206,7 @@ const ChatAssistant: React.FC = () => {
         ${colors.chatSendButtonBg} 
         ${colors.chatSendButtonText} 
         ${colors.chatSendButtonHoverBg} 
-        rounded-lg p-2.5 sm:p-3 transition-colors 
+        rounded-lg p-2 transition-colors 
         disabled:opacity-60 disabled:cursor-not-allowed 
         shadow-sm flex items-center justify-center
     `;
@@ -383,10 +382,10 @@ const ChatAssistant: React.FC = () => {
             {!isOpen && (
                 <button
                     onClick={() => setIsOpen(true)}
-                    className={`fixed bottom-5 right-5 ${colors.chatSendButtonBg || 'bg-blue-600'} ${colors.chatSendButtonText || 'text-white'} ${colors.chatSendButtonHoverBg || 'hover:bg-blue-700'} rounded-full p-4 shadow-xl transition-transform duration-200 hover:scale-110 z-50 flex items-center justify-center`}
+                    className={`fixed bottom-4 right-4 ${colors.chatSendButtonBg || 'bg-blue-600'} ${colors.chatSendButtonText || 'text-white'} ${colors.chatSendButtonHoverBg || 'hover:bg-blue-700'} rounded-full p-3 shadow-xl transition-transform duration-200 hover:scale-110 z-50 flex items-center justify-center`}
                     aria-label="Open Study Assistant"
                 >
-                    <ChatBubbleLeftEllipsisIcon className="w-8 h-8" />
+                    <ChatBubbleLeftEllipsisIcon className="w-6 h-6" />
                 </button>
             )}
 

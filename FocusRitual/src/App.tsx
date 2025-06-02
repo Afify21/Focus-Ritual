@@ -52,6 +52,12 @@ const App: React.FC = () => {
             navigate('/focus');
         } else {
             navigate('/');
+            setTimerState(prev => ({
+                ...prev,
+                isRunning: false,
+                isPaused: false,
+                hasStarted: false
+            }));
         }
     };
 
@@ -77,7 +83,22 @@ const App: React.FC = () => {
             />
             <Routes>
                 <Route path="/callback" element={<Callback />} />
-                <Route path="/focus" element={<FocusModePage onExitFocusMode={toggleFocusMode} duration={selectedTime * 60} onStateChange={handleTimerStateChange} />} />
+                <Route path="/focus" element={
+                    <FocusModePage
+                        onExitFocusMode={() => {
+                            setIsFocusMode(false);
+                            navigate('/');
+                            setTimerState(prev => ({
+                                ...prev,
+                                isRunning: false,
+                                isPaused: false,
+                                hasStarted: false
+                            }));
+                        }}
+                        duration={selectedTime * 60}
+                        onStateChange={handleTimerStateChange}
+                    />
+                } />
                 <Route path="/" element={
                     <div className="min-h-screen text-white p-4">
                         <BackgroundManager
@@ -89,12 +110,21 @@ const App: React.FC = () => {
                         <div className={`max-w-4xl mx-auto space-y-6 transition-all duration-300 ${isFocusMode ? 'mr-[50%]' : ''}`}>
                             <div className="flex justify-between items-center mb-8">
                                 <h1 className="text-4xl font-bold">FocusRitual</h1>
-                                <button
-                                    onClick={() => setShowThemeSelector(!showThemeSelector)}
-                                    className="px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors"
-                                >
-                                    {showThemeSelector ? 'Hide Themes' : 'Show Themes'}
-                                </button>
+                                <div className="flex space-x-2">
+                                    <button
+                                        onClick={toggleFocusMode}
+                                        className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors"
+                                    >
+                                        <ArrowsPointingOutIcon className="h-5 w-5" />
+                                        <span>{isFocusMode ? 'Exit Focus Mode' : 'Focus Mode'}</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setShowThemeSelector(!showThemeSelector)}
+                                        className="px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors"
+                                    >
+                                        {showThemeSelector ? 'Hide Themes' : 'Show Themes'}
+                                    </button>
+                                </div>
                             </div>
 
                             {showThemeSelector && (
@@ -137,15 +167,6 @@ const App: React.FC = () => {
                                     <div className="bg-white/10 backdrop-blur-md rounded-xl p-4">
                                         <div className="flex items-center justify-between">
                                             <h2 className="text-xl font-semibold">Media Players</h2>
-                                            <div className="flex space-x-2">
-                                                <button
-                                                    onClick={toggleFocusMode}
-                                                    className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors"
-                                                >
-                                                    <ArrowsPointingOutIcon className="h-5 w-5" />
-                                                    <span>{isFocusMode ? 'Exit Focus Mode' : 'Focus Mode'}</span>
-                                                </button>
-                                            </div>
                                         </div>
                                         <div className="mt-4 flex space-x-4">
                                             <button
