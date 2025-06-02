@@ -56,6 +56,10 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
     // Add a new state for tracking text selection
     const [selectedTextRanges, setSelectedTextRanges] = useState<Range[]>([]);
 
+    // Add new state for drawing mode
+    const [isDrawingMode, setIsDrawingMode] = useState(false);
+    const [drawBox, setDrawBox] = useState<{ startX: number; startY: number; endX: number; endY: number; page: number } | null>(null);
+
     const handleAnnotationAdd = useCallback((annotation: Annotation) => {
         setAnnotations(prev => [...prev, annotation]);
     }, []);
@@ -65,86 +69,84 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
     }, []);
 
     const handleMouseDown = useCallback((e: MouseEvent) => {
-        if (!isHighlightMode || !textLayerRef.current) return;
-        
-        // Prevent default behavior to avoid text selection
-        e.preventDefault();
-
+        if (!textLayerRef.current) return;
         const rect = textLayerRef.current.getBoundingClientRect();
         const x = (e.clientX - rect.left) / scale;
         const y = (e.clientY - rect.top) / scale;
-        setIsSelecting(true);
-        setSelection({ startX: x, startY: y, endX: x, endY: y });
-        
-        console.log('Mouse down in highlight mode:', { x, y });
-    }, [isHighlightMode, scale]);
+        if (isDrawingMode) {
+            setDrawBox({ startX: x, startY: y, endX: x, endY: y, page: currentPage });
+        } else if (isHighlightMode) {
+            e.preventDefault();
+            setIsSelecting(true);
+            setSelection({ startX: x, startY: y, endX: x, endY: y });
+        }
+    }, [isDrawingMode, isHighlightMode, scale]);
 
     const handleMouseMove = useCallback((e: MouseEvent) => {
-        if (!isSelecting || !textLayerRef.current || !selection) return;
-        
-        // Prevent default behavior
-        e.preventDefault();
-        
+        if (!textLayerRef.current) return;
         const rect = textLayerRef.current.getBoundingClientRect();
         const x = (e.clientX - rect.left) / scale;
         const y = (e.clientY - rect.top) / scale;
-        setSelection({ ...selection, endX: x, endY: y });
-        
-        console.log('Mouse move while selecting:', { x, y });
-    }, [isSelecting, selection, scale]);
+        if (isDrawingMode && drawBox) {
+            setDrawBox({ ...drawBox, endX: x, endY: y });
+        } else if (isSelecting && selection) {
+            e.preventDefault();
+            setSelection({ ...selection, endX: x, endY: y });
+        }
+    }, [isDrawingMode, drawBox, isSelecting, selection, scale]);
 
     const handleMouseUp = useCallback((e: MouseEvent) => {
-        if (!isHighlightMode) return;
-        
-        // Get the current text selection
-        const selection = window.getSelection();
-        if (!selection || selection.isCollapsed || selection.rangeCount === 0) return;
-        
-        // Get all selected ranges
-        const ranges: Range[] = [];
-        for (let i = 0; i < selection.rangeCount; i++) {
-            ranges.push(selection.getRangeAt(i));
-        }
-        
-        // Process each range to create highlights
-        ranges.forEach(range => {
-            // Get the bounding client rect of the selection
-            const rects = range.getClientRects();
-            if (!rects.length) return;
-            
-            // Convert each rect to an annotation
-            for (let i = 0; i < rects.length; i++) {
-                const rect = rects[i];
-                if (!textLayerRef.current) continue;
-                
-                const textLayerRect = textLayerRef.current.getBoundingClientRect();
-                
-                // Convert coordinates relative to the text layer
-                const x = (rect.left - textLayerRect.left) / scale;
-                const y = (rect.top - textLayerRect.top) / scale;
-                const width = rect.width / scale;
-                const height = rect.height / scale;
-                
-                // Create a new annotation
-                const newAnnotation: Annotation = {
-                    id: Date.now().toString() + i,
-                    type: 'highlight',
-                    page: currentPage,
-                    x,
-                    y,
-                    width,
-                    height,
-                    color: selectedColor,
-                    text: range.toString()
-                };
-                
-                handleAnnotationAdd(newAnnotation);
+        if (isDrawingMode && drawBox) {
+            const { startX, startY, endX, endY, page } = drawBox;
+            const newAnnotation: Annotation = {
+                id: Date.now().toString(),
+                type: 'highlight',
+                page: page,
+                x: Math.min(startX, endX),
+                y: Math.min(startY, endY),
+                width: Math.abs(endX - startX),
+                height: Math.abs(endY - startY),
+                color: selectedColor
+            };
+            handleAnnotationAdd(newAnnotation);
+            setDrawBox(null);
+        } else if (isHighlightMode) {
+            const selection = window.getSelection();
+            if (selection && !selection.isCollapsed && selection.rangeCount > 0) {
+                const ranges: Range[] = [];
+                for (let i = 0; i < selection.rangeCount; i++) {
+                    ranges.push(selection.getRangeAt(i));
+                }
+                ranges.forEach(range => {
+                    const rects = range.getClientRects();
+                    if (!rects.length || !textLayerRef.current) return;
+                    for (let i = 0; i < rects.length; i++) {
+                        const rect = rects[i];
+                        const textLayerRect = textLayerRef.current.getBoundingClientRect();
+                        const x = (rect.left - textLayerRect.left) / scale;
+                        const y = (rect.top - textLayerRect.top) / scale;
+                        const width = rect.width / scale;
+                        const height = rect.height / scale;
+                        const newAnnotation: Annotation = {
+                            id: Date.now().toString() + i,
+                            type: 'highlight',
+                            page: currentPage,
+                            x,
+                            y,
+                            width,
+                            height,
+                            color: selectedColor,
+                            text: range.toString()
+                        };
+                        handleAnnotationAdd(newAnnotation);
+                    }
+                });
+                selection.removeAllRanges();
             }
-        });
-        
-        // Clear the selection after creating highlights
-        selection.removeAllRanges();
-    }, [isHighlightMode, currentPage, scale, selectedColor, handleAnnotationAdd]);
+        }
+        setIsSelecting(false);
+        setSelection(null);
+    }, [isDrawingMode, drawBox, isHighlightMode, currentPage, scale, selectedColor, handleAnnotationAdd]);
 
     const renderPage = useCallback(async (pageNum: number) => {
         console.log('Attempting to render page:', pageNum);
@@ -262,20 +264,13 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
     useEffect(() => {
         const textLayer = textLayerRef.current;
         if (textLayer) {
-            console.log('Adding event listeners to text layer');
-            
-            // Use capture phase to ensure our handlers run first
-            textLayer.addEventListener('mousedown', handleMouseDown as EventListener, true);
-            textLayer.addEventListener('mousemove', handleMouseMove as EventListener, true);
-            textLayer.addEventListener('mouseup', handleMouseUp as EventListener, true);
-            window.addEventListener('mouseup', handleMouseUp as EventListener);
-
+            textLayer.addEventListener('mousedown', handleMouseDown as EventListener);
+            textLayer.addEventListener('mousemove', handleMouseMove as EventListener);
+            textLayer.addEventListener('mouseup', handleMouseUp as EventListener);
             return () => {
-                console.log('Removing event listeners from text layer');
-                textLayer.removeEventListener('mousedown', handleMouseDown as EventListener, true);
-                textLayer.removeEventListener('mousemove', handleMouseMove as EventListener, true);
-                textLayer.removeEventListener('mouseup', handleMouseUp as EventListener, true);
-                window.removeEventListener('mouseup', handleMouseUp as EventListener);
+                textLayer.removeEventListener('mousedown', handleMouseDown as EventListener);
+                textLayer.removeEventListener('mousemove', handleMouseMove as EventListener);
+                textLayer.removeEventListener('mouseup', handleMouseUp as EventListener);
             };
         }
     }, [handleMouseDown, handleMouseMove, handleMouseUp]);
@@ -511,9 +506,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
     }, [handleWheel, handleKeyDown]);
 
     return (
-        <div className="flex flex-col h-full bg-white/80 dark:bg-slate-800/80 rounded-lg shadow-lg">
+        <div className="flex flex-col h-full bg-white/40 dark:bg-slate-800/40 rounded-lg shadow-lg">
             <div className="flex justify-between items-center mb-4 p-4 border-b border-gray-200 dark:border-gray-700">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">PDF Viewer</h2>
+                <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200/80">PDF Viewer</h2>
                 <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-2">
                         <button
@@ -531,17 +526,16 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                         >
                             +
                         </button>
-                        {/* Highlight mode toggle and color picker */}
                         <button
-                            onClick={() => setIsHighlightMode(!isHighlightMode)}
-                            className={`px-3 py-1 rounded text-sm ${isHighlightMode
-                                ? 'bg-yellow-500 hover:bg-yellow-600 text-black font-bold'
+                            onClick={() => setIsDrawingMode(!isDrawingMode)}
+                            className={`px-3 py-1 rounded text-sm ${isDrawingMode
+                                ? 'bg-blue-500 hover:bg-blue-600 text-white font-bold'
                                 : 'bg-gray-600 hover:bg-gray-700 text-white'
-                            }`}
+                                }`}
                         >
-                            {isHighlightMode ? 'Select Text to Highlight' : 'Enable Highlighting'}
+                            {isDrawingMode ? 'Drawing Mode' : 'Enable Drawing'}
                         </button>
-                        {isHighlightMode && (
+                        {isDrawingMode && (
                             <input
                                 type="color"
                                 value={selectedColor}
@@ -616,25 +610,73 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                                             ref={pageNum === currentPage ? textLayerRef : undefined}
                                             className="textLayer absolute top-0 left-0 right-0 bottom-0 overflow-hidden"
                                             style={{
-                                                userSelect: isHighlightMode ? 'text' : 'none',
-                                                cursor: isHighlightMode ? 'text' : 'default',
+                                                userSelect: 'none',
+                                                cursor: isDrawingMode ? 'crosshair' : 'default',
                                                 pointerEvents: 'all'
                                             }}
-                                        />
-                                        {isSelecting && selection && (
-                                            <div
-                                                className="absolute pointer-events-none"
-                                                style={{
-                                                    left: Math.min(selection.startX, selection.endX) * scale,
-                                                    top: Math.min(selection.startY, selection.endY) * scale,
-                                                    width: Math.abs(selection.endX - selection.startX) * scale,
-                                                    height: Math.abs(selection.endY - selection.startY) * scale,
-                                                    backgroundColor: selectedColor + '80', // Add alpha for transparency
-                                                    border: `2px solid ${selectedColor}`,
-                                                    zIndex: 10
-                                                }}
-                                            />
-                                        )}
+                                            onMouseDown={isDrawingMode ? (e) => {
+                                                const rect = e.currentTarget.getBoundingClientRect();
+                                                const containerRect = pageContainerRef.current?.getBoundingClientRect();
+                                                if (!containerRect || !pageContainerRef.current) return;
+
+                                                // Calculate position relative to the current page's viewport
+                                                const x = (e.clientX - containerRect.left) / scale;
+                                                const y = (e.clientY - containerRect.top) / scale;
+
+                                                setDrawBox({
+                                                    startX: x,
+                                                    startY: y,
+                                                    endX: x,
+                                                    endY: y,
+                                                    page: currentPage
+                                                });
+                                            } : undefined}
+                                            onMouseMove={isDrawingMode ? (e) => {
+                                                if (!drawBox) return;
+                                                const containerRect = pageContainerRef.current?.getBoundingClientRect();
+                                                if (!containerRect || !pageContainerRef.current) return;
+
+                                                // Calculate position relative to the current page's viewport
+                                                const x = (e.clientX - containerRect.left) / scale;
+                                                const y = (e.clientY - containerRect.top) / scale;
+
+                                                // Only update if we're on the same page
+                                                if (currentPage === drawBox.page) {
+                                                    setDrawBox({ ...drawBox, endX: x, endY: y });
+                                                }
+                                            } : undefined}
+                                            onMouseUp={isDrawingMode ? (e) => {
+                                                if (!drawBox) return;
+                                                const { startX, startY, endX, endY, page } = drawBox;
+
+                                                handleAnnotationAdd({
+                                                    id: Date.now().toString(),
+                                                    type: 'highlight',
+                                                    page: page,
+                                                    x: Math.min(startX, endX),
+                                                    y: Math.min(startY, endY),
+                                                    width: Math.abs(endX - startX),
+                                                    height: Math.abs(endY - startY),
+                                                    color: selectedColor
+                                                });
+                                                setDrawBox(null);
+                                            } : undefined}
+                                        >
+                                            {isDrawingMode && drawBox && drawBox.page === currentPage && (
+                                                <div
+                                                    className="absolute pointer-events-none"
+                                                    style={{
+                                                        left: Math.min(drawBox.startX, drawBox.endX) * scale,
+                                                        top: Math.min(drawBox.startY, drawBox.endY) * scale,
+                                                        width: Math.abs(drawBox.endX - drawBox.startX) * scale,
+                                                        height: Math.abs(drawBox.endY - drawBox.startY) * scale,
+                                                        backgroundColor: selectedColor + '80',
+                                                        border: `2px solid ${selectedColor}`,
+                                                        zIndex: 10
+                                                    }}
+                                                />
+                                            )}
+                                        </div>
                                         <PDFAnnotations
                                             pdfDoc={pdfLibDoc}
                                             currentPage={pageNum}

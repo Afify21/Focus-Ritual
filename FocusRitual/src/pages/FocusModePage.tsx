@@ -32,16 +32,15 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
                     </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-[3fr_1fr] gap-6 h-[calc(100vh-90px)] relative z-10">
+                <div className="grid grid-cols-1 md:grid-cols-[3fr_1fr] gap-6 h-[calc(100vh-60px)] relative z-10">
                     {/* Left column for PDF viewer and YouTube player */}
                     <div className="space-y-6 h-full">
                         {/* PDF Viewer Container with fixed height and overflow hidden */}
-                        <div className="bg-white/80 backdrop-blur-md rounded-xl overflow-hidden relative h-[calc(70%-12px)]">
-                            <h2 className="text-xl font-semibold p-4 text-slate-900 dark:text-slate-200">PDF Viewer</h2>
+                        <div className="bg-white/40 dark:bg-slate-800/40 backdrop-blur-md rounded-xl overflow-hidden relative h-[calc(60%-12px)]">
                             <PDFViewer />
                         </div>
                         {/* YouTube Player Container with fixed height */}
-                        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 h-[calc(30%-12px)] relative">
+                        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 h-[calc(40%-12px)] relative">
                             <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-200">YouTube Player</h2>
                             <div className="h-[calc(100%-3rem)]">
                                 <YouTubePlayer onClose={() => { }} isFocusMode={true} />
