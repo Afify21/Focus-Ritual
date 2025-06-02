@@ -53,6 +53,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
     // Add new state for text selection
     const [selectedText, setSelectedText] = useState<{ text: string; rect: DOMRect } | null>(null);
 
+    // Add a new state for tracking text selection
+    const [selectedTextRanges, setSelectedTextRanges] = useState<Range[]>([]);
+
     const handleAnnotationAdd = useCallback((annotation: Annotation) => {
         setAnnotations(prev => [...prev, annotation]);
     }, []);
@@ -63,47 +66,85 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
 
     const handleMouseDown = useCallback((e: MouseEvent) => {
         if (!isHighlightMode || !textLayerRef.current) return;
+        
+        // Prevent default behavior to avoid text selection
+        e.preventDefault();
 
         const rect = textLayerRef.current.getBoundingClientRect();
         const x = (e.clientX - rect.left) / scale;
         const y = (e.clientY - rect.top) / scale;
         setIsSelecting(true);
         setSelection({ startX: x, startY: y, endX: x, endY: y });
+        
+        console.log('Mouse down in highlight mode:', { x, y });
     }, [isHighlightMode, scale]);
 
     const handleMouseMove = useCallback((e: MouseEvent) => {
         if (!isSelecting || !textLayerRef.current || !selection) return;
+        
+        // Prevent default behavior
+        e.preventDefault();
+        
         const rect = textLayerRef.current.getBoundingClientRect();
         const x = (e.clientX - rect.left) / scale;
         const y = (e.clientY - rect.top) / scale;
         setSelection({ ...selection, endX: x, endY: y });
+        
+        console.log('Mouse move while selecting:', { x, y });
     }, [isSelecting, selection, scale]);
 
-    const handleMouseUp = useCallback(() => {
-        if (!isSelecting || !selection) return;
-        setIsSelecting(false);
-
-        const width = Math.abs(selection.endX - selection.startX);
-        const height = Math.abs(selection.endY - selection.startY);
-        const x = Math.min(selection.startX, selection.endX);
-        const y = Math.min(selection.startY, selection.endY);
-
-        // Only add annotation if a significant area was selected
-        if (width > 5 && height > 5) {
-            const newAnnotation: Annotation = {
-                id: Date.now().toString(),
-                type: 'highlight',
-                page: currentPage,
-                x,
-                y,
-                width,
-                height,
-                color: selectedColor,
-            };
-            handleAnnotationAdd(newAnnotation);
+    const handleMouseUp = useCallback((e: MouseEvent) => {
+        if (!isHighlightMode) return;
+        
+        // Get the current text selection
+        const selection = window.getSelection();
+        if (!selection || selection.isCollapsed || selection.rangeCount === 0) return;
+        
+        // Get all selected ranges
+        const ranges: Range[] = [];
+        for (let i = 0; i < selection.rangeCount; i++) {
+            ranges.push(selection.getRangeAt(i));
         }
-        setSelection(null);
-    }, [isSelecting, selection, currentPage, selectedColor, handleAnnotationAdd]);
+        
+        // Process each range to create highlights
+        ranges.forEach(range => {
+            // Get the bounding client rect of the selection
+            const rects = range.getClientRects();
+            if (!rects.length) return;
+            
+            // Convert each rect to an annotation
+            for (let i = 0; i < rects.length; i++) {
+                const rect = rects[i];
+                if (!textLayerRef.current) continue;
+                
+                const textLayerRect = textLayerRef.current.getBoundingClientRect();
+                
+                // Convert coordinates relative to the text layer
+                const x = (rect.left - textLayerRect.left) / scale;
+                const y = (rect.top - textLayerRect.top) / scale;
+                const width = rect.width / scale;
+                const height = rect.height / scale;
+                
+                // Create a new annotation
+                const newAnnotation: Annotation = {
+                    id: Date.now().toString() + i,
+                    type: 'highlight',
+                    page: currentPage,
+                    x,
+                    y,
+                    width,
+                    height,
+                    color: selectedColor,
+                    text: range.toString()
+                };
+                
+                handleAnnotationAdd(newAnnotation);
+            }
+        });
+        
+        // Clear the selection after creating highlights
+        selection.removeAllRanges();
+    }, [isHighlightMode, currentPage, scale, selectedColor, handleAnnotationAdd]);
 
     const renderPage = useCallback(async (pageNum: number) => {
         console.log('Attempting to render page:', pageNum);
@@ -165,7 +206,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
             textLayerDiv.style.right = '0';
             textLayerDiv.style.bottom = '0';
             textLayerDiv.style.overflow = 'hidden';
-            textLayerDiv.style.opacity = '0.2';
+            textLayerDiv.style.opacity = '1.0'; // Make text fully visible
+            textLayerDiv.style.pointerEvents = 'all'; // Always enable pointer events
+            textLayerDiv.style.userSelect = isHighlightMode ? 'text' : 'none'; // Enable text selection when in highlight mode
             textLayerDiv.style.lineHeight = '1.0';
 
             // Append text layer div to the ref container
@@ -204,7 +247,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
         } catch (error) {
             console.error('Error rendering page:', pageNum, error);
         }
-    }, [pdfDoc, scale, totalPages]);
+    }, [pdfDoc, scale, totalPages, isHighlightMode]);
 
     useEffect(() => {
         console.log('pdfDoc or currentPage or scale changed. Running useEffect.');
@@ -219,15 +262,19 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
     useEffect(() => {
         const textLayer = textLayerRef.current;
         if (textLayer) {
-            textLayer.addEventListener('mousedown', handleMouseDown as EventListener);
-            textLayer.addEventListener('mousemove', handleMouseMove as EventListener);
-            textLayer.addEventListener('mouseup', handleMouseUp as EventListener);
+            console.log('Adding event listeners to text layer');
+            
+            // Use capture phase to ensure our handlers run first
+            textLayer.addEventListener('mousedown', handleMouseDown as EventListener, true);
+            textLayer.addEventListener('mousemove', handleMouseMove as EventListener, true);
+            textLayer.addEventListener('mouseup', handleMouseUp as EventListener, true);
             window.addEventListener('mouseup', handleMouseUp as EventListener);
 
             return () => {
-                textLayer.removeEventListener('mousedown', handleMouseDown as EventListener);
-                textLayer.removeEventListener('mousemove', handleMouseMove as EventListener);
-                textLayer.removeEventListener('mouseup', handleMouseUp as EventListener);
+                console.log('Removing event listeners from text layer');
+                textLayer.removeEventListener('mousedown', handleMouseDown as EventListener, true);
+                textLayer.removeEventListener('mousemove', handleMouseMove as EventListener, true);
+                textLayer.removeEventListener('mouseup', handleMouseUp as EventListener, true);
                 window.removeEventListener('mouseup', handleMouseUp as EventListener);
             };
         }
@@ -464,35 +511,35 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
     }, [handleWheel, handleKeyDown]);
 
     return (
-        <div className="flex flex-col h-full">
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">PDF Viewer</h2>
+        <div className="flex flex-col h-full bg-white/80 dark:bg-slate-800/80 rounded-lg shadow-lg">
+            <div className="flex justify-between items-center mb-4 p-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">PDF Viewer</h2>
                 <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-2">
                         <button
                             onClick={zoomOut}
-                            className="px-3 py-1 rounded bg-slate-600 hover:bg-slate-700"
+                            className="px-3 py-1 rounded bg-slate-600 hover:bg-slate-700 text-white"
                         >
                             -
                         </button>
-                        <span className="text-sm w-12 text-center">
+                        <span className="text-sm w-12 text-center text-gray-900 dark:text-white font-medium">
                             {Math.round(scale * 100)}%
                         </span>
                         <button
                             onClick={zoomIn}
-                            className="px-3 py-1 rounded bg-slate-600 hover:bg-slate-700"
+                            className="px-3 py-1 rounded bg-slate-600 hover:bg-slate-700 text-white"
                         >
                             +
                         </button>
                         {/* Highlight mode toggle and color picker */}
                         <button
                             onClick={() => setIsHighlightMode(!isHighlightMode)}
-                            className={`px-2 py-1 text-xs rounded ${isHighlightMode
-                                ? 'bg-blue-600 hover:bg-blue-700'
-                                : 'bg-gray-600 hover:bg-gray-700'
-                                } text-white`}
+                            className={`px-3 py-1 rounded text-sm ${isHighlightMode
+                                ? 'bg-yellow-500 hover:bg-yellow-600 text-black font-bold'
+                                : 'bg-gray-600 hover:bg-gray-700 text-white'
+                            }`}
                         >
-                            H
+                            {isHighlightMode ? 'Select Text to Highlight' : 'Enable Highlighting'}
                         </button>
                         {isHighlightMode && (
                             <input
@@ -507,7 +554,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                         <>
                             <button
                                 onClick={saveAnnotatedPDF}
-                                className="px-3 py-1 rounded bg-green-600 hover:bg-green-700"
+                                className="px-3 py-1 rounded bg-green-600 hover:bg-green-700 text-white"
                             >
                                 Save PDF
                             </button>
@@ -524,7 +571,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
             </div>
 
             {!pdfFile ? (
-                <div className="flex-1 flex items-center justify-center">
+                <div className="flex-1 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-b-lg">
                     <label className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-flex items-center">
                         <svg className="fill-current w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                             <path d="M13 10V3a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1h8a1 1 0 001-1v-7h3l-4-4z" />
@@ -569,18 +616,22 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                                             ref={pageNum === currentPage ? textLayerRef : undefined}
                                             className="textLayer absolute top-0 left-0 right-0 bottom-0 overflow-hidden"
                                             style={{
-                                                userSelect: isHighlightMode ? 'none' : 'text',
-                                                cursor: isHighlightMode ? 'crosshair' : 'text'
+                                                userSelect: isHighlightMode ? 'text' : 'none',
+                                                cursor: isHighlightMode ? 'text' : 'default',
+                                                pointerEvents: 'all'
                                             }}
                                         />
                                         {isSelecting && selection && (
                                             <div
-                                                className="absolute border-2 border-blue-500 bg-blue-200 bg-opacity-30"
+                                                className="absolute pointer-events-none"
                                                 style={{
-                                                    left: Math.min(selection.startX, selection.endX),
-                                                    top: Math.min(selection.startY, selection.endY),
-                                                    width: Math.abs(selection.endX - selection.startX),
-                                                    height: Math.abs(selection.endY - selection.startY),
+                                                    left: Math.min(selection.startX, selection.endX) * scale,
+                                                    top: Math.min(selection.startY, selection.endY) * scale,
+                                                    width: Math.abs(selection.endX - selection.startX) * scale,
+                                                    height: Math.abs(selection.endY - selection.startY) * scale,
+                                                    backgroundColor: selectedColor + '80', // Add alpha for transparency
+                                                    border: `2px solid ${selectedColor}`,
+                                                    zIndex: 10
                                                 }}
                                             />
                                         )}

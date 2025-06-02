@@ -148,14 +148,14 @@ const ChatAssistant: React.FC = () => {
     const chatWindowBaseClasses = `
         ${colors.chatWindowBg} 
         shadow-2xl flex flex-col 
-        fixed z-[99999]
+        fixed z-[999999] pointer-events-auto
         transition-[width,height,top,left,bottom,right,border-radius] duration-300 ease-in-out
     `;
 
     let chatWindowDynamicClasses = '';
     if (isFullScreen) {
         chatWindowDynamicClasses = `
-            w-[500px] h-[700px]
+            w-[600px] h-[700px]
             bottom-4 right-4
             rounded-xl
         `;
@@ -255,15 +255,13 @@ const ChatAssistant: React.FC = () => {
                     <h3 className="font-semibold text-lg">Study Assistant</h3>
                 </div>
                 <div className="flex items-center space-x-1">
-                    {!isFullScreen && (
-                        <button
-                            onClick={handleToggleFullScreen}
-                            className={headerButtonClasses}
-                            aria-label={isFullScreen ? "Exit full screen" : "Go full screen"}
-                        >
-                            {isFullScreen ? <ArrowsPointingInIcon className="w-5 h-5" /> : <ArrowsPointingOutIcon className="w-5 h-5" />}
-                        </button>
-                    )}
+                    <button
+                        onClick={handleToggleFullScreen}
+                        className={headerButtonClasses}
+                        aria-label={isFullScreen ? "Exit full screen" : "Go full screen"}
+                    >
+                        {isFullScreen ? <ArrowsPointingInIcon className="w-5 h-5" /> : <ArrowsPointingOutIcon className="w-5 h-5" />}
+                    </button>
                     <button
                         onClick={handleClose}
                         className={headerButtonClasses}
@@ -376,7 +374,7 @@ const ChatAssistant: React.FC = () => {
     );
 
     return (
-        <div className="fixed bottom-4 right-4 z-[99999]">
+        <div className="fixed bottom-4 right-4 z-[999999]">
             {!isOpen ? (
                 <div className="pointer-events-auto">
                     <button
@@ -394,7 +392,7 @@ const ChatAssistant: React.FC = () => {
                     bounds="parent"
                     disabled={isInFocusMode}
                 >
-                    <div className="pointer-events-auto">
+                    <div className="pointer-events-auto" style={{ position: 'relative', zIndex: 999999 }}>
                         <div className={chatWindowClasses}>
                             {chatWindowInnerContent}
                         </div>

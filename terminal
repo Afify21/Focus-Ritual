@@ -1,0 +1,8 @@
+# Navigate to the FocusRitual directory
+cd FocusRitual
+
+# Install dependencies if you haven't already
+npm install
+
+# Start the React development server
+npm start

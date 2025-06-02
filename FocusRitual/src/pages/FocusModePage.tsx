@@ -19,13 +19,13 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
     onStateChange,
 }) => {
     return (
-        <div className="min-h-screen text-white p-4 relative">
+        <div className="min-h-screen text-slate-800 dark:text-white p-4 relative">
             <div className="container mx-auto h-full">
                 <div className="flex justify-between items-center mb-4 relative z-50">
-                    <h1 className="text-2xl font-bold">Focus Mode</h1>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Focus Mode</h1>
                     <button
                         onClick={onExitFocusMode}
-                        className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors cursor-pointer"
+                        className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors cursor-pointer text-white"
                     >
                         <XMarkIcon className="h-5 w-5" />
                         <span>Exit Focus Mode</span>
@@ -36,12 +36,13 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
                     {/* Left column for PDF viewer and YouTube player */}
                     <div className="space-y-6 h-full">
                         {/* PDF Viewer Container with fixed height and overflow hidden */}
-                        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 h-[calc(70%-12px)] overflow-hidden relative">
+                        <div className="bg-white/80 backdrop-blur-md rounded-xl overflow-hidden relative h-[calc(70%-12px)]">
+                            <h2 className="text-xl font-semibold p-4 text-slate-900 dark:text-slate-200">PDF Viewer</h2>
                             <PDFViewer />
                         </div>
                         {/* YouTube Player Container with fixed height */}
                         <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 h-[calc(30%-12px)] relative">
-                            <h2 className="text-xl font-semibold mb-4">YouTube Player</h2>
+                            <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-200">YouTube Player</h2>
                             <div className="h-[calc(100%-3rem)]">
                                 <YouTubePlayer onClose={() => { }} isFocusMode={true} />
                             </div>
@@ -51,42 +52,31 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
                     {/* Right column for Timer, Soundscapes, and Theme Selector */}
                     <div className="space-y-4">
                         <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 relative">
-                            <h2 className="text-xl font-semibold mb-4">Timer</h2>
+                            <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-200">Timer</h2>
                             <Timer duration={duration} onStateChange={onStateChange} isMinimized={true} />
                         </div>
 
                         {/* Soundscapes */}
                         <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 relative">
-                            <h2 className="text-xl font-semibold mb-4">Ambient Sounds</h2>
-                            <div className="scale-75 origin-top">
-                                <Soundscape />
+                            <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-200">Ambient Sounds</h2>
+                            <div className="scale-90 origin-top">
+                                <Soundscape compact={true} />
                             </div>
                         </div>
 
                         {/* Theme Selector */}
                         <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 relative">
-                            <h2 className="text-xl font-semibold mb-4">Theme</h2>
+                            <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-200">Theme</h2>
                             <div className="flex flex-wrap gap-2">
-                                <button className="px-3 py-1.5 bg-slate-600 hover:bg-slate-700 rounded-lg text-sm transition-colors">
-                                    Default
-                                </button>
-                                <button className="px-3 py-1.5 bg-slate-600 hover:bg-slate-700 rounded-lg text-sm transition-colors">
-                                    Dark
-                                </button>
-                                <button className="px-3 py-1.5 bg-slate-600 hover:bg-slate-700 rounded-lg text-sm transition-colors">
-                                    Light
-                                </button>
-                                <button className="px-3 py-1.5 bg-slate-600 hover:bg-slate-700 rounded-lg text-sm transition-colors">
-                                    Sepia
-                                </button>
+                                <ThemeSelector compact={true} />
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            {/* Chat Assistant container with proper bounds for dragging */}
-            <div className="fixed inset-0 pointer-events-none">
-                <div className="absolute inset-0 pointer-events-auto">
+            {/* Chat Assistant rendered at the highest level */}
+            <div className="fixed inset-0 z-[999999] pointer-events-none">
+                <div className="absolute inset-0 pointer-events-none">
                     <ChatAssistant />
                 </div>
             </div>
