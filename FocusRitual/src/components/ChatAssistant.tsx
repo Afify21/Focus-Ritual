@@ -22,21 +22,31 @@ const ChatAssistant: React.FC = () => {
     const [inputMessage, setInputMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isMinimized, setIsMinimized] = useState(false);
     const [isFullScreen, setIsFullScreen] = useState(false);
+    const [isInFocusMode, setIsInFocusMode] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
+
+    // Check if we're in focus mode
+    useEffect(() => {
+        const checkFocusMode = () => {
+            setIsInFocusMode(window.location.pathname === '/focus');
+        };
+        checkFocusMode();
+        window.addEventListener('popstate', checkFocusMode);
+        return () => window.removeEventListener('popstate', checkFocusMode);
+    }, []);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
     useEffect(() => {
-        if (isOpen && !isMinimized) {
+        if (isOpen && !isFullScreen) {
             scrollToBottom();
             inputRef.current?.focus();
         }
-    }, [isOpen, messages, isMinimized]);
+    }, [isOpen, messages, isFullScreen]);
 
     const handleSendMessage = async () => {
         if (!inputMessage.trim()) return;
@@ -106,13 +116,25 @@ const ChatAssistant: React.FC = () => {
             }]);
         } finally {
             setIsLoading(false);
-            if (!isMinimized) inputRef.current?.focus();
+            if (!isFullScreen) inputRef.current?.focus();
         }
+    };
+
+    const handleToggleFullScreen = () => {
+        const newFullScreenState = !isFullScreen;
+        setIsFullScreen(newFullScreenState);
+    };
+
+    const handleClose = () => {
+        setIsOpen(false);
+        setIsFullScreen(false);
     };
 
     const handlePromptButtonClick = (promptText: string) => {
         setInputMessage(promptText);
-        if (!isMinimized) inputRef.current?.focus();
+        if (!isFullScreen) {
+            inputRef.current?.focus();
+        }
     };
 
     const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -126,22 +148,16 @@ const ChatAssistant: React.FC = () => {
     const chatWindowBaseClasses = `
         ${colors.chatWindowBg} 
         shadow-2xl flex flex-col 
-        fixed z-[9999]
+        fixed z-[99999]
         transition-[width,height,top,left,bottom,right,border-radius] duration-300 ease-in-out
     `;
 
     let chatWindowDynamicClasses = '';
-    if (isMinimized) {
+    if (isFullScreen) {
         chatWindowDynamicClasses = `
-            h-12 w-12
+            w-[500px] h-[700px]
             bottom-4 right-4
-            rounded-full
-        `;
-    } else if (isFullScreen) {
-        chatWindowDynamicClasses = `
-            w-screen h-screen 
-            top-0 left-0 right-0 bottom-0 
-            rounded-none
+            rounded-xl
         `;
     } else { // Default floating window state
         chatWindowDynamicClasses = `
@@ -231,14 +247,6 @@ const ChatAssistant: React.FC = () => {
         prose-code:${colors.assistantMessageCodeText}
     `;
 
-    const handleToggleFullScreen = () => {
-        const newFullScreenState = !isFullScreen;
-        setIsFullScreen(newFullScreenState);
-        if (newFullScreenState) {
-            setIsMinimized(false); // Ensure not minimized when going full screen
-        }
-    };
-
     const chatWindowInnerContent = (
         <>
             <div className={headerClasses}>
@@ -247,7 +255,7 @@ const ChatAssistant: React.FC = () => {
                     <h3 className="font-semibold text-lg">Study Assistant</h3>
                 </div>
                 <div className="flex items-center space-x-1">
-                    {!isMinimized && (
+                    {!isFullScreen && (
                         <button
                             onClick={handleToggleFullScreen}
                             className={headerButtonClasses}
@@ -256,17 +264,8 @@ const ChatAssistant: React.FC = () => {
                             {isFullScreen ? <ArrowsPointingInIcon className="w-5 h-5" /> : <ArrowsPointingOutIcon className="w-5 h-5" />}
                         </button>
                     )}
-                    {!isFullScreen && (
-                        <button
-                            onClick={() => setIsMinimized(!isMinimized)}
-                            className={headerButtonClasses}
-                            aria-label={isMinimized ? "Restore" : "Minimize"}
-                        >
-                            {isMinimized ? <ArrowsPointingOutIcon className="w-5 h-5 transform rotate-45" /> : <MinusIcon className="w-5 h-5" />}
-                        </button>
-                    )}
                     <button
-                        onClick={() => setIsOpen(false)}
+                        onClick={handleClose}
                         className={headerButtonClasses}
                         aria-label="Close chat"
                     >
@@ -275,134 +274,134 @@ const ChatAssistant: React.FC = () => {
                 </div>
             </div>
 
-            {!isMinimized && (
-                <>
-                    {error && (
-                        <div className="p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-sm border-b border-red-200 dark:border-red-800/50">
-                            <div className="flex items-center gap-2">
-                                <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
-                                <span>{error}</span>
-                            </div>
-                        </div>
-                    )}
-                    <div className={messageListClasses}>
-                        {messages.length === 0 && !isLoading && (
-                            <div className={`text-center ${colors.assistantMessageText || 'text-slate-500 dark:text-slate-400'} mt-12 opacity-75`}>
-                                <AcademicCapIcon className={`w-16 h-16 mx-auto mb-4 ${colors.assistantMessageText ? (colors.assistantMessageText.replace('text-', 'text-') + '/70') : 'text-slate-400 dark:text-slate-500'}`} />
-                                <h4 className="font-semibold text-xl mb-2">FocusRitual AI Assistant</h4>
-                                <p className="text-sm">Ready to help you learn and explore. <br />Ask me anything!</p>
-                            </div>
-                        )}
-                        {messages.map((message) => (
-                            <div
-                                key={message.id}
-                                className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'
-                                    }`}
-                            >
-                                <div
-                                    className={`max-w-[85%] rounded-xl sm:rounded-2xl py-2 px-3.5 sm:py-2.5 sm:px-4 shadow-md break-words ${message.sender === 'user'
-                                        ? userMessageBubbleClasses
-                                        : assistantMessageBubbleClasses
-                                        }`}
-                                >
-                                    {message.sender === 'assistant' ? (
-                                        <div className={assistantMarkdownProseClasses}>
-                                            <ReactMarkdown rehypePlugins={[rehypeRaw, remarkGfm]}>
-                                                {message.text}
-                                            </ReactMarkdown>
-                                        </div>
-                                    ) : (
-                                        <p className={`text-sm whitespace-pre-wrap leading-relaxed ${colors.userMessageText}`}>{message.text}</p>
-                                    )}
-                                    <span className={`text-xs mt-1.5 block ${colors.messageTimestampText} ${message.sender === 'user' ? `${colors.userMessageText}/80 text-right` : `${colors.assistantMessageText}/80`
-                                        }`}>
-                                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
-                        {isLoading && (
-                            <div className="flex justify-start">
-                                <div className={`${assistantMessageBubbleClasses} py-2.5 px-3.5 sm:px-4`}>
-                                    <div className="flex space-x-1.5 items-center">
-                                        <div className={`w-2 h-2 ${colors.chatSendButtonBg || 'bg-blue-500'} rounded-full animate-bounce`} style={{ animationDelay: '0s' }} />
-                                        <div className={`w-2 h-2 ${colors.chatSendButtonBg || 'bg-blue-500'} rounded-full animate-bounce`} style={{ animationDelay: '0.15s' }} />
-                                        <div className={`w-2 h-2 ${colors.chatSendButtonBg || 'bg-blue-500'} rounded-full animate-bounce`} style={{ animationDelay: '0.3s' }} />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                        <div ref={messagesEndRef} className="h-1" />
+            {error && (
+                <div className="p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-sm border-b border-red-200 dark:border-red-800/50">
+                    <div className="flex items-center gap-2">
+                        <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+                        <span>{error}</span>
                     </div>
-
-                    <div className={inputAreaClasses}>
-                        <div className="mb-2.5 flex flex-wrap gap-1.5 sm:gap-2">
-                            {[
-                                { label: "Explain...", prompt: "Explain this concept: " },
-                                { label: "Summarize...", prompt: "Summarize this text: " },
-                                { label: "Quiz me...", prompt: "Quiz me on: " },
-                            ].map(p => (
-                                <button
-                                    key={p.label}
-                                    onClick={() => handlePromptButtonClick(p.prompt)}
-                                    className={promptButtonClasses(p)}
-                                >
-                                    {p.label}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="flex items-end space-x-2 sm:space-x-3">
-                            <textarea
-                                ref={inputRef}
-                                value={inputMessage}
-                                onChange={(e) => setInputMessage(e.target.value)}
-                                onKeyPress={handleKeyPress}
-                                placeholder="Ask anything... (Shift+Enter for new line)"
-                                className={textareaClasses}
-                                rows={1}
-                                style={{ maxHeight: '120px' }}
-                            />
-                            <button
-                                onClick={handleSendMessage}
-                                disabled={isLoading || !inputMessage.trim()}
-                                className={sendButtonClasses}
-                                aria-label="Send message"
-                            >
-                                <PaperAirplaneIcon className="w-5 h-5 sm:w-6 sm:h-6" />
-                            </button>
-                        </div>
-                    </div>
-                </>
+                </div>
             )}
+            <div className={messageListClasses}>
+                {messages.length === 0 && !isLoading && (
+                    <div className={`text-center ${colors.assistantMessageText || 'text-slate-500 dark:text-slate-400'} mt-12 opacity-75`}>
+                        <AcademicCapIcon className={`w-16 h-16 mx-auto mb-4 ${colors.assistantMessageText ? (colors.assistantMessageText.replace('text-', 'text-') + '/70') : 'text-slate-400 dark:text-slate-500'}`} />
+                        <h4 className="font-semibold text-xl mb-2">FocusRitual AI Assistant</h4>
+                        <p className="text-sm">Ready to help you learn and explore. <br />Ask me anything!</p>
+                    </div>
+                )}
+                {messages.map((message) => (
+                    <div
+                        key={message.id}
+                        className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                        <div
+                            className={`max-w-[85%] rounded-xl sm:rounded-2xl py-2 px-3.5 sm:py-2.5 sm:px-4 shadow-md break-words ${message.sender === 'user'
+                                ? userMessageBubbleClasses
+                                : assistantMessageBubbleClasses
+                                }`}
+                        >
+                            {message.sender === 'assistant' ? (
+                                <div className={assistantMarkdownProseClasses}>
+                                    <ReactMarkdown rehypePlugins={[rehypeRaw, remarkGfm]}>
+                                        {message.text}
+                                    </ReactMarkdown>
+                                </div>
+                            ) : (
+                                <p className={`text-sm whitespace-pre-wrap leading-relaxed ${colors.userMessageText}`}>{message.text}</p>
+                            )}
+                            <span className={`text-xs mt-1.5 block ${colors.messageTimestampText} ${message.sender === 'user'
+                                ? `${colors.userMessageText}/80 text-right`
+                                : `${colors.assistantMessageText}/80`
+                                }`}>
+                                {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                        </div>
+                    </div>
+                ))}
+                {isLoading && (
+                    <div className="flex justify-start">
+                        <div className={`${assistantMessageBubbleClasses} py-2.5 px-3.5 sm:px-4`}>
+                            <div className="flex space-x-1.5 items-center">
+                                <div className={`w-2 h-2 ${colors.chatSendButtonBg || 'bg-blue-500'} rounded-full animate-bounce`} style={{ animationDelay: '0s' }} />
+                                <div className={`w-2 h-2 ${colors.chatSendButtonBg || 'bg-blue-500'} rounded-full animate-bounce`} style={{ animationDelay: '0.15s' }} />
+                                <div className={`w-2 h-2 ${colors.chatSendButtonBg || 'bg-blue-500'} rounded-full animate-bounce`} style={{ animationDelay: '0.3s' }} />
+                            </div>
+                        </div>
+                    </div>
+                )}
+                <div ref={messagesEndRef} className="h-1" />
+            </div>
+
+            <div className={inputAreaClasses}>
+                <div className="mb-2.5 flex flex-wrap gap-1.5 sm:gap-2">
+                    {[
+                        { label: "Explain...", prompt: "Explain this concept: " },
+                        { label: "Summarize...", prompt: "Summarize this text: " },
+                        { label: "Quiz me...", prompt: "Quiz me on: " },
+                    ].map(p => (
+                        <button
+                            key={p.label}
+                            onClick={() => handlePromptButtonClick(p.prompt)}
+                            className={promptButtonClasses(p)}
+                            type="button"
+                        >
+                            {p.label}
+                        </button>
+                    ))}
+                </div>
+                <div className="flex items-end space-x-2 sm:space-x-3">
+                    <textarea
+                        ref={inputRef}
+                        value={inputMessage}
+                        onChange={(e) => setInputMessage(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder="Ask anything... (Shift+Enter for new line)"
+                        className={textareaClasses}
+                        rows={1}
+                        style={{ maxHeight: '120px' }}
+                    />
+                    <button
+                        onClick={handleSendMessage}
+                        disabled={isLoading || !inputMessage.trim()}
+                        className={sendButtonClasses}
+                        type="button"
+                        aria-label="Send message"
+                    >
+                        <PaperAirplaneIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                    </button>
+                </div>
+            </div>
         </>
     );
 
     return (
-        <>
-            {!isOpen && (
-                <button
-                    onClick={() => setIsOpen(true)}
-                    className={`fixed bottom-4 right-4 ${colors.chatSendButtonBg || 'bg-blue-600'} ${colors.chatSendButtonText || 'text-white'} ${colors.chatSendButtonHoverBg || 'hover:bg-blue-700'} rounded-full p-3 shadow-xl transition-transform duration-200 hover:scale-110 z-50 flex items-center justify-center`}
-                    aria-label="Open Study Assistant"
+        <div className="fixed bottom-4 right-4 z-[99999]">
+            {!isOpen ? (
+                <div className="pointer-events-auto">
+                    <button
+                        onClick={() => setIsOpen(true)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg flex items-center justify-center"
+                        style={{ width: '48px', height: '48px' }}
+                        type="button"
+                    >
+                        <ChatBubbleLeftEllipsisIcon className="w-6 h-6" />
+                    </button>
+                </div>
+            ) : (
+                <Draggable
+                    handle=".chat-header"
+                    bounds="parent"
+                    disabled={isInFocusMode}
                 >
-                    <ChatBubbleLeftEllipsisIcon className="w-6 h-6" />
-                </button>
-            )}
-
-            {isOpen && (
-                isFullScreen ? (
-                    <div className={chatWindowClasses}>
-                        {chatWindowInnerContent}
-                    </div>
-                ) : (
-                    <Draggable handle=".chat-header" bounds="parent">
+                    <div className="pointer-events-auto">
                         <div className={chatWindowClasses}>
                             {chatWindowInnerContent}
                         </div>
-                    </Draggable>
-                )
+                    </div>
+                </Draggable>
             )}
-        </>
+        </div>
     );
 };
 

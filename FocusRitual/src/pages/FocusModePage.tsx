@@ -4,6 +4,8 @@ import Timer from '../components/Timer';
 import PDFViewer from '../components/PDFViewer';
 import { XMarkIcon } from '@heroicons/react/24/solid';
 import ChatAssistant from '../components/ChatAssistant';
+import Soundscape from '../components/Soundscape';
+import { ThemeSelector } from '../components/ThemeSelector';
 
 interface FocusModePageProps {
     onExitFocusMode: () => void;
@@ -46,11 +48,38 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
                         </div>
                     </div>
 
-                    {/* Right column for minimized Timer */}
-                    <div className="space-y-6">
+                    {/* Right column for Timer, Soundscapes, and Theme Selector */}
+                    <div className="space-y-4">
                         <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 relative">
                             <h2 className="text-xl font-semibold mb-4">Timer</h2>
                             <Timer duration={duration} onStateChange={onStateChange} isMinimized={true} />
+                        </div>
+
+                        {/* Soundscapes */}
+                        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 relative">
+                            <h2 className="text-xl font-semibold mb-4">Ambient Sounds</h2>
+                            <div className="scale-75 origin-top">
+                                <Soundscape />
+                            </div>
+                        </div>
+
+                        {/* Theme Selector */}
+                        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 relative">
+                            <h2 className="text-xl font-semibold mb-4">Theme</h2>
+                            <div className="flex flex-wrap gap-2">
+                                <button className="px-3 py-1.5 bg-slate-600 hover:bg-slate-700 rounded-lg text-sm transition-colors">
+                                    Default
+                                </button>
+                                <button className="px-3 py-1.5 bg-slate-600 hover:bg-slate-700 rounded-lg text-sm transition-colors">
+                                    Dark
+                                </button>
+                                <button className="px-3 py-1.5 bg-slate-600 hover:bg-slate-700 rounded-lg text-sm transition-colors">
+                                    Light
+                                </button>
+                                <button className="px-3 py-1.5 bg-slate-600 hover:bg-slate-700 rounded-lg text-sm transition-colors">
+                                    Sepia
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -31,7 +31,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
     const [pdfLibDoc, setPdfLibDoc] = useState<PDFDocument | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
-    const [scale, setScale] = useState(1.0);
+    const [scale, setScale] = useState(1.2);
     const [annotations, setAnnotations] = useState<Annotation[]>([]);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const pageContainerRef = useRef<HTMLDivElement>(null);
@@ -43,10 +43,15 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
     const [pageHeight, setPageHeight] = useState(0);
     const [isHighlightMode, setIsHighlightMode] = useState(false);
     const [selectedColor, setSelectedColor] = useState('#ffeb3b');
+    const [horizontalScroll, setHorizontalScroll] = useState(0);
+    const [showHorizontalNav, setShowHorizontalNav] = useState(false);
 
     // State and handlers for text selection/highlighting
     const [isSelecting, setIsSelecting] = useState(false);
     const [selection, setSelection] = useState<{ startX: number; startY: number; endX: number; endY: number } | null>(null);
+
+    // Add new state for text selection
+    const [selectedText, setSelectedText] = useState<{ text: string; rect: DOMRect } | null>(null);
 
     const handleAnnotationAdd = useCallback((annotation: Annotation) => {
         setAnnotations(prev => [...prev, annotation]);
@@ -143,7 +148,6 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
             setTotalHeight(viewport.height * totalPages);
 
             // Render text layer
-            const textContentSource = await page.getTextContent();
             const textLayer = textLayerRef.current;
 
             // Clear previous text layer
@@ -155,6 +159,14 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
             textLayerDiv.className = 'textLayer';
             textLayerDiv.style.width = `${viewport.width}px`;
             textLayerDiv.style.height = `${viewport.height}px`;
+            textLayerDiv.style.position = 'absolute';
+            textLayerDiv.style.left = '0';
+            textLayerDiv.style.top = '0';
+            textLayerDiv.style.right = '0';
+            textLayerDiv.style.bottom = '0';
+            textLayerDiv.style.overflow = 'hidden';
+            textLayerDiv.style.opacity = '0.2';
+            textLayerDiv.style.lineHeight = '1.0';
 
             // Append text layer div to the ref container
             textLayer.appendChild(textLayerDiv);
@@ -175,12 +187,16 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
 
                 const textSpan = document.createElement('span');
                 textSpan.textContent = item.str;
+                textSpan.style.position = 'absolute';
                 textSpan.style.left = `${tx[4]}px`;
                 textSpan.style.top = `${tx[5]}px`;
                 textSpan.style.fontSize = `${fontSize}px`;
                 textSpan.style.fontFamily = style.fontFamily;
                 textSpan.style.transform = `scaleX(${tx[0] / fontSize})`;
                 textSpan.style.transformOrigin = 'left';
+                textSpan.style.whiteSpace = 'pre';
+                textSpan.style.cursor = 'text';
+                textSpan.style.userSelect = 'text';
 
                 textLayerDiv.appendChild(textSpan);
             });
@@ -188,7 +204,6 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
         } catch (error) {
             console.error('Error rendering page:', pageNum, error);
         }
-
     }, [pdfDoc, scale, totalPages]);
 
     useEffect(() => {
@@ -207,7 +222,6 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
             textLayer.addEventListener('mousedown', handleMouseDown as EventListener);
             textLayer.addEventListener('mousemove', handleMouseMove as EventListener);
             textLayer.addEventListener('mouseup', handleMouseUp as EventListener);
-            // Add event listeners to window as well, in case mouseup happens outside the text layer
             window.addEventListener('mouseup', handleMouseUp as EventListener);
 
             return () => {
@@ -224,6 +238,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
         console.log('File selected:', file?.name);
         if (file && file.type === 'application/pdf') {
             setPdfFile(file);
+            setScale(1.2);
 
             try {
                 // Load PDF for viewing (using pdfjsLib)
@@ -275,11 +290,19 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
     };
 
     const zoomIn = () => {
-        setScale(prev => Math.min(prev + 0.2, 3));
+        setScale(prev => {
+            const newScale = Math.min(prev + 0.2, 3);
+            setShowHorizontalNav(newScale > 1);
+            return newScale;
+        });
     };
 
     const zoomOut = () => {
-        setScale(prev => Math.max(prev - 0.2, 0.5));
+        setScale(prev => {
+            const newScale = Math.max(prev - 0.2, 0.5);
+            setShowHorizontalNav(newScale > 1);
+            return newScale;
+        });
     };
 
     const handleZoomChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -369,18 +392,23 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
 
         if (!pageContainerRef.current || !totalHeight) return;
 
-        const delta = event.deltaY; // Removed the negative sign to reverse direction
         const container = pageContainerRef.current;
-        const newPosition = container.scrollTop + delta;
 
-        // Calculate which page we're on based on scroll position
-        const currentPageNum = Math.floor(newPosition / pageHeight) + 1;
-        if (currentPageNum !== currentPage) {
-            setCurrentPage(currentPageNum);
+        // Handle vertical scrolling
+        if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+            const newPosition = container.scrollTop + event.deltaY;
+            const currentPageNum = Math.floor(newPosition / pageHeight) + 1;
+
+            if (currentPageNum !== currentPage) {
+                setCurrentPage(currentPageNum);
+            }
+            container.scrollTop = newPosition;
         }
-
-        // Update scroll position
-        container.scrollTop = newPosition;
+        // Handle horizontal scrolling
+        else {
+            const newPosition = container.scrollLeft + event.deltaX;
+            container.scrollLeft = newPosition;
+        }
     }, [currentPage, pageHeight, totalHeight]);
 
     const handleKeyDown = useCallback((event: KeyboardEvent) => {
@@ -403,6 +431,18 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                     setIsScrolling(true);
                     setCurrentPage(prev => Math.max(prev - 1, 1));
                     setTimeout(() => setIsScrolling(false), 300);
+                }
+                break;
+            case 'ArrowLeft':
+                event.preventDefault();
+                if (pageContainerRef.current) {
+                    pageContainerRef.current.scrollLeft -= 100;
+                }
+                break;
+            case 'ArrowRight':
+                event.preventDefault();
+                if (pageContainerRef.current) {
+                    pageContainerRef.current.scrollLeft += 100;
                 }
                 break;
         }
@@ -499,71 +539,93 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                     </label>
                 </div>
             ) : (
-                <div className="flex-1 flex">
-                    <div
-                        ref={pageContainerRef}
-                        className="flex-1 overflow-auto bg-gray-200 rounded-lg relative flex items-start justify-center p-4 transition-all duration-300 ease-in-out cursor-default"
-                        style={{
-                            scrollBehavior: 'smooth',
-                            WebkitOverflowScrolling: 'touch',
-                            height: '100%'
-                        }}
-                    >
+                <div className="flex-1 flex flex-col">
+                    <div className="flex-1 flex relative">
                         <div
-                            className="relative shadow-lg transition-transform duration-300 ease-in-out"
+                            ref={pageContainerRef}
+                            className="flex-1 overflow-auto bg-gray-200 rounded-lg relative flex items-start justify-start p-4 transition-all duration-300 ease-in-out cursor-default"
                             style={{
-                                transform: `scale(${scale})`,
-                                transformOrigin: 'top center',
-                                height: totalHeight
+                                scrollBehavior: 'smooth',
+                                WebkitOverflowScrolling: 'touch',
+                                height: '100%'
                             }}
                         >
-                            {/* Selection rectangle */}
-                            {isSelecting && selection && (
-                                <div
-                                    className="absolute border-2 border-blue-500 bg-blue-500/20 pointer-events-none"
-                                    style={{
-                                        left: Math.min(selection.startX, selection.endX) * scale,
-                                        top: Math.min(selection.startY, selection.endY) * scale,
-                                        width: Math.abs(selection.endX - selection.startX) * scale,
-                                        height: Math.abs(selection.startY - selection.endY) * scale,
-                                        // Position relative to the start of the PDF content
-                                        transform: `translateY(${scrollPosition}px)`,
-                                    }}
-                                />
-                            )}
-
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                                <div key={pageNum} style={{ height: pageHeight }}>
-                                    <canvas
-                                        ref={pageNum === currentPage ? canvasRef : undefined}
-                                        className="block"
-                                    />
-                                    <div
-                                        ref={pageNum === currentPage ? textLayerRef : undefined}
-                                        className="textLayer absolute top-0 left-0 right-0 bottom-0 overflow-hidden"
-                                    />
-                                    {/* PDFAnnotations component now only renders existing annotations */}
-                                    <PDFAnnotations
-                                        pdfDoc={pdfLibDoc}
-                                        currentPage={pageNum}
-                                        scale={scale}
-                                        annotations={annotations.filter(a => a.page === pageNum)}
-                                        onAnnotationRemove={handleAnnotationRemove}
-                                    />
-                                    {pageNum < totalPages && (
-                                        <div
-                                            className="w-full h-px bg-black opacity-30"
-                                            style={{ marginTop: '1px' }}
+                            <div
+                                className="relative shadow-lg transition-transform duration-300 ease-in-out"
+                                style={{
+                                    transform: `scale(${scale})`,
+                                    transformOrigin: 'top left',
+                                    height: totalHeight,
+                                    minWidth: '100%'
+                                }}
+                            >
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                                    <div key={pageNum} style={{ height: pageHeight }}>
+                                        <canvas
+                                            ref={pageNum === currentPage ? canvasRef : undefined}
+                                            className="block"
                                         />
-                                    )}
-                                </div>
-                            ))}
+                                        <div
+                                            ref={pageNum === currentPage ? textLayerRef : undefined}
+                                            className="textLayer absolute top-0 left-0 right-0 bottom-0 overflow-hidden"
+                                            style={{
+                                                userSelect: isHighlightMode ? 'none' : 'text',
+                                                cursor: isHighlightMode ? 'crosshair' : 'text'
+                                            }}
+                                        />
+                                        {isSelecting && selection && (
+                                            <div
+                                                className="absolute border-2 border-blue-500 bg-blue-200 bg-opacity-30"
+                                                style={{
+                                                    left: Math.min(selection.startX, selection.endX),
+                                                    top: Math.min(selection.startY, selection.endY),
+                                                    width: Math.abs(selection.endX - selection.startX),
+                                                    height: Math.abs(selection.endY - selection.startY),
+                                                }}
+                                            />
+                                        )}
+                                        <PDFAnnotations
+                                            pdfDoc={pdfLibDoc}
+                                            currentPage={pageNum}
+                                            scale={scale}
+                                            annotations={annotations.filter(a => a.page === pageNum)}
+                                            onAnnotationRemove={handleAnnotationRemove}
+                                        />
+                                        {pageNum < totalPages && (
+                                            <div
+                                                className="w-full h-px bg-black opacity-30"
+                                                style={{ marginTop: '1px' }}
+                                            />
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="w-8 flex flex-col items-center justify-center bg-gray-100 rounded-r-lg">
+                            <span className="text-sm font-medium text-gray-700">
+                                {currentPage}/{totalPages}
+                            </span>
                         </div>
                     </div>
-                    <div className="w-8 flex flex-col items-center justify-center bg-gray-100 rounded-r-lg">
-                        <span className="text-sm font-medium text-gray-700">
-                            {currentPage}/{totalPages}
-                        </span>
+                    {/* Horizontal scrollbar */}
+                    <div className="h-8 bg-gray-100 rounded-b-lg mt-2 px-4">
+                        <div className="h-full flex items-center">
+                            <input
+                                type="range"
+                                min="0"
+                                max={pageContainerRef.current?.scrollWidth || 0}
+                                value={pageContainerRef.current?.scrollLeft || 0}
+                                onChange={(e) => {
+                                    if (pageContainerRef.current) {
+                                        pageContainerRef.current.scrollLeft = parseInt(e.target.value);
+                                    }
+                                }}
+                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                style={{
+                                    background: 'linear-gradient(to right, #4B5563 0%, #4B5563 50%, #E5E7EB 50%, #E5E7EB 100%)'
+                                }}
+                            />
+                        </div>
                     </div>
                 </div>
             )}
