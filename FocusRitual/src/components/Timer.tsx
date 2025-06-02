@@ -48,26 +48,34 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange, isMinimized = fa
     }, [isBreak, duration]);
 
     useEffect(() => {
-        if (isRunning) {
-            timerRef.current = setInterval(() => {
-                setTimeLeft(prev => {
-                    const newTimeLeft = prev - 1;
-                    if (newTimeLeft <= 0) {
-                        handleTimerComplete();
-                        return 0;
-                    }
-                    return newTimeLeft;
+        if (timeLeft === 0) {
+            if (onStateChange) {
+                onStateChange({
+                    timeLeft: 0,
+                    isRunning: false,
+                    isBreak: true,
+                    isPaused: false,
+                    completedSessions: completedSessions + 1,
+                    hasStarted: true,
+                    isReset: false
                 });
+            }
+            return;
+        }
+
+        let timer: NodeJS.Timeout | null = null;
+        if (isRunning) {
+            timer = setInterval(() => {
+                setTimeLeft((prev) => prev - 1);
             }, 1000);
         }
 
         return () => {
-            if (timerRef.current) {
-                clearInterval(timerRef.current);
-                timerRef.current = null;
+            if (timer) {
+                clearInterval(timer);
             }
         };
-    }, [isRunning, handleTimerComplete]);
+    }, [timeLeft, onStateChange, completedSessions, isRunning]);
 
     useEffect(() => {
         if (onStateChange) {

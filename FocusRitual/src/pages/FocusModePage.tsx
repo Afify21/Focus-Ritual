@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import YouTubePlayer from '../components/YouTubePlayer';
 import Timer from '../components/Timer';
 import PDFViewer from '../components/PDFViewer';
@@ -6,6 +6,7 @@ import { XMarkIcon } from '@heroicons/react/24/solid';
 import ChatAssistant from '../components/ChatAssistant';
 import Soundscape from '../components/Soundscape';
 import { ThemeSelector } from '../components/ThemeSelector';
+import Paint from '../components/Paint';
 
 interface FocusModePageProps {
     onExitFocusMode: () => void;
@@ -18,6 +19,8 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
     duration,
     onStateChange,
 }) => {
+    const [showPaint, setShowPaint] = useState(false);
+
     return (
         <div className="min-h-screen text-slate-800 dark:text-white p-4 relative">
             <div className="container mx-auto h-full">
@@ -35,9 +38,21 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-[3fr_1fr] gap-6 h-[calc(100vh-60px)] relative z-10">
                     {/* Left column for PDF viewer and YouTube player */}
                     <div className="space-y-6 h-full">
-                        {/* PDF Viewer Container with fixed height and overflow hidden */}
-                        <div className="bg-white/40 dark:bg-slate-800/40 backdrop-blur-md rounded-xl overflow-hidden relative h-[calc(60%-12px)]">
-                            <PDFViewer />
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200/80">
+                                PDF Viewer
+                            </h2>
+                            <button
+                                onClick={() => setShowPaint(!showPaint)}
+                                className="px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600"
+                            >
+                                {showPaint ? 'Hide Paint' : 'Show Paint'}
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-hidden">
+                            <div className="h-[calc(60%-12px)] bg-white/40 dark:bg-slate-800/40 rounded-lg overflow-hidden">
+                                <PDFViewer />
+                            </div>
                         </div>
                         {/* YouTube Player Container with fixed height */}
                         <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 h-[calc(40%-12px)] relative">
@@ -73,6 +88,8 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
                     </div>
                 </div>
             </div>
+            {/* Paint Component */}
+            {showPaint && <Paint width={400} height={400} />}
             {/* Chat Assistant rendered at the highest level */}
             <div className="fixed inset-0 z-[999999] pointer-events-none">
                 <div className="absolute inset-0 pointer-events-none">
