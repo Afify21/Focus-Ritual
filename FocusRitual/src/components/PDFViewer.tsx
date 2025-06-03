@@ -291,7 +291,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                 setPdfDoc(pdf);
                 setTotalPages(pdf.numPages);
                 console.log('Total pages:', pdf.numPages);
-                setCurrentPage(1);
+                setCurrentPage(1); // Ensure current page is always at least 1 on load
 
                 // Load PDF for annotations (using pdf-lib)
                 console.log('Attempting to load PDF for annotations with pdf-lib.');
@@ -407,8 +407,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving annotated PDF:', error);
+            console.error('Error details:', error.message, error.stack);
             alert('Error saving annotated PDF. Please try again.');
         }
     };
@@ -426,7 +427,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
     };
 
     const handlePageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setCurrentPage(Number(event.target.value));
+        setCurrentPage(Math.max(1, Number(event.target.value))); // Ensure page is at least 1
     };
 
     const handleWheel = useCallback((event: WheelEvent) => {
@@ -442,7 +443,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
             const currentPageNum = Math.floor(newPosition / pageHeight) + 1;
 
             if (currentPageNum !== currentPage) {
-                setCurrentPage(currentPageNum);
+                setCurrentPage(Math.max(1, currentPageNum)); // Ensure page is at least 1
             }
             container.scrollTop = newPosition;
         }
@@ -471,7 +472,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                 event.preventDefault();
                 if (currentPage > 1) {
                     setIsScrolling(true);
-                    setCurrentPage(prev => Math.max(prev - 1, 1));
+                    setCurrentPage(prev => Math.max(1, prev - 1)); // Ensure page is at least 1
                     setTimeout(() => setIsScrolling(false), 300);
                 }
                 break;
