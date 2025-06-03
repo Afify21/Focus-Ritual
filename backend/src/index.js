@@ -4,6 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const audioRoutes = require('./routes/audioRoutes');
 const chatRoutes = require('./routes/chatRoutes');
+const habitRoutes = require('./routes/habitRoutes');
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.use('/audio', express.static(path.join(__dirname, '../public/audio')));
 // Routes
 app.use('/api/audio', audioRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/habits', habitRoutes);
 
 // Start server
 const PORT = process.env.PORT || 5002;

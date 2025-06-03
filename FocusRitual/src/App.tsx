@@ -9,10 +9,12 @@ import QuoteGenerator from './components/QuoteGenerator';
 import { PlayCircleIcon, ArrowsPointingOutIcon, XMarkIcon, MusicalNoteIcon } from '@heroicons/react/24/solid';
 import Callback from './pages/Callback';
 import FocusModePage from './pages/FocusModePage';
+import HabitPage from './pages/HabitPage';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { useTheme } from './context/ThemeContext';
 import { ThemeSelector } from './components/ThemeSelector';
 import { BackgroundManager } from './components/BackgroundManager';
+import HabitSummary from './components/HabitSummary';
 
 const App: React.FC = () => {
     const [selectedTime, setSelectedTime] = useState(25);
@@ -99,6 +101,7 @@ const App: React.FC = () => {
                         onStateChange={handleTimerStateChange}
                     />
                 } />
+                <Route path="/habits" element={<HabitPage />} />
                 <Route path="/" element={
                     <div className="min-h-screen text-white p-4">
                         <BackgroundManager
@@ -123,6 +126,12 @@ const App: React.FC = () => {
                                         className="px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors"
                                     >
                                         {showThemeSelector ? 'Hide Themes' : 'Show Themes'}
+                                    </button>
+                                    <button
+                                        onClick={() => navigate('/habits')}
+                                        className="px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors"
+                                    >
+                                        Habits
                                     </button>
                                 </div>
                             </div>
@@ -188,6 +197,7 @@ const App: React.FC = () => {
                                 </div>
                                 <div className="space-y-6">
                                     <Soundscape />
+                                    <HabitSummary />
                                     <RitualBuilder />
                                     <QuoteGenerator />
                                 </div>
