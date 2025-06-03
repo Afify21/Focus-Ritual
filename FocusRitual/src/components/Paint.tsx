@@ -37,11 +37,22 @@ const Paint: React.FC<PaintProps> = ({ width, height }) => {
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
+        // Save the current canvas content
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        if (!tempCtx) return;
+
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        tempCtx.drawImage(canvas, 0, 0);
+
+        // Resize the main canvas
         canvas.width = size.width;
         canvas.height = size.height;
 
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, size.width, size.height);
+        // Restore the content
+        ctx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, size.width, size.height);
+
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
     }, [size.width, size.height]);
