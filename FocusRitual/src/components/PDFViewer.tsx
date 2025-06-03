@@ -511,9 +511,14 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                 <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200/80">PDF Viewer</h2>
                 <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-2">
+                        {pdfFile && totalPages > 0 && (
+                            <span className="text-sm text-gray-900 dark:text-white font-medium">
+                                {currentPage}/{totalPages}
+                            </span>
+                        )}
                         <button
                             onClick={zoomOut}
-                            className="px-3 py-1 rounded bg-slate-600 hover:bg-slate-700 text-white"
+                            className="px-2 py-1 text-xs font-medium text-white bg-slate-600 rounded-md hover:bg-slate-700 transition-colors"
                         >
                             -
                         </button>
@@ -522,7 +527,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                         </span>
                         <button
                             onClick={zoomIn}
-                            className="px-3 py-1 rounded bg-slate-600 hover:bg-slate-700 text-white"
+                            className="px-2 py-1 text-xs font-medium text-white bg-slate-600 rounded-md hover:bg-slate-700 transition-colors"
                         >
                             +
                         </button>
@@ -693,31 +698,6 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                                     </div>
                                 ))}
                             </div>
-                        </div>
-                        <div className="w-8 flex flex-col items-center justify-center bg-gray-100 rounded-r-lg">
-                            <span className="text-sm font-medium text-gray-700">
-                                {currentPage}/{totalPages}
-                            </span>
-                        </div>
-                    </div>
-                    {/* Horizontal scrollbar */}
-                    <div className="h-8 bg-gray-100 rounded-b-lg mt-2 px-4">
-                        <div className="h-full flex items-center">
-                            <input
-                                type="range"
-                                min="0"
-                                max={pageContainerRef.current?.scrollWidth || 0}
-                                value={pageContainerRef.current?.scrollLeft || 0}
-                                onChange={(e) => {
-                                    if (pageContainerRef.current) {
-                                        pageContainerRef.current.scrollLeft = parseInt(e.target.value);
-                                    }
-                                }}
-                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                style={{
-                                    background: 'linear-gradient(to right, #4B5563 0%, #4B5563 50%, #E5E7EB 50%, #E5E7EB 100%)'
-                                }}
-                            />
                         </div>
                     </div>
                 </div>
