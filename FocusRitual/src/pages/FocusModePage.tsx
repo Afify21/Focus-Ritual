@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import YouTubePlayer from '../components/YouTubePlayer';
 import Timer from '../components/Timer';
 import PDFViewer from '../components/PDFViewer';
-import { XMarkIcon } from '@heroicons/react/24/solid';
+import { XMarkIcon, PencilIcon } from '@heroicons/react/24/solid';
 import ChatAssistant from '../components/ChatAssistant';
 import Soundscape from '../components/Soundscape';
 import { ThemeSelector } from '../components/ThemeSelector';
+import Paint from '../components/Paint/Paint';
 
 interface FocusModePageProps {
     onExitFocusMode: () => void;
@@ -18,8 +19,11 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
     duration,
     onStateChange,
 }) => {
+    const [showPaint, setShowPaint] = useState(false);
+
     return (
         <div className="min-h-screen text-slate-800 dark:text-white p-4 relative">
+            {showPaint && <Paint width={500} height={400} />}
             <div className="container mx-auto h-full">
                 <div className="flex justify-between items-center mb-4 relative z-50">
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Focus Mode</h1>
@@ -35,9 +39,20 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-[3fr_1fr] gap-6 h-[calc(100vh-60px)] relative z-10">
                     {/* Left column for PDF viewer and YouTube player */}
                     <div className="space-y-6 h-full">
-                        {/* PDF Viewer Container with fixed height and overflow hidden */}
-                        <div className="bg-white/40 dark:bg-slate-800/40 backdrop-blur-md rounded-xl overflow-hidden relative h-[calc(60%-12px)]">
-                            <PDFViewer />
+                        {/* Wrapper for Paint Button and PDF Viewer */}
+                        <div className="relative">
+                            {/* PDF Viewer Container with fixed height and overflow hidden */}
+                            <div className="bg-white/40 dark:bg-slate-800/40 backdrop-blur-md rounded-xl overflow-hidden h-[calc(60%-12px)]">
+                                <PDFViewer />
+                            </div>
+                            {/* Paint Button - outside PDF Viewer container */}
+                            <button
+                                onClick={() => setShowPaint(!showPaint)}
+                                className="absolute -top-8 right-0 flex items-center space-x-1 px-2 py-1 rounded-lg bg-blue-500 hover:bg-blue-600 transition-colors text-white text-sm z-10"
+                            >
+                                <PencilIcon className="h-4 w-4" />
+                                <span>{showPaint ? 'Hide Paint' : 'Show Paint'}</span>
+                            </button>
                         </div>
                         {/* YouTube Player Container with fixed height */}
                         <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 h-[calc(40%-12px)] relative">
