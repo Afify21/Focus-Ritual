@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import YouTubePlayer from '../components/YouTubePlayer';
 import Timer from '../components/Timer';
-import PDFViewer from '../components/PDFViewer';
+import PDFViewer from '../components/SimplePDFViewer';
 import { XMarkIcon, PencilIcon } from '@heroicons/react/24/solid';
 import ChatAssistant from '../components/ChatAssistant';
 import Soundscape from '../components/Soundscape';

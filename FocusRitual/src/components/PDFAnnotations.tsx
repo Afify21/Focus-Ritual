@@ -3,7 +3,7 @@ import { PDFDocument, rgb } from 'pdf-lib';
 
 interface Annotation {
     id: string;
-    type: 'highlight' | 'note';
+    type: 'highlight' | 'note' | 'rectangle' | 'underline';
     page: number;
     x: number;
     y: number;
@@ -50,18 +50,33 @@ const PDFAnnotations: React.FC<PDFAnnotationsProps> = ({
             className="absolute inset-0 pointer-events-none"
         >
             {/* Annotations */}
-            {annotations
-                .map(annotation => (
+            {annotations.map((annotation: Annotation) => {
+                let style: React.CSSProperties = {
+                    left: annotation.x * scale,
+                    top: annotation.y * scale,
+                    width: annotation.width * scale,
+                    height: annotation.height * scale,
+                    position: 'absolute', // Ensure position is absolute
+                    cursor: 'pointer',
+                };
+
+                if (annotation.type === 'underline') {
+                    style.backgroundColor = annotation.color; // Solid color for underline
+                    // height is already set to the underline thickness from annotation.height
+                } else if (annotation.type === 'highlight' || annotation.type === 'rectangle') {
+                    style.backgroundColor = annotation.color + '40'; // Semi-transparent for highlight/rectangle
+                } else if (annotation.type === 'note') {
+                    // Placeholder for note styling - maybe an icon
+                    style.backgroundColor = annotation.color + '40'; // Default for now
+                    style.width = 20 * scale; // Example fixed size for a note icon
+                    style.height = 20 * scale;
+                }
+
+                return (
                     <div
                         key={annotation.id}
-                        className="absolute cursor-pointer group pointer-events-auto"
-                        style={{
-                            left: annotation.x * scale,
-                            top: annotation.y * scale,
-                            width: annotation.width * scale,
-                            height: annotation.height * scale,
-                            backgroundColor: annotation.color + '40',
-                        }}
+                        className="group pointer-events-auto" // Removed absolute from here, it's in style object
+                        style={style}
                         onClick={() => handleAnnotationClick(annotation.id)}
                     >
                         <button
@@ -73,13 +88,14 @@ const PDFAnnotations: React.FC<PDFAnnotationsProps> = ({
                         >
                             ×
                         </button>
-                        {annotation.text && (
-                            <div className="absolute -top-8 left-0 bg-white text-black p-1 rounded text-sm whitespace-nowrap pointer-events-auto">
+                        {annotation.text && (annotation.type === 'highlight' || annotation.type === 'note') && (
+                            <div className="absolute -top-8 left-0 bg-white text-black p-1 rounded text-sm whitespace-nowrap pointer-events-auto z-10">
                                 {annotation.text}
                             </div>
                         )}
                     </div>
-                ))}
+                );
+            })}
         </div>
     );
 };

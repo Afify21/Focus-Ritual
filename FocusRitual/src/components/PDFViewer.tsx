@@ -5,8 +5,20 @@ import PDFAnnotations from './PDFAnnotations';
 import { XMarkIcon } from '@heroicons/react/24/solid';
 import 'pdfjs-dist/web/pdf_viewer.css';
 
-// Set up PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `${window.location.origin}/workers/pdf.worker.mjs`;
+// Set up PDF.js worker with more robust path handling
+const workerSrc = `${window.location.origin}/workers/pdf.worker.mjs`;
+const workerSrcFallback = `https://unpkg.com/pdfjs-dist@5.3.31/build/pdf.worker.min.mjs`;
+
+try {
+    if (typeof window !== 'undefined') {
+        console.log('Setting PDF.js worker source to:', workerSrc);
+        pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
+    }
+} catch (error) {
+    console.error('Error setting up PDF.js worker:', error);
+    // Fall back to CDN
+    pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrcFallback;
+}
 
 interface PDFViewerProps {
     onClose?: () => void;
@@ -14,7 +26,7 @@ interface PDFViewerProps {
 
 interface Annotation {
     id: string;
-    type: 'highlight' | 'note';
+    type: 'highlight' | 'note' | 'rectangle' | 'underline';
     page: number;
     x: number;
     y: number;
@@ -58,8 +70,19 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
     // Add new state for drawing mode
     const [isDrawingMode, setIsDrawingMode] = useState(false);
     const [drawBox, setDrawBox] = useState<{ startX: number; startY: number; endX: number; endY: number; page: number } | null>(null);
+    const [isUnderlineMode, setIsUnderlineMode] = useState(false);
+    const [isNoteMode, setIsNoteMode] = useState(false);
+    const [showNoteInputModal, setShowNoteInputModal] = useState(false);
+    const [currentNoteText, setCurrentNoteText] = useState('');
+    const [notePosition, setNotePosition] = useState<{ x: number; y: number; page: number } | null>(null);
 
     const [pdfText, setPdfText] = useState<string>('');
+    const [rotation, setRotation] = useState<number>(0);
+    const [isPageLoading, setIsPageLoading] = useState<boolean>(false);
+    const [showTextExtractModal, setShowTextExtractModal] = useState<boolean>(false);
+    const [extractedTextContent, setExtractedTextContent] = useState<string>('');
+
+    const debouncedSetCurrentPage = useRef<((page: number) => void) | null>(null);
 
     const handleAnnotationAdd = useCallback((annotation: Annotation) => {
         setAnnotations(prev => [...prev, annotation]);
@@ -74,14 +97,28 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
         const rect = textLayerRef.current.getBoundingClientRect();
         const x = (e.clientX - rect.left) / scale;
         const y = (e.clientY - rect.top) / scale;
+
+        if (isNoteMode) {
+            e.preventDefault();
+            setNotePosition({ x, y, page: currentPage });
+            setCurrentNoteText('');
+            setShowNoteInputModal(true);
+            setIsNoteMode(false);
+            return;
+        }
+
         if (isDrawingMode) {
             setDrawBox({ startX: x, startY: y, endX: x, endY: y, page: currentPage });
         } else if (isHighlightMode) {
             e.preventDefault();
             setIsSelecting(true);
             setSelection({ startX: x, startY: y, endX: x, endY: y });
+        } else if (isUnderlineMode) {
+            e.preventDefault();
+            setIsSelecting(true);
+            setSelection({ startX: x, startY: y, endX: x, endY: y });
         }
-    }, [isDrawingMode, isHighlightMode, scale]);
+    }, [isDrawingMode, drawBox, isHighlightMode, currentPage, scale, selectedColor, handleAnnotationAdd, isUnderlineMode, isNoteMode]);
 
     const handleMouseMove = useCallback((e: MouseEvent) => {
         if (!textLayerRef.current) return;
@@ -101,7 +138,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
             const { startX, startY, endX, endY, page } = drawBox;
             const newAnnotation: Annotation = {
                 id: Date.now().toString(),
-                type: 'highlight',
+                type: 'rectangle',
                 page: page,
                 x: Math.min(startX, endX),
                 y: Math.min(startY, endY),
@@ -111,26 +148,46 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
             };
             handleAnnotationAdd(newAnnotation);
             setDrawBox(null);
-        } else if (isHighlightMode) {
+        } else if (isHighlightMode || isUnderlineMode) {
             const selection = window.getSelection();
             if (selection && !selection.isCollapsed && selection.rangeCount > 0) {
+                try {
                 const ranges: Range[] = [];
                 for (let i = 0; i < selection.rangeCount; i++) {
                     ranges.push(selection.getRangeAt(i));
                 }
+                    
+                    if (!textLayerRef.current) {
+                        console.error('Text layer ref is not available');
+                        return;
+                    }
+                    
+                    const textLayerRect = textLayerRef.current.getBoundingClientRect();
+                    
                 ranges.forEach(range => {
                     const rects = range.getClientRects();
-                    if (!rects.length || !textLayerRef.current) return;
+                        if (!rects.length) {
+                            console.log('No client rects in range');
+                            return;
+                        }
+                        
+                        console.log(`Creating ${isHighlightMode ? 'highlight' : 'underline'} for range with ${rects.length} rects`);
+                        
                     for (let i = 0; i < rects.length; i++) {
                         const rect = rects[i];
-                        const textLayerRect = textLayerRef.current.getBoundingClientRect();
                         const x = (rect.left - textLayerRect.left) / scale;
-                        const y = (rect.top - textLayerRect.top) / scale;
+                            const y = isHighlightMode 
+                                ? (rect.top - textLayerRect.top) / scale 
+                                : (rect.top - textLayerRect.top + rect.height - 2) / scale;
+                            
                         const width = rect.width / scale;
-                        const height = rect.height / scale;
+                            const height = isHighlightMode ? rect.height / scale : 2 / scale;
+                            
+                            console.log(`Creating annotation at x:${x}, y:${y}, w:${width}, h:${height}`);
+                            
                         const newAnnotation: Annotation = {
-                            id: Date.now().toString() + i,
-                            type: 'highlight',
+                                id: Date.now().toString() + "-" + (isHighlightMode ? "highlight" : "underline") + "-" + i,
+                                type: isHighlightMode ? 'highlight' : 'underline',
                             page: currentPage,
                             x,
                             y,
@@ -142,23 +199,33 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                         handleAnnotationAdd(newAnnotation);
                     }
                 });
+                    
+                    setTimeout(() => {
                 selection.removeAllRanges();
+                    }, 300);
+                } catch (error) {
+                    console.error('Error creating annotation:', error);
             }
+            } else {
+                console.log('No text selected or selection collapsed');
         }
+        }
+        
         setIsSelecting(false);
         setSelection(null);
-    }, [isDrawingMode, drawBox, isHighlightMode, currentPage, scale, selectedColor, handleAnnotationAdd]);
+    }, [isDrawingMode, drawBox, isHighlightMode, isUnderlineMode, currentPage, scale, selectedColor, handleAnnotationAdd]);
 
     const renderPage = useCallback(async (pageNum: number) => {
-        console.log('Attempting to render page:', pageNum);
+        console.log('Attempting to render page:', pageNum, 'with rotation:', rotation);
         if (!pdfDoc || !canvasRef.current || !pageContainerRef.current || !textLayerRef.current) {
             console.log('Rendering skipped: pdfDoc, canvasRef, pageContainerRef, or textLayerRef not available');
             return;
         }
-
+        setIsPageLoading(true);
         try {
             const page = await pdfDoc.getPage(pageNum);
-            const viewport = page.getViewport({ scale });
+            console.log('Page retrieved successfully:', pageNum);
+            const viewport = page.getViewport({ scale, rotation });
 
             const canvas = canvasRef.current;
             const context = canvas.getContext('2d');
@@ -167,14 +234,11 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                 return;
             }
 
-            // Set canvas dimensions to match viewport
             canvas.height = viewport.height;
             canvas.width = viewport.width;
 
-            // Update page height for scroll calculations
             setPageHeight(viewport.height);
 
-            // Set the container dimensions to match the canvas for correct annotation and text layer positioning
             pageContainerRef.current.style.width = `${viewport.width}px`;
             pageContainerRef.current.style.height = `${viewport.height}px`;
 
@@ -183,22 +247,28 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                 viewport: viewport
             };
 
-            // Clear the canvas before rendering
             context.clearRect(0, 0, canvas.width, canvas.height);
-            await page.render(renderContext).promise;
+            
+            console.log('Beginning page render operation for page:', pageNum);
+            await page.render(renderContext).promise.catch(err => {
+                console.error(`Render error for page ${pageNum}:`, err);
+                throw err;
+            });
             console.log('Page rendered successfully:', pageNum);
 
-            // Update total height for scroll calculations
+            if (rotation === 0 || rotation === 180) {
+                setPageHeight(viewport.height);
             setTotalHeight(viewport.height * totalPages);
+            } else {
+                setPageHeight(viewport.width);
+                setTotalHeight(viewport.width * totalPages);
+            }
 
-            // Render text layer
             const textLayer = textLayerRef.current;
 
-            // Clear previous text layer
             textLayer.innerHTML = '';
             textLayer.style.setProperty('--scale-factor', scale.toString());
 
-            // Create text layer div
             const textLayerDiv = document.createElement('div');
             textLayerDiv.className = 'textLayer';
             textLayerDiv.style.width = `${viewport.width}px`;
@@ -209,48 +279,147 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
             textLayerDiv.style.right = '0';
             textLayerDiv.style.bottom = '0';
             textLayerDiv.style.overflow = 'hidden';
-            textLayerDiv.style.opacity = '1.0'; // Make text fully visible
-            textLayerDiv.style.pointerEvents = 'all'; // Always enable pointer events
-            textLayerDiv.style.userSelect = isHighlightMode ? 'text' : 'none'; // Enable text selection when in highlight mode
+            textLayerDiv.style.opacity = '1.0';
+            textLayerDiv.style.pointerEvents = 'all';
+            textLayerDiv.style.userSelect = isHighlightMode || isUnderlineMode ? 'text' : 'none';
             textLayerDiv.style.lineHeight = '1.0';
 
-            // Append text layer div to the ref container
             textLayer.appendChild(textLayerDiv);
 
             // Render text content
-            const textContent = await page.getTextContent();
-            const textItems = textContent.items;
-
-            // Create text spans for each text item
-            textItems.forEach((item: any) => {
-                const tx = pdfjsLib.Util.transform(
-                    pdfjsLib.Util.transform(viewport.transform, item.transform),
-                    [1, 0, 0, -1, 0, 0]
-                );
-
-                const style = textContent.styles[item.fontName];
-                const fontSize = Math.sqrt((tx[0] * tx[0]) + (tx[1] * tx[1]));
-
-                const textSpan = document.createElement('span');
-                textSpan.textContent = item.str;
-                textSpan.style.position = 'absolute';
-                textSpan.style.left = `${tx[4]}px`;
-                textSpan.style.top = `${tx[5]}px`;
-                textSpan.style.fontSize = `${fontSize}px`;
-                textSpan.style.fontFamily = style.fontFamily;
-                textSpan.style.transform = `scaleX(${tx[0] / fontSize})`;
-                textSpan.style.transformOrigin = 'left';
-                textSpan.style.whiteSpace = 'pre';
-                textSpan.style.cursor = 'text';
-                textSpan.style.userSelect = 'text';
-
-                textLayerDiv.appendChild(textSpan);
-            });
-
+            try {
+                console.log('Retrieving text content for page:', pageNum);
+                const textContent = await page.getTextContent().catch(err => {
+                    console.error(`Text content error for page ${pageNum}:`, err);
+                    throw err;
+                });
+                console.log('Text content retrieved for page:', pageNum);
+                
+                // Clear previous text layer
+                textLayer.innerHTML = '';
+                
+                // Create a new text layer container with proper scaling
+                const textLayerDiv = document.createElement('div');
+                textLayerDiv.className = 'textLayer';
+                textLayerDiv.style.width = `${viewport.width}px`;
+                textLayerDiv.style.height = `${viewport.height}px`;
+                textLayerDiv.style.position = 'absolute';
+                textLayerDiv.style.left = '0';
+                textLayerDiv.style.top = '0';
+                textLayerDiv.style.right = '0';
+                textLayerDiv.style.bottom = '0';
+                textLayerDiv.style.overflow = 'hidden';
+                textLayerDiv.style.opacity = '1.0';
+                textLayerDiv.style.pointerEvents = 'all';
+                textLayerDiv.style.userSelect = isHighlightMode || isUnderlineMode ? 'text' : 'none';
+                textLayerDiv.style.lineHeight = '1.0';
+                textLayer.appendChild(textLayerDiv);
+                
+                // Render text content using our improved algorithm
+                renderTextLayer(textContent, textLayerDiv, viewport, scale);
+            } catch (textError) {
+                console.error('Failed to render text layer:', textError);
+                // Add a fallback message to the text layer
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'text-red-500 p-4 text-center';
+                errorMsg.textContent = 'Error loading text layer. Text selection may not work correctly.';
+                textLayerRef.current.appendChild(errorMsg);
+            }
         } catch (error) {
             console.error('Error rendering page:', pageNum, error);
+            if (error instanceof Error) {
+                console.error('Error name:', error.name);
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
+            }
+        } finally {
+            setIsPageLoading(false);
         }
-    }, [pdfDoc, scale, totalPages, isHighlightMode]);
+    }, [pdfDoc, scale, totalPages, isHighlightMode, isUnderlineMode, rotation]);
+
+    // Helper function for manual text rendering with improved positioning
+    const renderTextLayer = (
+        textContent: any, 
+        textLayerDiv: HTMLDivElement, 
+        viewport: any, 
+        scale: number
+    ) => {
+                const textItems = textContent.items;
+        const textStyles = textContent.styles || {};
+        
+        // Sort text items by vertical position for better layout
+        const sortedItems = [...textItems].sort((a, b) => {
+            const yDiff = a.transform[5] - b.transform[5];
+            if (Math.abs(yDiff) > 5) return yDiff;
+            return a.transform[4] - b.transform[4]; // Sort by x if y is similar
+        });
+        
+        // Track lines for better text positioning
+        const lineMap: { [key: number]: Array<{x: number, width: number, item: any}> } = {};
+        
+        // First pass: group by lines
+        sortedItems.forEach((item: any) => {
+            const ty = Math.round(item.transform[5]);
+            if (!lineMap[ty]) {
+                lineMap[ty] = [];
+            }
+            
+            const x = item.transform[4];
+            const width = item.width || 5; // Default width if none provided
+            
+            lineMap[ty].push({
+                x,
+                width,
+                item
+            });
+        });
+        
+        // Second pass: create spans with proper positioning
+        Object.keys(lineMap).forEach((yPos) => {
+            const lineItems = lineMap[Number(yPos)].sort((a, b) => a.x - b.x);
+            
+            lineItems.forEach((lineItem) => {
+                try {
+                    // Transform PDF coordinates to page coordinates
+                        const tx = pdfjsLib.Util.transform(
+                        pdfjsLib.Util.transform(viewport.transform, lineItem.item.transform),
+                            [1, 0, 0, -1, 0, 0]
+                        );
+
+                    // Get style information
+                    const styleKey = lineItem.item.fontName;
+                    const style = textStyles[styleKey] || {};
+                        const fontSize = Math.sqrt((tx[0] * tx[0]) + (tx[1] * tx[1]));
+
+                    // Skip empty or whitespace-only strings
+                    if (!lineItem.item.str.trim()) return;
+                    
+                    // Create and position the text span
+                        const textSpan = document.createElement('span');
+                    textSpan.textContent = lineItem.item.str;
+                    
+                    // Apply styles with better positioning
+                        textSpan.style.position = 'absolute';
+                        textSpan.style.left = `${tx[4]}px`;
+                        textSpan.style.top = `${tx[5]}px`;
+                        textSpan.style.fontSize = `${fontSize}px`;
+                    textSpan.style.fontFamily = style.fontFamily || 'sans-serif';
+                        textSpan.style.transform = `scaleX(${tx[0] / fontSize})`;
+                        textSpan.style.transformOrigin = 'left';
+                        textSpan.style.whiteSpace = 'pre';
+                    textSpan.style.letterSpacing = '0px';
+                    textSpan.style.display = 'inline-block';
+                    textSpan.style.color = 'rgba(0, 0, 0, 1)';
+                        textSpan.style.userSelect = 'text';
+
+                    // Add the span to the text layer
+                        textLayerDiv.appendChild(textSpan);
+                    } catch (err) {
+                        console.error('Error creating text span:', err);
+                    }
+                });
+        });
+    };
 
     useEffect(() => {
         console.log('pdfDoc or currentPage or scale changed. Running useEffect.');
@@ -260,7 +429,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
         } else {
             console.log('pdfDoc is not available.');
         }
-    }, [pdfDoc, currentPage, scale, renderPage]); // Add renderPage as a dependency
+    }, [pdfDoc, currentPage, scale, renderPage]);
 
     useEffect(() => {
         const textLayer = textLayerRef.current;
@@ -268,13 +437,30 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
             textLayer.addEventListener('mousedown', handleMouseDown as EventListener);
             textLayer.addEventListener('mousemove', handleMouseMove as EventListener);
             textLayer.addEventListener('mouseup', handleMouseUp as EventListener);
+            
+            window.addEventListener('mouseup', handleMouseUp as EventListener);
+            
             return () => {
                 textLayer.removeEventListener('mousedown', handleMouseDown as EventListener);
                 textLayer.removeEventListener('mousemove', handleMouseMove as EventListener);
                 textLayer.removeEventListener('mouseup', handleMouseUp as EventListener);
+                window.removeEventListener('mouseup', handleMouseUp as EventListener);
             };
         }
     }, [handleMouseDown, handleMouseMove, handleMouseUp]);
+
+    useEffect(() => {
+        const textLayer = textLayerRef.current;
+        if (textLayer) {
+            const textLayerDivs = textLayer.querySelectorAll('.textLayer');
+            textLayerDivs.forEach(div => {
+                const htmlDiv = div as HTMLElement;
+                htmlDiv.style.userSelect = isHighlightMode || isUnderlineMode ? 'text' : 'none';
+                htmlDiv.style.cursor = isHighlightMode || isUnderlineMode ? 'text' : 
+                                       isDrawingMode ? 'crosshair' : 'default';
+            });
+        }
+    }, [isHighlightMode, isUnderlineMode, isDrawingMode]);
 
     const extractTextFromPDF = async () => {
         if (!pdfDoc) return;
@@ -282,20 +468,48 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
         try {
             let fullText = '';
             console.log(`Extracting text from ${totalPages} pages.`);
+            
+            // Show loading state or progress
+            setIsPageLoading(true);
+            
             for (let i = 1; i <= totalPages; i++) {
+                try {
                 const page = await pdfDoc.getPage(i);
+                    // Fix linter errors by removing incompatible options
                 const textContent = await page.getTextContent();
-                const pageText = textContent.items.map((item: any) => item.str).join(' ');
+                    
+                    // Process text items
+                    const pageText = textContent.items
+                        .map((item: any) => item.str)
+                        .join(' ')
+                        .replace(/\s+/g, ' ') // Normalize spacing
+                        .trim();
+                        
                 fullText += pageText + '\n\n';
-                console.log(`Extracted text from page ${i}.`);
+                    console.log(`Extracted text from page ${i}/${totalPages}.`);
+                } catch (pageError) {
+                    console.error(`Error extracting text from page ${i}:`, pageError);
+                    fullText += `[Error extracting text from page ${i}]\n\n`;
             }
+            }
+            
             setPdfText(fullText);
-            console.log(`PDF text state updated. Total length: ${fullText.length}`);
-            // Dispatch event with PDF text for AI Research Assistant
+            console.log(`PDF text extraction complete. Total length: ${fullText.length}`);
+            
+            // Dispatch event with PDF text
             window.dispatchEvent(new CustomEvent('pdfTextUpdated', { detail: fullText }));
-            console.log('Dispatched pdfTextUpdated event.');
+            
+            // Set extracted text for the modal if needed
+            setExtractedTextContent(fullText);
+            
+            // Hide loading state
+            setIsPageLoading(false);
+            
+            return fullText;
         } catch (error) {
-            console.error('Error during PDF text extraction or event dispatch:', error);
+            console.error('Error during PDF text extraction:', error);
+            setIsPageLoading(false);
+            return '';
         }
     };
 
@@ -304,29 +518,46 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
         if (!file) return;
 
         setPdfFile(file);
-        const arrayBuffer = await file.arrayBuffer();
+        let arrayBuffer;
+        
+        try {
+            arrayBuffer = await file.arrayBuffer();
+        } catch (error) {
+            console.error('Error reading file as array buffer:', error);
+            alert('Error reading the PDF file. Please try again with a different file.');
+            setPdfFile(null);
+            return;
+        }
 
         try {
-            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+            console.log('Initializing PDF.js with worker source:', pdfjsLib.GlobalWorkerOptions.workerSrc);
+            const loadingTask = pdfjsLib.getDocument({
+                data: arrayBuffer,
+                cMapUrl: 'https://unpkg.com/pdfjs-dist@5.3.31/cmaps/',
+                cMapPacked: true,
+                standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@5.3.31/standard_fonts/'
+            });
+            
+            const pdf = await loadingTask.promise;
+            console.log('PDF loaded successfully:', pdf);
             setPdfDoc(pdf);
             setTotalPages(pdf.numPages);
             setCurrentPage(1);
 
-            // Extract text after loading
-            console.log('Starting PDF text extraction...');
             await extractTextFromPDF();
-            console.log('PDF text extraction finished.');
 
-            // Load PDF for annotations (using pdf-lib)
-            console.log('Attempting to load PDF for annotations with pdf-lib.');
-            const arrayBufferForPdfLib = await file.arrayBuffer(); // Get another fresh buffer
+            const arrayBufferForPdfLib = await file.arrayBuffer();
             const pdfLibDocument = await PDFDocument.load(arrayBufferForPdfLib);
             console.log('pdf-lib document loaded:', pdfLibDocument);
             setPdfLibDoc(pdfLibDocument);
 
         } catch (error) {
             console.error('Error loading PDF:', error);
-            alert('Error loading PDF. Please ensure it is a valid PDF file.');
+            if (error instanceof Error) {
+                alert(`Error loading PDF: ${error.name} - ${error.message}`);
+            } else {
+                alert('Error loading PDF. Please ensure it is a valid PDF file.');
+            }
             setPdfFile(null);
             setPdfDoc(null);
             setPdfLibDoc(null);
@@ -372,50 +603,73 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
         if (!pdfLibDoc || !pdfFile) return;
 
         try {
-            // Create a new PDF document from the original
             const pdfBytes = await pdfFile.arrayBuffer();
             const newPdfDoc = await PDFDocument.load(pdfBytes);
 
-            // Add annotations to the PDF
             for (const annotation of annotations) {
                 const pageIndex = annotation.page - 1;
-                if (pageIndex >= newPdfDoc.getPages().length) continue; // Skip if page index is out of bounds
+                if (pageIndex >= newPdfDoc.getPages().length) continue;
 
                 const page = newPdfDoc.getPage(pageIndex);
-                const { x, y, width, height, color, text } = annotation;
+                const { x, y, width, height, color, text, type } = annotation;
 
-                // Convert hex color to RGB
                 const r = parseInt(color.slice(1, 3), 16) / 255;
                 const g = parseInt(color.slice(3, 5), 16) / 255;
                 const b = parseInt(color.slice(5, 7), 16) / 255;
+                const pageHeight = page.getHeight();
 
-                // Draw highlight
+                if (type === 'highlight' || type === 'rectangle') {
                 page.drawRectangle({
                     x,
-                    y: page.getHeight() - y - height, // Adjust y-coordinate for PDF-LIB
+                        y: pageHeight - y - height,
                     width,
                     height,
                     color: rgb(r, g, b),
                     opacity: 0.3,
                 });
+                } else if (type === 'underline') {
+                    page.drawLine({
+                        start: { x: x, y: pageHeight - y - (height / 2) },
+                        end: { x: x + width, y: pageHeight - y - (height / 2) },
+                        thickness: height,
+                        color: rgb(r, g, b),
+                        opacity: 1,
+                    });
+                }
 
-                // Add note if exists
+                if (type === 'note') {
+                    page.drawRectangle({
+                        x: x,
+                        y: pageHeight - y - height,
+                        width: width,
+                        height: height,
+                        color: rgb(r, g, b),
+                        opacity: 0.5,
+                        borderColor: rgb(0,0,0),
+                        borderWidth: 0.5,
+                    });
                 if (text) {
                     page.drawText(text, {
-                        x: x + width,
-                        y: page.getHeight() - y - height - 10, // Adjust y-coordinate for PDF-LIB
+                            x: x + width + 5,
+                            y: pageHeight - y - height,
+                            size: 10,
+                            color: rgb(0, 0, 0),
+                        });
+                    }
+                } else if (text && type === 'highlight') {
+                    page.drawText(text, {
+                        x: x, 
+                        y: pageHeight - y - height - 10, 
                         size: 12,
                         color: rgb(0, 0, 0),
                     });
                 }
             }
 
-            // Save the PDF
             const modifiedPdfBytes = await newPdfDoc.save();
             const blob = new Blob([modifiedPdfBytes], { type: 'application/pdf' });
             const url = URL.createObjectURL(blob);
 
-            // Create download link
             const link = document.createElement('a');
             link.href = url;
             link.download = `annotated_${pdfFile.name}`;
@@ -443,32 +697,29 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
     };
 
     const handlePageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setCurrentPage(Math.max(1, Number(event.target.value))); // Ensure page is at least 1
+        setCurrentPage(Math.max(1, Number(event.target.value)));
     };
 
     const handleWheel = useCallback((event: WheelEvent) => {
-        event.preventDefault();
-
-        if (!pageContainerRef.current || !totalHeight) return;
+        if (!pageContainerRef.current || !totalHeight || !pdfDoc) return;
 
         const container = pageContainerRef.current;
+        const { deltaY, deltaX } = event;
 
-        // Handle vertical scrolling
-        if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
-            const newPosition = container.scrollTop + event.deltaY;
-            const currentPageNum = Math.floor(newPosition / pageHeight) + 1;
+        if (Math.abs(deltaY) > Math.abs(deltaX)) {
+            const newScrollTop = container.scrollTop + deltaY;
+            const newCurrentPageNum = Math.floor(newScrollTop / pageHeight) + 1;
 
-            if (currentPageNum !== currentPage) {
-                setCurrentPage(Math.max(1, currentPageNum)); // Ensure page is at least 1
+            if (newCurrentPageNum !== currentPage && newCurrentPageNum >= 1 && newCurrentPageNum <= totalPages) {
+                if (debouncedSetCurrentPage.current) {
+                    debouncedSetCurrentPage.current(newCurrentPageNum);
+                } else {
+                    setCurrentPage(Math.max(1, Math.min(newCurrentPageNum, totalPages)));
+                }
             }
-            container.scrollTop = newPosition;
+        } else {
         }
-        // Handle horizontal scrolling
-        else {
-            const newPosition = container.scrollLeft + event.deltaX;
-            container.scrollLeft = newPosition;
-        }
-    }, [currentPage, pageHeight, totalHeight]);
+    }, [currentPage, pageHeight, totalPages, pdfDoc]);
 
     const handleKeyDown = useCallback((event: KeyboardEvent) => {
         if (isScrolling) return;
@@ -488,7 +739,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                 event.preventDefault();
                 if (currentPage > 1) {
                     setIsScrolling(true);
-                    setCurrentPage(prev => Math.max(1, prev - 1)); // Ensure page is at least 1
+                    setCurrentPage(prev => Math.max(1, prev - 1));
                     setTimeout(() => setIsScrolling(false), 300);
                 }
                 break;
@@ -522,96 +773,453 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
         }
     }, [handleWheel, handleKeyDown]);
 
+    useEffect(() => {
+        const checkPdfWorker = async () => {
+            try {
+                const response = await fetch(workerSrc, { method: 'HEAD' });
+                if (response.ok) {
+                    console.log('PDF.js worker is available at the expected path:', workerSrc);
+                } else {
+                    console.warn('PDF.js worker not found at expected path. Status:', response.status);
+                    console.log('Attempting to use fallback worker from CDN...');
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrcFallback;
+                }
+            } catch (error) {
+                console.error('Error checking PDF.js worker availability:', error);
+                console.log('Falling back to CDN worker source...');
+                pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrcFallback;
+            }
+        };
+        checkPdfWorker();
+    }, []);
+
+    useEffect(() => {
+        const debounce = (func: (pageNumber: number) => void, delay: number) => {
+            let timeoutId: NodeJS.Timeout;
+            return (pageNumber: number) => {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => func(pageNumber), delay);
+            };
+        };
+
+        if (totalPages > 0) {
+            debouncedSetCurrentPage.current = debounce((pageNumber) => {
+                setCurrentPage(prevPage => {
+                    const newPage = Math.max(1, Math.min(pageNumber, totalPages));
+                    if (newPage !== prevPage) {
+                        return newPage;
+                    }
+                    return prevPage;
+                });
+            }, 250);
+        }
+    }, [totalPages]);
+
+    const handleSaveNote = () => {
+        if (notePosition && currentNoteText.trim() !== '') {
+            const newAnnotation: Annotation = {
+                id: Date.now().toString() + "-note",
+                type: 'note',
+                page: notePosition.page,
+                x: notePosition.x,
+                y: notePosition.y,
+                width: 20,
+                height: 20,
+                color: selectedColor,
+                text: currentNoteText
+            };
+            handleAnnotationAdd(newAnnotation);
+        }
+        setShowNoteInputModal(false);
+        setCurrentNoteText('');
+        setNotePosition(null);
+    };
+
+    // Add new functions for fit-to-width, fit-to-page, and rotation
+    const fitToWidth = useCallback(async () => {
+        if (!pdfDoc || !pageContainerRef.current) return;
+        
+        try {
+            const page = await pdfDoc.getPage(currentPage);
+            const viewport = page.getViewport({ scale: 1, rotation });
+            const containerWidth = pageContainerRef.current.clientWidth - 40; // Subtract padding
+            const newScale = containerWidth / viewport.width;
+            setScale(newScale);
+        } catch (error) {
+            console.error('Error in fitToWidth:', error);
+        }
+    }, [pdfDoc, currentPage, rotation]);
+
+    const fitToPage = useCallback(async () => {
+        if (!pdfDoc || !pageContainerRef.current) return;
+        
+        try {
+            const page = await pdfDoc.getPage(currentPage);
+            const viewport = page.getViewport({ scale: 1, rotation });
+            const containerWidth = pageContainerRef.current.clientWidth - 40; // Subtract padding
+            const containerHeight = pageContainerRef.current.clientHeight - 40;
+            
+            const widthScale = containerWidth / viewport.width;
+            const heightScale = containerHeight / viewport.height;
+            
+            // Use the smaller scale to ensure the entire page fits
+            const newScale = Math.min(widthScale, heightScale);
+            setScale(newScale);
+        } catch (error) {
+            console.error('Error in fitToPage:', error);
+        }
+    }, [pdfDoc, currentPage, rotation]);
+
+    const rotateLeft = () => {
+        setRotation(prev => (prev - 90 + 360) % 360);
+    };
+
+    const rotateRight = () => {
+        setRotation(prev => (prev + 90) % 360);
+    };
+
+    useEffect(() => {
+        // Auto fit to page on initial load or rotation change
+        if (pdfDoc && totalPages > 0) {
+            fitToPage();
+        }
+    }, [pdfDoc, totalPages, rotation, fitToPage]);
+
     return (
         <div className="relative h-full w-full">
-            <div className="flex flex-col h-full bg-white/40 dark:bg-slate-800/40 rounded-lg shadow-lg">
-                <div className="flex justify-between items-center mb-4 p-4 border-b border-gray-200 dark:border-gray-700">
-                    <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200/80">PDF Viewer</h2>
-                    <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-2">
-                            {pdfFile && totalPages > 0 && (
-                                <span className="text-sm text-gray-900 dark:text-white font-medium">
-                                    {currentPage}/{totalPages}
-                                </span>
-                            )}
+            {showNoteInputModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-xl dark:bg-slate-700">
+                        <h3 className="text-lg font-semibold mb-4 dark:text-slate-200">Add Note</h3>
+                        <textarea
+                            className="w-full h-32 p-2 border rounded dark:bg-slate-600 dark:text-slate-200 dark:border-slate-500"
+                            value={currentNoteText}
+                            onChange={(e) => setCurrentNoteText(e.target.value)}
+                            placeholder="Enter your note..."
+                        />
+                        <div className="mt-4 flex justify-end space-x-2">
+                            <button
+                                onClick={() => {
+                                    setShowNoteInputModal(false);
+                                    setCurrentNoteText('');
+                                    setNotePosition(null);
+                                }}
+                                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 dark:bg-slate-500 dark:hover:bg-slate-400"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSaveNote}
+                                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                            >
+                                Save Note
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            <div className="flex flex-col h-full bg-white dark:bg-gray-900 rounded-lg shadow-lg overflow-hidden">
+                {/* Header with title and close button */}
+                <div className="flex justify-between items-center p-3 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                    <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">PDF Reader</h2>
+                    {onClose && (
+                        <button
+                            onClick={handleClosePDF}
+                            className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                            aria-label="Close PDF"
+                        >
+                            <XMarkIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                        </button>
+                    )}
+                </div>
+                
+                {!pdfFile ? (
+                    /* Upload area */
+                    <div className="flex-1 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 p-8">
+                        <div className="max-w-md w-full bg-white dark:bg-gray-700 rounded-lg shadow-md p-8">
+                            <div className="flex flex-col items-center text-center">
+                                <svg className="w-16 h-16 text-blue-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <h3 className="text-lg font-semibold mb-2 dark:text-white">Upload a PDF</h3>
+                                <p className="text-gray-600 dark:text-gray-300 mb-6">
+                                    Upload your PDF document to view, annotate and highlight your content.
+                                </p>
+                                <label className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded inline-flex items-center transition-colors">
+                                    <svg className="fill-current w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                        <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
+                                    </svg>
+                                    <span>Select PDF File</span>
+                                    <input
+                                        type="file"
+                                        accept=".pdf"
+                                        className="hidden"
+                                        onChange={handleFileUpload}
+                                    />
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    /* PDF Viewer area */
+                    <div className="flex-1 flex flex-col">
+                        {/* Toolbar area */}
+                        <div className="py-2 px-3 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-2">
+                            {/* Navigation controls */}
+                            <div className="flex items-center space-x-1 mr-2">
+                                <button
+                                    onClick={prevPage}
+                                    disabled={currentPage <= 1}
+                                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-40"
+                                    aria-label="Previous Page"
+                                >
+                                    <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </button>
+                                
+                                <div className="flex items-center space-x-1">
+                                    <input
+                                        type="number"
+                                        value={currentPage}
+                                        onChange={handlePageChange}
+                                        min={1}
+                                        max={totalPages}
+                                        className="w-12 text-center bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded p-1 text-sm"
+                                    />
+                                    <span className="text-gray-600 dark:text-gray-400 text-sm whitespace-nowrap">
+                                        / {totalPages}
+                                    </span>
+                                </div>
+                                
+                                <button
+                                    onClick={nextPage}
+                                    disabled={currentPage >= totalPages}
+                                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-40"
+                                    aria-label="Next Page"
+                                >
+                                    <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            {/* Divider */}
+                            <div className="h-6 border-r border-gray-300 dark:border-gray-600"></div>
+                            
+                            {/* Zoom controls */}
+                            <div className="flex items-center space-x-1 mr-2">
                             <button
                                 onClick={zoomOut}
-                                className="px-2 py-1 text-xs font-medium text-white bg-slate-600 rounded-md hover:bg-slate-700 transition-colors"
+                                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                                    aria-label="Zoom Out"
                             >
-                                -
+                                    <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                                    </svg>
                             </button>
-                            <span className="text-sm w-12 text-center text-gray-900 dark:text-white font-medium">
+                                
+                                <span className="text-gray-700 dark:text-gray-300 text-sm w-14 text-center">
                                 {Math.round(scale * 100)}%
                             </span>
+                                
                             <button
                                 onClick={zoomIn}
-                                className="px-2 py-1 text-xs font-medium text-white bg-slate-600 rounded-md hover:bg-slate-700 transition-colors"
+                                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                                    aria-label="Zoom In"
                             >
-                                +
+                                    <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                    </svg>
                             </button>
+                                
                             <button
-                                onClick={() => setIsDrawingMode(!isDrawingMode)}
-                                className={`px-3 py-1 rounded text-sm ${isDrawingMode
-                                    ? 'bg-blue-500 hover:bg-blue-600 text-white font-bold'
-                                    : 'bg-gray-600 hover:bg-gray-700 text-white'
+                                    onClick={fitToWidth}
+                                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                                    title="Fit to width"
+                                >
+                                    <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V6a2 2 0 012-2h12a2 2 0 012 2v2M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
+                                    </svg>
+                                </button>
+                                
+                                <button
+                                    onClick={fitToPage}
+                                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                                    title="Fit to page"
+                                >
+                                    <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V6a2 2 0 012-2h12a2 2 0 012 2v2M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M9 12h6" />
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            {/* Divider */}
+                            <div className="h-6 border-r border-gray-300 dark:border-gray-600"></div>
+                            
+                            {/* Rotation controls */}
+                            <div className="flex items-center space-x-1 mr-2">
+                                <button
+                                    onClick={rotateLeft}
+                                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                                    title="Rotate left"
+                                >
+                                    <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                    </svg>
+                                </button>
+                                
+                                <button
+                                    onClick={rotateRight}
+                                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                                    title="Rotate right"
+                                >
+                                    <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            {/* Divider */}
+                            <div className="h-6 border-r border-gray-300 dark:border-gray-600"></div>
+                            
+                            {/* Annotation tools */}
+                            <div className="flex items-center space-x-1 mr-2">
+                                <button
+                                    onClick={() => {
+                                        setIsHighlightMode(!isHighlightMode);
+                                        setIsDrawingMode(false);
+                                        setIsUnderlineMode(false);
+                                        setIsNoteMode(false);
+                                    }}
+                                    className={`p-1 rounded ${
+                                        isHighlightMode 
+                                            ? 'bg-yellow-200 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-200' 
+                                            : 'hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
                                     }`}
-                            >
-                                {isDrawingMode ? 'Drawing Mode' : 'Enable Drawing'}
+                                    title="Highlight text"
+                                >
+                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                    </svg>
                             </button>
-                            {isDrawingMode && (
+                                
+                                <button
+                                    onClick={() => {
+                                        setIsUnderlineMode(!isUnderlineMode);
+                                        setIsHighlightMode(false);
+                                        setIsDrawingMode(false);
+                                        setIsNoteMode(false);
+                                    }}
+                                    className={`p-1 rounded ${
+                                        isUnderlineMode 
+                                            ? 'bg-purple-200 text-purple-800 dark:bg-purple-700 dark:text-purple-200' 
+                                            : 'hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                    }`}
+                                    title="Underline text"
+                                >
+                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12h16M4 18h16" />
+                                    </svg>
+                                </button>
+                                
+                                <button
+                                    onClick={() => {
+                                        setIsDrawingMode(!isDrawingMode);
+                                        setIsHighlightMode(false);
+                                        setIsUnderlineMode(false);
+                                        setIsNoteMode(false);
+                                    }}
+                                    className={`p-1 rounded ${
+                                        isDrawingMode 
+                                            ? 'bg-blue-200 text-blue-800 dark:bg-blue-700 dark:text-blue-200' 
+                                            : 'hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                    }`}
+                                    title="Draw rectangles"
+                                >
+                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
+                                    </svg>
+                                </button>
+                                
+                                <button
+                                    onClick={() => {
+                                        setIsNoteMode(!isNoteMode);
+                                        setIsHighlightMode(false);
+                                        setIsUnderlineMode(false);
+                                        setIsDrawingMode(false);
+                                    }}
+                                    className={`p-1 rounded ${
+                                        isNoteMode 
+                                            ? 'bg-green-200 text-green-800 dark:bg-green-700 dark:text-green-200' 
+                                            : 'hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                    }`}
+                                    title="Add notes"
+                                >
+                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                                    </svg>
+                                </button>
+                                
                                 <input
                                     type="color"
                                     value={selectedColor}
                                     onChange={(e) => setSelectedColor(e.target.value)}
-                                    className="w-6 h-6 rounded cursor-pointer"
+                                    className="w-6 h-6 rounded cursor-pointer border border-gray-300 dark:border-gray-600"
+                                    title="Select color"
                                 />
-                            )}
                         </div>
-                        {pdfFile && (
-                            <>
+                            
+                            {/* Divider */}
+                            <div className="h-6 border-r border-gray-300 dark:border-gray-600"></div>
+                            
+                            {/* Actions */}
+                            <div className="flex items-center space-x-1">
+                                <button
+                                    onClick={() => {
+                                        void extractTextFromPDF().then(() => {
+                                            setShowTextExtractModal(true);
+                                        });
+                                    }}
+                                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                                    title="Extract text"
+                                >
+                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                </button>
+                                
                                 <button
                                     onClick={saveAnnotatedPDF}
-                                    className="px-3 py-1 rounded bg-green-600 hover:bg-green-700 text-white"
+                                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                                    title="Save annotated PDF"
                                 >
-                                    Save PDF
+                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                                    </svg>
                                 </button>
-                                <button
-                                    onClick={handleClosePDF}
-                                    className="p-1 rounded-full bg-red-600 hover:bg-red-700 text-white"
-                                    aria-label="Close PDF"
-                                >
-                                    <XMarkIcon className="h-5 w-5" />
-                                </button>
-                            </>
-                        )}
-                    </div>
                 </div>
 
-                {!pdfFile ? (
-                    <div className="flex-1 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-b-lg">
-                        <label className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-flex items-center">
-                            <svg className="fill-current w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                <path d="M13 10V3a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1h8a1 1 0 001-1v-7h3l-4-4z" />
-                            </svg>
-                            <span>Upload PDF</span>
-                            <input
-                                type="file"
-                                accept=".pdf"
-                                className="hidden"
-                                onChange={handleFileUpload}
-                            />
-                        </label>
+                            <div className="flex-grow"></div>
+                            
+                            {/* Mode indicator */}
+                            {(isHighlightMode || isUnderlineMode || isDrawingMode || isNoteMode) && (
+                                <span className="text-xs font-medium px-2 py-1 rounded bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                    {isHighlightMode && "Highlight Mode"}
+                                    {isUnderlineMode && "Underline Mode"}
+                                    {isDrawingMode && "Rectangle Mode"}
+                                    {isNoteMode && "Note Mode"}
+                                </span>
+                            )}
                     </div>
-                ) : (
-                    <div className="flex-1 flex flex-col">
-                        <div className="flex-1 flex relative" style={{ minHeight: '80vh' }}>
+                        
+                        {/* PDF content area */}
+                        <div className="flex-1 overflow-hidden bg-gray-200 dark:bg-gray-700 relative">
                             <div
                                 ref={pageContainerRef}
-                                className="flex-1 overflow-auto bg-gray-200 rounded-lg relative flex items-start justify-start p-4 transition-all duration-300 ease-in-out cursor-default"
+                                className="h-full overflow-auto bg-gray-200 dark:bg-gray-700 flex items-start justify-start p-4 transition-all duration-300 ease-in-out"
                                 style={{
-                                    scrollBehavior: 'smooth',
                                     WebkitOverflowScrolling: 'touch',
-                                    height: '100%'
                                 }}
                             >
                                 <div
@@ -624,7 +1232,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                                     }}
                                 >
                                     {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                                        <div key={pageNum} style={{ height: pageHeight }}>
+                                        <div key={pageNum} style={{ height: pageHeight }} className="relative">
                                             <canvas
                                                 ref={pageNum === currentPage ? canvasRef : undefined}
                                                 className="block"
@@ -633,8 +1241,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                                                 ref={pageNum === currentPage ? textLayerRef : undefined}
                                                 className="textLayer absolute top-0 left-0 right-0 bottom-0 overflow-hidden"
                                                 style={{
-                                                    userSelect: 'none',
-                                                    cursor: isDrawingMode ? 'crosshair' : 'default',
+                                                    userSelect: isHighlightMode || isUnderlineMode ? 'text' : 'none',
+                                                    cursor: isHighlightMode || isUnderlineMode ? 'text' : isDrawingMode ? 'crosshair' : 'default',
                                                     pointerEvents: 'all'
                                                 }}
                                                 onMouseDown={isDrawingMode ? (e) => {
@@ -642,7 +1250,6 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                                                     const containerRect = pageContainerRef.current?.getBoundingClientRect();
                                                     if (!containerRect || !pageContainerRef.current) return;
 
-                                                    // Calculate position relative to the current page's viewport
                                                     const x = (e.clientX - containerRect.left) / scale;
                                                     const y = (e.clientY - containerRect.top) / scale;
 
@@ -659,11 +1266,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                                                     const containerRect = pageContainerRef.current?.getBoundingClientRect();
                                                     if (!containerRect || !pageContainerRef.current) return;
 
-                                                    // Calculate position relative to the current page's viewport
                                                     const x = (e.clientX - containerRect.left) / scale;
                                                     const y = (e.clientY - containerRect.top) / scale;
 
-                                                    // Only update if we're on the same page
                                                     if (currentPage === drawBox.page) {
                                                         setDrawBox({ ...drawBox, endX: x, endY: y });
                                                     }
@@ -674,7 +1279,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
 
                                                     handleAnnotationAdd({
                                                         id: Date.now().toString(),
-                                                        type: 'highlight',
+                                                        type: 'rectangle',
                                                         page: page,
                                                         x: Math.min(startX, endX),
                                                         y: Math.min(startY, endY),
@@ -693,7 +1298,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                                                             top: Math.min(drawBox.startY, drawBox.endY) * scale,
                                                             width: Math.abs(drawBox.endX - drawBox.startX) * scale,
                                                             height: Math.abs(drawBox.endY - drawBox.startY) * scale,
-                                                            backgroundColor: selectedColor + '80',
+                                                            backgroundColor: selectedColor + '40',
                                                             border: `2px solid ${selectedColor}`,
                                                             zIndex: 10
                                                         }}
@@ -716,11 +1321,63 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                                         </div>
                                     ))}
                                 </div>
+                                
+                                {/* Add loading spinner overlay */}
+                                {isPageLoading && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-white/60 dark:bg-slate-800/60 z-50">
+                                        <div className="flex flex-col items-center">
+                                            <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                            <p className="mt-2 text-blue-600 dark:text-blue-400 font-medium">Loading...</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
                 )}
             </div>
+            
+            {/* Text Extract Modal */}
+            {showTextExtractModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-xl dark:bg-slate-700 max-w-4xl w-full max-h-[80vh] flex flex-col">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-semibold dark:text-slate-200">Extracted Text</h3>
+                            <button 
+                                onClick={() => setShowTextExtractModal(false)}
+                                className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <div className="overflow-auto flex-1 p-4 bg-gray-100 dark:bg-slate-800 rounded">
+                            <pre className="whitespace-pre-wrap font-mono text-sm dark:text-slate-200">
+                                {extractedTextContent || "No text extracted yet."}
+                            </pre>
+                        </div>
+                        <div className="mt-4 flex justify-end">
+                            <button
+                                onClick={() => {
+                                    navigator.clipboard.writeText(extractedTextContent).then(() => {
+                                        alert("Text copied to clipboard!");
+                                    }).catch(err => {
+                                        console.error("Failed to copy text: ", err);
+                                    });
+                                }}
+                                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 mr-2"
+                            >
+                                Copy to Clipboard
+                            </button>
+                            <button
+                                onClick={() => setShowTextExtractModal(false)}
+                                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 dark:bg-slate-500 dark:hover:bg-slate-400"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
