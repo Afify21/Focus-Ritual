@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeftIcon } from '@heroicons/react/24/solid';
 import HabitTracker from '../components/HabitTracker';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
+
+// Define tab type to fix linter errors
+type TabType = 'habits' | 'stats' | 'insights';
 
 interface Habit {
   id: string;
@@ -21,9 +25,10 @@ interface Habit {
 
 const HabitPage: React.FC = () => {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'habits' | 'stats' | 'insights'>('habits');
+    const [activeTab, setActiveTab] = useState<TabType>('habits');
     const [habits, setHabits] = useState<Habit[]>([]);
     const [statsPeriod, setStatsPeriod] = useState<'week' | 'month'>('week');
+    const { currentTheme } = useTheme();
     const [insights, setInsights] = useState<{
         loading: boolean;
         data: {
@@ -272,29 +277,29 @@ const HabitPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen text-white p-6 bg-gradient-to-br from-slate-900 to-slate-800">
-            <div className="max-w-6xl mx-auto">
+        <div className={`min-h-screen text-white p-1 sm:p-3 md:p-4 ${currentTheme.colors.chatWindowBg} overflow-x-hidden`}>
+            <div className="w-full max-w-5xl mx-auto">
                 {/* Header with back button */}
-                <div className="flex justify-between items-center mb-8">
+                <div className="flex justify-between items-center mb-3 md:mb-6">
                     <div className="flex items-center">
                         <button 
                             onClick={() => navigate('/')}
-                            className="mr-4 p-2 rounded-full bg-slate-700 hover:bg-slate-600 transition-colors"
+                            className={`mr-3 p-2 rounded-full ${currentTheme.colors.chatPromptButtonBg} ${currentTheme.colors.chatPromptButtonHoverBg} transition-colors`}
                         >
                             <ArrowLeftIcon className="h-5 w-5" />
                         </button>
-                        <h1 className="text-3xl font-bold">Habit Tracker</h1>
+                        <h1 className="text-xl md:text-3xl font-bold">Habit Tracker</h1>
                     </div>
                 </div>
 
                 {/* Tabs navigation */}
-                <div className="mb-8 border-b border-slate-700">
-                    <div className="flex space-x-8">
+                <div className="mb-3 md:mb-6 border-b border-slate-700 overflow-x-auto no-scrollbar">
+                    <div className="flex space-x-3 md:space-x-6 whitespace-nowrap">
                         <button
                             onClick={() => setActiveTab('habits')}
-                            className={`pb-4 px-2 font-medium text-lg transition-colors ${
+                            className={`pb-2 md:pb-3 px-2 font-medium text-sm md:text-base transition-colors ${
                                 activeTab === 'habits' 
-                                    ? 'text-white border-b-2 border-blue-500' 
+                                    ? `${currentTheme.colors.chatHeaderText} border-b-2 border-blue-500` 
                                     : 'text-slate-400 hover:text-slate-200'
                             }`}
                         >
@@ -302,9 +307,9 @@ const HabitPage: React.FC = () => {
                         </button>
                         <button
                             onClick={() => setActiveTab('stats')}
-                            className={`pb-4 px-2 font-medium text-lg transition-colors ${
+                            className={`pb-2 md:pb-3 px-2 font-medium text-sm md:text-base transition-colors ${
                                 activeTab === 'stats' 
-                                    ? 'text-white border-b-2 border-blue-500' 
+                                    ? `${currentTheme.colors.chatHeaderText} border-b-2 border-blue-500` 
                                     : 'text-slate-400 hover:text-slate-200'
                             }`}
                         >
@@ -312,9 +317,9 @@ const HabitPage: React.FC = () => {
                         </button>
                         <button
                             onClick={() => setActiveTab('insights')}
-                            className={`pb-4 px-2 font-medium text-lg transition-colors ${
+                            className={`pb-2 md:pb-3 px-2 font-medium text-sm md:text-base transition-colors ${
                                 activeTab === 'insights' 
-                                    ? 'text-white border-b-2 border-blue-500' 
+                                    ? `${currentTheme.colors.chatHeaderText} border-b-2 border-blue-500` 
                                     : 'text-slate-400 hover:text-slate-200'
                             }`}
                         >
@@ -324,15 +329,15 @@ const HabitPage: React.FC = () => {
                 </div>
 
                 {/* Content area */}
-                <div className="mt-6">
+                <div className="mt-3 md:mt-4">
                     {activeTab === 'habits' && (
-                        <div className="bg-slate-800/50 backdrop-blur-sm p-8 rounded-xl shadow-xl">
+                        <div className={`${currentTheme.colors.chatMessageListBg} backdrop-blur-sm p-3 sm:p-4 md:p-6 rounded-xl shadow-xl overflow-hidden`}>
                             <HabitTracker />
                         </div>
                     )}
                     
                     {activeTab === 'stats' && (
-                        <div className="bg-slate-800/50 backdrop-blur-sm p-8 rounded-xl shadow-xl">
+                        <div className={`${currentTheme.colors.chatMessageListBg} backdrop-blur-sm p-8 rounded-xl shadow-xl`}>
                             {habits.length === 0 ? (
                                 <div className="text-center py-12">
                                     <h3 className="text-2xl font-medium text-slate-300 mb-4">No Statistics Available</h3>
@@ -453,7 +458,7 @@ const HabitPage: React.FC = () => {
                     )}
                     
                     {activeTab === 'insights' && (
-                        <div className="bg-slate-800/50 backdrop-blur-sm p-8 rounded-xl shadow-xl">
+                        <div className={`${currentTheme.colors.chatMessageListBg} backdrop-blur-sm p-8 rounded-xl shadow-xl`}>
                             {habits.length === 0 ? (
                                 <div className="text-center py-12">
                                     <h3 className="text-2xl font-medium text-slate-300 mb-4">No Data for Insights</h3>

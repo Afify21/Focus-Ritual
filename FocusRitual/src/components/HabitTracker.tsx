@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CheckIcon, PlusIcon, TrashIcon, SparklesIcon, CalendarIcon, FolderIcon, TagIcon, TrophyIcon, BellIcon } from '@heroicons/react/24/solid';
 import NotificationSettings from './NotificationSettings';
 import { HabitReminderService } from '../services/HabitReminderService';
+import { useTheme } from '../context/ThemeContext';
 
 interface Habit {
   id: string;
@@ -134,6 +135,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
   });
   const [recentAchievement, setRecentAchievement] = useState<Achievement | null>(null);
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
+  const { currentTheme } = useTheme();
 
   useEffect(() => {
     localStorage.setItem('focus-ritual-habits', JSON.stringify(habits));
@@ -390,87 +392,91 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
   return (
     <div className={`w-full ${compact ? 'scale-90 origin-top' : ''}`}>
       {/* Header with button */}
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <h2 className="text-2xl font-bold">My Habits</h2>
-          {!compact && (
-            <div className="flex">
-              <button
-                onClick={() => setSelectedCategory(null)}
-                className={`px-3 py-1 text-sm rounded-full mr-2 ${
-                  selectedCategory === null
-                    ? 'bg-slate-100 text-slate-800'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                }`}
-              >
-                All
-              </button>
-              {CATEGORIES.map(category => (
-                <button
-                  key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
-                  className={`px-3 py-1 text-sm rounded-full mr-2 ${
-                    selectedCategory === category.id
-                      ? `${category.color.replace('bg-', 'bg-')} text-white`
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                  }`}
-                >
-                  {category.name}
-                </button>
-              ))}
-            </div>
-          )}
+      <div className="mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="flex items-center">
+          <h2 className="text-lg sm:text-xl font-bold">My Habits</h2>
         </div>
         
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap gap-1.5">
           <button
             onClick={() => setShowNotificationSettings(!showNotificationSettings)}
-            className="p-2 rounded-full bg-slate-700 hover:bg-slate-600 text-white"
+            className={`p-1.5 rounded-full ${currentTheme.colors.chatPromptButtonBg} ${currentTheme.colors.chatPromptButtonHoverBg} ${currentTheme.colors.chatPromptButtonText}`}
             title="Notification Settings"
           >
-            <BellIcon className="h-5 w-5" />
+            <BellIcon className="h-4 w-4" />
           </button>
           
           <button
             onClick={() => setShowAchievements(true)}
-            className="p-2 rounded-full bg-slate-700 hover:bg-slate-600 text-white"
+            className={`p-1.5 rounded-full ${currentTheme.colors.chatPromptButtonBg} ${currentTheme.colors.chatPromptButtonHoverBg} ${currentTheme.colors.chatPromptButtonText}`}
             title="Achievements"
           >
-            <TrophyIcon className="h-5 w-5" />
+            <TrophyIcon className="h-4 w-4" />
           </button>
           
           <button
             onClick={fetchAiRecommendation}
-            className="p-2 rounded-full bg-slate-700 hover:bg-slate-600 text-white"
+            className={`p-1.5 rounded-full ${currentTheme.colors.chatPromptButtonBg} ${currentTheme.colors.chatPromptButtonHoverBg} ${currentTheme.colors.chatPromptButtonText}`}
             title="Get AI Suggestion"
           >
-            <SparklesIcon className="h-5 w-5 text-yellow-400" />
+            <SparklesIcon className="h-4 w-4 text-yellow-400" />
           </button>
           
           <button
             onClick={() => setShowForm(true)}
-            className="p-2 rounded-full bg-green-600 hover:bg-green-500 text-white"
+            className="p-1.5 rounded-full bg-green-600 hover:bg-green-500 text-white"
             title="Add New Habit"
           >
-            <PlusIcon className="h-5 w-5" />
+            <PlusIcon className="h-4 w-4" />
           </button>
         </div>
       </div>
       
+      {/* Category filters */}
+      {!compact && (
+        <div className="mb-3 overflow-x-auto pb-1 no-scrollbar">
+          <div className="flex space-x-1.5 whitespace-nowrap">
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className={`px-2 py-1 text-xs rounded-full ${
+                selectedCategory === null
+                  ? `${currentTheme.colors.chatSendButtonBg} text-${currentTheme.colors.chatSendButtonText.replace('text-', '')}`
+                  : `${currentTheme.colors.chatPromptButtonBg} ${currentTheme.colors.chatPromptButtonText}`
+              }`}
+            >
+              All
+            </button>
+            {CATEGORIES.map(category => (
+              <button
+                key={category.id}
+                onClick={() => setSelectedCategory(category.id)}
+                className={`px-2 py-1 text-xs rounded-full ${
+                  selectedCategory === category.id
+                    ? `${category.color.replace('bg-', 'bg-')} text-white`
+                    : `${currentTheme.colors.chatPromptButtonBg} ${currentTheme.colors.chatPromptButtonText}`
+                }`}
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      
       {showNotificationSettings && (
-        <div className="mb-4">
+        <div className="mb-3 scale-95 origin-top">
           <NotificationSettings />
         </div>
       )}
 
       {/* Achievement unlocked notification */}
       {recentAchievement && (
-        <div className="mb-4 p-3 bg-yellow-500/20 border border-yellow-500/40 rounded-lg animate-pulse">
+        <div className="mb-3 p-2 bg-yellow-500/20 border border-yellow-500/40 rounded-lg animate-pulse">
           <div className="flex items-center">
-            <div className="text-xl mr-2">{recentAchievement.icon}</div>
+            <div className="text-lg mr-2">{recentAchievement.icon}</div>
             <div>
-              <div className="font-medium text-yellow-300">Achievement Unlocked!</div>
-              <div className="text-sm text-white">{recentAchievement.title}: {recentAchievement.description}</div>
+              <div className="font-medium text-sm text-yellow-300">Achievement Unlocked!</div>
+              <div className="text-xs text-white">{recentAchievement.title}: {recentAchievement.description}</div>
             </div>
           </div>
         </div>
@@ -478,7 +484,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
 
       {/* Achievements Panel */}
       {showAchievements && (
-        <div className="mb-4 p-3 bg-slate-700/50 rounded-lg">
+        <div className="mb-3 p-2 bg-slate-700/50 rounded-lg text-sm">
           <div className="flex justify-between items-center mb-3">
             <h4 className="font-medium flex items-center">
               <TrophyIcon className="h-4 w-4 mr-1 text-yellow-400" />
@@ -740,10 +746,10 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
         </div>
       )}
 
-      {/* Habits List */}
-      <div className={`space-y-2 ${compact ? 'max-h-[180px]' : 'max-h-[300px]'} overflow-y-auto pr-1`}>
+      {/* Habits List - adjust max height and padding */}
+      <div className={`space-y-1.5 ${compact ? 'max-h-[160px]' : 'max-h-[250px] sm:max-h-[350px] md:max-h-[450px]'} overflow-y-auto`}>
         {filteredHabits.length === 0 ? (
-          <p className="text-slate-400 text-center py-4 italic">
+          <p className="text-slate-400 text-center py-3 italic text-sm">
             {habits.length === 0 ? 
               "No habits tracked yet. Add one to get started!" :
               "No habits in this category. Add one or select a different category."
@@ -758,47 +764,49 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
             return (
               <div 
                 key={habit.id}
-                className={`p-3 rounded-lg ${
-                  isCompletedToday ? 'bg-slate-700/50 border-l-4 border-green-500' : 'bg-slate-700'
+                className={`p-2 rounded-lg ${
+                  isCompletedToday 
+                    ? `${currentTheme.colors.assistantMessageBg} border-l-4 border-green-500` 
+                    : currentTheme.colors.chatPromptButtonBg
                 }`}
               >
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center flex-1">
+                <div className="flex justify-between items-center flex-wrap gap-1.5">
+                  <div className="flex items-center flex-1 min-w-0">
                     <button
                       onClick={() => toggleHabitCompletion(habit.id)}
-                      className={`h-5 w-5 rounded mr-3 flex items-center justify-center ${
+                      className={`h-4 w-4 flex-shrink-0 rounded mr-2 flex items-center justify-center ${
                         isCompletedToday ? 'bg-green-600' : 'border border-slate-400'
                       }`}
                     >
-                      {isCompletedToday && <CheckIcon className="h-3 w-3 text-white" />}
+                      {isCompletedToday && <CheckIcon className="h-2.5 w-2.5 text-white" />}
                     </button>
-                    <div className="flex-1">
-                      <div className="text-white font-medium flex items-center">
-                        <span>{habit.name}</span>
-                        <span className={`ml-2 w-2 h-2 rounded-full ${category.color}`} title={category.name}></span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-white font-medium flex items-center text-sm">
+                        <span className="truncate">{habit.name}</span>
+                        <span className={`ml-2 w-2 h-2 rounded-full ${category.color} flex-shrink-0`} title={category.name}></span>
                       </div>
                       {habit.description && (
-                        <div className="text-xs text-slate-400">{habit.description}</div>
+                        <div className="text-xs text-slate-400 truncate">{habit.description}</div>
                       )}
                       {habit.frequency.time && (
-                        <div className="text-xs text-blue-400 flex items-center mt-1">
-                          <BellIcon className="h-3 w-3 mr-1" />
+                        <div className="text-xs text-blue-400 flex items-center mt-0.5">
+                          <BellIcon className="h-3 w-3 mr-1 flex-shrink-0" />
                           <span>Reminder at {habit.frequency.time}</span>
                         </div>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center ml-2">
+                  <div className="flex items-center ml-1">
                     {habit.streak > 0 && (
-                      <span className="text-xs bg-yellow-500/20 text-yellow-300 px-2 py-0.5 rounded mr-2">
+                      <span className="text-xs bg-yellow-500/20 text-yellow-300 px-1.5 py-0.5 rounded mr-1.5">
                         {habit.streak} day{habit.streak !== 1 ? 's' : ''}
                       </span>
                     )}
                     <button
                       onClick={() => deleteHabit(habit.id)}
-                      className="text-slate-400 hover:text-red-500"
+                      className="text-slate-400 hover:text-red-500 flex-shrink-0"
                     >
-                      <TrashIcon className="h-4 w-4" />
+                      <TrashIcon className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
