@@ -152,65 +152,65 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
             const selection = window.getSelection();
             if (selection && !selection.isCollapsed && selection.rangeCount > 0) {
                 try {
-                const ranges: Range[] = [];
-                for (let i = 0; i < selection.rangeCount; i++) {
-                    ranges.push(selection.getRangeAt(i));
-                }
-                    
+                    const ranges: Range[] = [];
+                    for (let i = 0; i < selection.rangeCount; i++) {
+                        ranges.push(selection.getRangeAt(i));
+                    }
+
                     if (!textLayerRef.current) {
                         console.error('Text layer ref is not available');
                         return;
                     }
-                    
+
                     const textLayerRect = textLayerRef.current.getBoundingClientRect();
-                    
-                ranges.forEach(range => {
-                    const rects = range.getClientRects();
+
+                    ranges.forEach(range => {
+                        const rects = range.getClientRects();
                         if (!rects.length) {
                             console.log('No client rects in range');
                             return;
                         }
-                        
+
                         console.log(`Creating ${isHighlightMode ? 'highlight' : 'underline'} for range with ${rects.length} rects`);
-                        
-                    for (let i = 0; i < rects.length; i++) {
-                        const rect = rects[i];
-                        const x = (rect.left - textLayerRect.left) / scale;
-                            const y = isHighlightMode 
-                                ? (rect.top - textLayerRect.top) / scale 
+
+                        for (let i = 0; i < rects.length; i++) {
+                            const rect = rects[i];
+                            const x = (rect.left - textLayerRect.left) / scale;
+                            const y = isHighlightMode
+                                ? (rect.top - textLayerRect.top) / scale
                                 : (rect.top - textLayerRect.top + rect.height - 2) / scale;
-                            
-                        const width = rect.width / scale;
+
+                            const width = rect.width / scale;
                             const height = isHighlightMode ? rect.height / scale : 2 / scale;
-                            
+
                             console.log(`Creating annotation at x:${x}, y:${y}, w:${width}, h:${height}`);
-                            
-                        const newAnnotation: Annotation = {
+
+                            const newAnnotation: Annotation = {
                                 id: Date.now().toString() + "-" + (isHighlightMode ? "highlight" : "underline") + "-" + i,
                                 type: isHighlightMode ? 'highlight' : 'underline',
-                            page: currentPage,
-                            x,
-                            y,
-                            width,
-                            height,
-                            color: selectedColor,
-                            text: range.toString()
-                        };
-                        handleAnnotationAdd(newAnnotation);
-                    }
-                });
-                    
+                                page: currentPage,
+                                x,
+                                y,
+                                width,
+                                height,
+                                color: selectedColor,
+                                text: range.toString()
+                            };
+                            handleAnnotationAdd(newAnnotation);
+                        }
+                    });
+
                     setTimeout(() => {
-                selection.removeAllRanges();
+                        selection.removeAllRanges();
                     }, 300);
                 } catch (error) {
                     console.error('Error creating annotation:', error);
-            }
+                }
             } else {
                 console.log('No text selected or selection collapsed');
+            }
         }
-        }
-        
+
         setIsSelecting(false);
         setSelection(null);
     }, [isDrawingMode, drawBox, isHighlightMode, isUnderlineMode, currentPage, scale, selectedColor, handleAnnotationAdd]);
@@ -248,7 +248,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
             };
 
             context.clearRect(0, 0, canvas.width, canvas.height);
-            
+
             console.log('Beginning page render operation for page:', pageNum);
             await page.render(renderContext).promise.catch(err => {
                 console.error(`Render error for page ${pageNum}:`, err);
@@ -258,7 +258,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
 
             if (rotation === 0 || rotation === 180) {
                 setPageHeight(viewport.height);
-            setTotalHeight(viewport.height * totalPages);
+                setTotalHeight(viewport.height * totalPages);
             } else {
                 setPageHeight(viewport.width);
                 setTotalHeight(viewport.width * totalPages);
@@ -294,10 +294,10 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                     throw err;
                 });
                 console.log('Text content retrieved for page:', pageNum);
-                
+
                 // Clear previous text layer
                 textLayer.innerHTML = '';
-                
+
                 // Create a new text layer container with proper scaling
                 const textLayerDiv = document.createElement('div');
                 textLayerDiv.className = 'textLayer';
@@ -314,7 +314,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                 textLayerDiv.style.userSelect = isHighlightMode || isUnderlineMode ? 'text' : 'none';
                 textLayerDiv.style.lineHeight = '1.0';
                 textLayer.appendChild(textLayerDiv);
-                
+
                 // Render text content using our improved algorithm
                 renderTextLayer(textContent, textLayerDiv, viewport, scale);
             } catch (textError) {
@@ -339,85 +339,85 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
 
     // Helper function for manual text rendering with improved positioning
     const renderTextLayer = (
-        textContent: any, 
-        textLayerDiv: HTMLDivElement, 
-        viewport: any, 
+        textContent: any,
+        textLayerDiv: HTMLDivElement,
+        viewport: any,
         scale: number
     ) => {
-                const textItems = textContent.items;
+        const textItems = textContent.items;
         const textStyles = textContent.styles || {};
-        
+
         // Sort text items by vertical position for better layout
         const sortedItems = [...textItems].sort((a, b) => {
             const yDiff = a.transform[5] - b.transform[5];
             if (Math.abs(yDiff) > 5) return yDiff;
             return a.transform[4] - b.transform[4]; // Sort by x if y is similar
         });
-        
+
         // Track lines for better text positioning
-        const lineMap: { [key: number]: Array<{x: number, width: number, item: any}> } = {};
-        
+        const lineMap: { [key: number]: Array<{ x: number, width: number, item: any }> } = {};
+
         // First pass: group by lines
         sortedItems.forEach((item: any) => {
             const ty = Math.round(item.transform[5]);
             if (!lineMap[ty]) {
                 lineMap[ty] = [];
             }
-            
+
             const x = item.transform[4];
             const width = item.width || 5; // Default width if none provided
-            
+
             lineMap[ty].push({
                 x,
                 width,
                 item
             });
         });
-        
+
         // Second pass: create spans with proper positioning
         Object.keys(lineMap).forEach((yPos) => {
             const lineItems = lineMap[Number(yPos)].sort((a, b) => a.x - b.x);
-            
+
             lineItems.forEach((lineItem) => {
                 try {
                     // Transform PDF coordinates to page coordinates
-                        const tx = pdfjsLib.Util.transform(
+                    const tx = pdfjsLib.Util.transform(
                         pdfjsLib.Util.transform(viewport.transform, lineItem.item.transform),
-                            [1, 0, 0, -1, 0, 0]
-                        );
+                        [1, 0, 0, -1, 0, 0]
+                    );
 
                     // Get style information
                     const styleKey = lineItem.item.fontName;
                     const style = textStyles[styleKey] || {};
-                        const fontSize = Math.sqrt((tx[0] * tx[0]) + (tx[1] * tx[1]));
+                    const fontSize = Math.sqrt((tx[0] * tx[0]) + (tx[1] * tx[1]));
 
                     // Skip empty or whitespace-only strings
                     if (!lineItem.item.str.trim()) return;
-                    
+
                     // Create and position the text span
-                        const textSpan = document.createElement('span');
+                    const textSpan = document.createElement('span');
                     textSpan.textContent = lineItem.item.str;
-                    
+
                     // Apply styles with better positioning
-                        textSpan.style.position = 'absolute';
-                        textSpan.style.left = `${tx[4]}px`;
-                        textSpan.style.top = `${tx[5]}px`;
-                        textSpan.style.fontSize = `${fontSize}px`;
+                    textSpan.style.position = 'absolute';
+                    textSpan.style.left = `${tx[4]}px`;
+                    textSpan.style.top = `${tx[5]}px`;
+                    textSpan.style.fontSize = `${fontSize}px`;
                     textSpan.style.fontFamily = style.fontFamily || 'sans-serif';
-                        textSpan.style.transform = `scaleX(${tx[0] / fontSize})`;
-                        textSpan.style.transformOrigin = 'left';
-                        textSpan.style.whiteSpace = 'pre';
+                    textSpan.style.transform = `scaleX(${tx[0] / fontSize})`;
+                    textSpan.style.transformOrigin = 'left';
+                    textSpan.style.whiteSpace = 'pre';
                     textSpan.style.letterSpacing = '0px';
                     textSpan.style.display = 'inline-block';
                     textSpan.style.color = 'rgba(0, 0, 0, 1)';
-                        textSpan.style.userSelect = 'text';
+                    textSpan.style.userSelect = 'text';
 
                     // Add the span to the text layer
-                        textLayerDiv.appendChild(textSpan);
-                    } catch (err) {
-                        console.error('Error creating text span:', err);
-                    }
-                });
+                    textLayerDiv.appendChild(textSpan);
+                } catch (err) {
+                    console.error('Error creating text span:', err);
+                }
+            });
         });
     };
 
@@ -437,9 +437,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
             textLayer.addEventListener('mousedown', handleMouseDown as EventListener);
             textLayer.addEventListener('mousemove', handleMouseMove as EventListener);
             textLayer.addEventListener('mouseup', handleMouseUp as EventListener);
-            
+
             window.addEventListener('mouseup', handleMouseUp as EventListener);
-            
+
             return () => {
                 textLayer.removeEventListener('mousedown', handleMouseDown as EventListener);
                 textLayer.removeEventListener('mousemove', handleMouseMove as EventListener);
@@ -456,8 +456,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
             textLayerDivs.forEach(div => {
                 const htmlDiv = div as HTMLElement;
                 htmlDiv.style.userSelect = isHighlightMode || isUnderlineMode ? 'text' : 'none';
-                htmlDiv.style.cursor = isHighlightMode || isUnderlineMode ? 'text' : 
-                                       isDrawingMode ? 'crosshair' : 'default';
+                htmlDiv.style.cursor = isHighlightMode || isUnderlineMode ? 'text' :
+                    isDrawingMode ? 'crosshair' : 'default';
             });
         }
     }, [isHighlightMode, isUnderlineMode, isDrawingMode]);
@@ -468,43 +468,43 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
         try {
             let fullText = '';
             console.log(`Extracting text from ${totalPages} pages.`);
-            
+
             // Show loading state or progress
             setIsPageLoading(true);
-            
+
             for (let i = 1; i <= totalPages; i++) {
                 try {
-                const page = await pdfDoc.getPage(i);
+                    const page = await pdfDoc.getPage(i);
                     // Fix linter errors by removing incompatible options
-                const textContent = await page.getTextContent();
-                    
+                    const textContent = await page.getTextContent();
+
                     // Process text items
                     const pageText = textContent.items
                         .map((item: any) => item.str)
                         .join(' ')
                         .replace(/\s+/g, ' ') // Normalize spacing
                         .trim();
-                        
-                fullText += pageText + '\n\n';
+
+                    fullText += pageText + '\n\n';
                     console.log(`Extracted text from page ${i}/${totalPages}.`);
                 } catch (pageError) {
                     console.error(`Error extracting text from page ${i}:`, pageError);
                     fullText += `[Error extracting text from page ${i}]\n\n`;
+                }
             }
-            }
-            
+
             setPdfText(fullText);
             console.log(`PDF text extraction complete. Total length: ${fullText.length}`);
-            
+
             // Dispatch event with PDF text
             window.dispatchEvent(new CustomEvent('pdfTextUpdated', { detail: fullText }));
-            
+
             // Set extracted text for the modal if needed
             setExtractedTextContent(fullText);
-            
+
             // Hide loading state
             setIsPageLoading(false);
-            
+
             return fullText;
         } catch (error) {
             console.error('Error during PDF text extraction:', error);
@@ -519,7 +519,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
 
         setPdfFile(file);
         let arrayBuffer;
-        
+
         try {
             arrayBuffer = await file.arrayBuffer();
         } catch (error) {
@@ -537,7 +537,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                 cMapPacked: true,
                 standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@5.3.31/standard_fonts/'
             });
-            
+
             const pdf = await loadingTask.promise;
             console.log('PDF loaded successfully:', pdf);
             setPdfDoc(pdf);
@@ -619,14 +619,14 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                 const pageHeight = page.getHeight();
 
                 if (type === 'highlight' || type === 'rectangle') {
-                page.drawRectangle({
-                    x,
+                    page.drawRectangle({
+                        x,
                         y: pageHeight - y - height,
-                    width,
-                    height,
-                    color: rgb(r, g, b),
-                    opacity: 0.3,
-                });
+                        width,
+                        height,
+                        color: rgb(r, g, b),
+                        opacity: 0.3,
+                    });
                 } else if (type === 'underline') {
                     page.drawLine({
                         start: { x: x, y: pageHeight - y - (height / 2) },
@@ -645,11 +645,11 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                         height: height,
                         color: rgb(r, g, b),
                         opacity: 0.5,
-                        borderColor: rgb(0,0,0),
+                        borderColor: rgb(0, 0, 0),
                         borderWidth: 0.5,
                     });
-                if (text) {
-                    page.drawText(text, {
+                    if (text) {
+                        page.drawText(text, {
                             x: x + width + 5,
                             y: pageHeight - y - height,
                             size: 10,
@@ -658,8 +658,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                     }
                 } else if (text && type === 'highlight') {
                     page.drawText(text, {
-                        x: x, 
-                        y: pageHeight - y - height - 10, 
+                        x: x,
+                        y: pageHeight - y - height - 10,
                         size: 12,
                         color: rgb(0, 0, 0),
                     });
@@ -838,7 +838,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
     // Add new functions for fit-to-width, fit-to-page, and rotation
     const fitToWidth = useCallback(async () => {
         if (!pdfDoc || !pageContainerRef.current) return;
-        
+
         try {
             const page = await pdfDoc.getPage(currentPage);
             const viewport = page.getViewport({ scale: 1, rotation });
@@ -852,16 +852,16 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
 
     const fitToPage = useCallback(async () => {
         if (!pdfDoc || !pageContainerRef.current) return;
-        
+
         try {
             const page = await pdfDoc.getPage(currentPage);
             const viewport = page.getViewport({ scale: 1, rotation });
             const containerWidth = pageContainerRef.current.clientWidth - 40; // Subtract padding
             const containerHeight = pageContainerRef.current.clientHeight - 40;
-            
+
             const widthScale = containerWidth / viewport.width;
             const heightScale = containerHeight / viewport.height;
-            
+
             // Use the smaller scale to ensure the entire page fits
             const newScale = Math.min(widthScale, heightScale);
             setScale(newScale);
@@ -932,7 +932,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                         </button>
                     )}
                 </div>
-                
+
                 {!pdfFile ? (
                     /* Upload area */
                     <div className="flex-1 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 p-8">
@@ -964,255 +964,122 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                     /* PDF Viewer area */
                     <div className="flex-1 flex flex-col">
                         {/* Toolbar area */}
-                        <div className="py-2 px-3 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-2">
-                            {/* Navigation controls */}
-                            <div className="flex items-center space-x-1 mr-2">
-                                <button
-                                    onClick={prevPage}
-                                    disabled={currentPage <= 1}
-                                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-40"
-                                    aria-label="Previous Page"
-                                >
-                                    <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                    </svg>
-                                </button>
-                                
+                        <div className="py-2 px-3 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex flex-wrap items-center justify-between">
+                            {/* Left side controls */}
+                            <div className="flex items-center space-x-2">
+                                {/* Navigation controls */}
                                 <div className="flex items-center space-x-1">
-                                    <input
-                                        type="number"
-                                        value={currentPage}
-                                        onChange={handlePageChange}
-                                        min={1}
-                                        max={totalPages}
-                                        className="w-12 text-center bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded p-1 text-sm"
-                                    />
-                                    <span className="text-gray-600 dark:text-gray-400 text-sm whitespace-nowrap">
-                                        / {totalPages}
-                                    </span>
+                                    <button
+                                        onClick={prevPage}
+                                        disabled={currentPage <= 1}
+                                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-40"
+                                        aria-label="Previous Page"
+                                    >
+                                        <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                        </svg>
+                                    </button>
+
+                                    <div className="flex items-center space-x-1">
+                                        <input
+                                            type="number"
+                                            value={currentPage}
+                                            onChange={handlePageChange}
+                                            min={1}
+                                            max={totalPages}
+                                            className="w-12 text-center bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded p-1 text-sm"
+                                        />
+                                        <span className="text-gray-600 dark:text-gray-400 text-sm whitespace-nowrap">
+                                            / {totalPages}
+                                        </span>
+                                    </div>
+
+                                    <button
+                                        onClick={nextPage}
+                                        disabled={currentPage >= totalPages}
+                                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-40"
+                                        aria-label="Next Page"
+                                    >
+                                        <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </button>
                                 </div>
-                                
-                                <button
-                                    onClick={nextPage}
-                                    disabled={currentPage >= totalPages}
-                                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-40"
-                                    aria-label="Next Page"
-                                >
-                                    <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </button>
+
+                                {/* Divider */}
+                                <div className="h-6 border-r border-gray-300 dark:border-gray-600"></div>
+
+                                {/* Zoom controls */}
+                                <div className="flex items-center space-x-1">
+                                    <button
+                                        onClick={zoomOut}
+                                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                                        aria-label="Zoom Out"
+                                    >
+                                        <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                                        </svg>
+                                    </button>
+
+                                    <span className="text-gray-700 dark:text-gray-300 text-sm w-14 text-center">
+                                        {Math.round(scale * 100)}%
+                                    </span>
+
+                                    <button
+                                        onClick={zoomIn}
+                                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                                        aria-label="Zoom In"
+                                    >
+                                        <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
-                            
-                            {/* Divider */}
-                            <div className="h-6 border-r border-gray-300 dark:border-gray-600"></div>
-                            
-                            {/* Zoom controls */}
-                            <div className="flex items-center space-x-1 mr-2">
-                            <button
-                                onClick={zoomOut}
-                                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                                    aria-label="Zoom Out"
-                            >
-                                    <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                                    </svg>
-                            </button>
-                                
-                                <span className="text-gray-700 dark:text-gray-300 text-sm w-14 text-center">
-                                {Math.round(scale * 100)}%
-                            </span>
-                                
-                            <button
-                                onClick={zoomIn}
-                                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                                    aria-label="Zoom In"
-                            >
-                                    <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                    </svg>
-                            </button>
-                                
-                            <button
-                                    onClick={fitToWidth}
-                                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                                    title="Fit to width"
-                                >
-                                    <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V6a2 2 0 012-2h12a2 2 0 012 2v2M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
-                                    </svg>
-                                </button>
-                                
-                                <button
-                                    onClick={fitToPage}
-                                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                                    title="Fit to page"
-                                >
-                                    <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V6a2 2 0 012-2h12a2 2 0 012 2v2M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M9 12h6" />
-                                    </svg>
-                                </button>
-                            </div>
-                            
-                            {/* Divider */}
-                            <div className="h-6 border-r border-gray-300 dark:border-gray-600"></div>
-                            
-                            {/* Rotation controls */}
-                            <div className="flex items-center space-x-1 mr-2">
-                                <button
-                                    onClick={rotateLeft}
-                                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                                    title="Rotate left"
-                                >
-                                    <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                                    </svg>
-                                </button>
-                                
-                                <button
-                                    onClick={rotateRight}
-                                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                                    title="Rotate right"
-                                >
-                                    <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                    </svg>
-                                </button>
-                            </div>
-                            
-                            {/* Divider */}
-                            <div className="h-6 border-r border-gray-300 dark:border-gray-600"></div>
-                            
-                            {/* Annotation tools */}
-                            <div className="flex items-center space-x-1 mr-2">
+
+                            {/* Right side controls */}
+                            <div className="flex items-center space-x-2">
+                                {/* Highlight button */}
                                 <button
                                     onClick={() => {
                                         setIsHighlightMode(!isHighlightMode);
-                                        setIsDrawingMode(false);
                                         setIsUnderlineMode(false);
+                                        setIsDrawingMode(false);
                                         setIsNoteMode(false);
                                     }}
-                                    className={`p-1 rounded ${
-                                        isHighlightMode 
-                                            ? 'bg-yellow-200 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-200' 
-                                            : 'hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-                                    }`}
+                                    className={`p-2 rounded flex items-center space-x-2 ${isHighlightMode ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}`}
                                     title="Highlight text"
                                 >
-                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M15.5 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3A.75.75 0 0112 2.25zM8.5 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM4.5 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM2.25 4.5a.75.75 0 01.75-.75h2.25a.75.75 0 010 1.5H3a.75.75 0 01-.75-.75zM2.25 8.5a.75.75 0 01.75-.75h2.25a.75.75 0 010 1.5H3a.75.75 0 01-.75-.75zM2.25 12.5a.75.75 0 01.75-.75h2.25a.75.75 0 010 1.5H3a.75.75 0 01-.75-.75zM2.25 16.5a.75.75 0 01.75-.75h2.25a.75.75 0 010 1.5H3a.75.75 0 01-.75-.75zM2.25 20.5a.75.75 0 01.75-.75h2.25a.75.75 0 010 1.5H3a.75.75 0 01-.75-.75zM6.5 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM10.5 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM14.5 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM18.5 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM21.75 4.5a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM21.75 8.5a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM21.75 12.5a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM21.75 16.5a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM21.75 20.5a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75z" />
                                     </svg>
-                            </button>
-                                
-                                <button
-                                    onClick={() => {
-                                        setIsUnderlineMode(!isUnderlineMode);
-                                        setIsHighlightMode(false);
-                                        setIsDrawingMode(false);
-                                        setIsNoteMode(false);
-                                    }}
-                                    className={`p-1 rounded ${
-                                        isUnderlineMode 
-                                            ? 'bg-purple-200 text-purple-800 dark:bg-purple-700 dark:text-purple-200' 
-                                            : 'hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-                                    }`}
-                                    title="Underline text"
-                                >
-                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12h16M4 18h16" />
-                                    </svg>
+                                    <span>Highlight</span>
                                 </button>
-                                
-                                <button
-                                    onClick={() => {
-                                        setIsDrawingMode(!isDrawingMode);
-                                        setIsHighlightMode(false);
-                                        setIsUnderlineMode(false);
-                                        setIsNoteMode(false);
-                                    }}
-                                    className={`p-1 rounded ${
-                                        isDrawingMode 
-                                            ? 'bg-blue-200 text-blue-800 dark:bg-blue-700 dark:text-blue-200' 
-                                            : 'hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-                                    }`}
-                                    title="Draw rectangles"
-                                >
-                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
-                                    </svg>
-                                </button>
-                                
-                                <button
-                                    onClick={() => {
-                                        setIsNoteMode(!isNoteMode);
-                                        setIsHighlightMode(false);
-                                        setIsUnderlineMode(false);
-                                        setIsDrawingMode(false);
-                                    }}
-                                    className={`p-1 rounded ${
-                                        isNoteMode 
-                                            ? 'bg-green-200 text-green-800 dark:bg-green-700 dark:text-green-200' 
-                                            : 'hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-                                    }`}
-                                    title="Add notes"
-                                >
-                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                                    </svg>
-                                </button>
-                                
-                                <input
-                                    type="color"
-                                    value={selectedColor}
-                                    onChange={(e) => setSelectedColor(e.target.value)}
-                                    className="w-6 h-6 rounded cursor-pointer border border-gray-300 dark:border-gray-600"
-                                    title="Select color"
-                                />
-                        </div>
-                            
-                            {/* Divider */}
-                            <div className="h-6 border-r border-gray-300 dark:border-gray-600"></div>
-                            
-                            {/* Actions */}
-                            <div className="flex items-center space-x-1">
-                                <button
-                                    onClick={() => {
-                                        void extractTextFromPDF().then(() => {
-                                            setShowTextExtractModal(true);
-                                        });
-                                    }}
-                                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
-                                    title="Extract text"
-                                >
-                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                    </svg>
-                                </button>
-                                
-                                <button
-                                    onClick={saveAnnotatedPDF}
-                                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
-                                    title="Save annotated PDF"
-                                >
-                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                                    </svg>
-                                </button>
-                </div>
 
-                            <div className="flex-grow"></div>
-                            
-                            {/* Mode indicator */}
-                            {(isHighlightMode || isUnderlineMode || isDrawingMode || isNoteMode) && (
-                                <span className="text-xs font-medium px-2 py-1 rounded bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                    {isHighlightMode && "Highlight Mode"}
-                                    {isUnderlineMode && "Underline Mode"}
-                                    {isDrawingMode && "Rectangle Mode"}
-                                    {isNoteMode && "Note Mode"}
-                                </span>
-                            )}
-                    </div>
-                        
+                                {isHighlightMode && (
+                                    <div className="flex items-center space-x-2">
+                                        <input
+                                            type="color"
+                                            value={selectedColor}
+                                            onChange={(e) => setSelectedColor(e.target.value)}
+                                            className="w-8 h-8 rounded cursor-pointer"
+                                            title="Select highlight color"
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Mode indicator */}
+                                {(isHighlightMode || isUnderlineMode || isDrawingMode || isNoteMode) && (
+                                    <span className="text-xs font-medium px-2 py-1 rounded bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                        {isHighlightMode && "Highlight Mode"}
+                                        {isUnderlineMode && "Underline Mode"}
+                                        {isDrawingMode && "Rectangle Mode"}
+                                        {isNoteMode && "Note Mode"}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+
                         {/* PDF content area */}
                         <div className="flex-1 overflow-hidden bg-gray-200 dark:bg-gray-700 relative">
                             <div
@@ -1321,7 +1188,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                                         </div>
                                     ))}
                                 </div>
-                                
+
                                 {/* Add loading spinner overlay */}
                                 {isPageLoading && (
                                     <div className="absolute inset-0 flex items-center justify-center bg-white/60 dark:bg-slate-800/60 z-50">
@@ -1336,14 +1203,14 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                     </div>
                 )}
             </div>
-            
+
             {/* Text Extract Modal */}
             {showTextExtractModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white p-6 rounded-lg shadow-xl dark:bg-slate-700 max-w-4xl w-full max-h-[80vh] flex flex-col">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-semibold dark:text-slate-200">Extracted Text</h3>
-                            <button 
+                            <button
                                 onClick={() => setShowTextExtractModal(false)}
                                 className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white"
                             >
