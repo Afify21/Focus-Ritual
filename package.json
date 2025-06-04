@@ -16,6 +16,7 @@
         "worker-loader": "^3.0.8"
     },
     "devDependencies": {
-        "@types/react-pdf": "^6.2.0"
+        "@types/react-pdf": "^6.2.0",
+        "@types/tesseract.js": "^0.0.2"
     }
 }

@@ -131,8 +131,8 @@ const App: React.FC = () => {
                         <div className={`max-w-4xl mx-auto space-y-6 transition-all duration-300 ${isFocusMode ? 'mr-[50%]' : ''}`}>
                             <div className="flex justify-between items-center mb-8">
                                 <div className="flex items-center space-x-2">
-                                    <img src="/images/logo.png" alt="FocusRitual Logo" className="h-24 w-auto brightness-90" />
-                                    <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">FocusRitual</h1>
+                                    <img src="/images/logo.png" alt="FocusRitual Logo" className="h-20 w-auto brightness-90" />
+                                    <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-700 bg-clip-text text-transparent">FocusRitual</h1>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
                                     <button
@@ -160,10 +160,10 @@ const App: React.FC = () => {
                             {/* Focus Mode Button */}
                             <button
                                 onClick={toggleFocusMode}
-                                className="fixed right-8 top-1/2 -translate-y-1/2 flex flex-col items-center space-y-2 px-6 py-8 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg"
+                                className="fixed right-8 top-1/2 -translate-y-1/2 flex flex-col items-center space-y-2 px-6 py-8 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 shadow-lg"
                             >
                                 <ArrowsPointingOutIcon className="h-8 w-8 text-white" />
-                                <span className="text-white font-medium text-lg">{isFocusMode ? 'Exit Focus' : 'Enter Focus'}</span>
+                                <span className="text-white font-medium text-lg">{isFocusMode ? 'Exit Focus' : 'Enter Focus Mode'}</span>
                             </button>
 
                             {showThemeSelector && (
