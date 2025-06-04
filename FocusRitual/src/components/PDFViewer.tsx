@@ -6,8 +6,7 @@ import { XMarkIcon } from '@heroicons/react/24/solid';
 import 'pdfjs-dist/web/pdf_viewer.css';
 
 // Set up PDF.js worker
-// We assume the worker file is copied to the public directory at /workers/
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/workers/pdf.worker.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc = `${window.location.origin}/workers/pdf.worker.mjs`;
 
 interface PDFViewerProps {
     onClose?: () => void;
@@ -59,6 +58,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
     // Add new state for drawing mode
     const [isDrawingMode, setIsDrawingMode] = useState(false);
     const [drawBox, setDrawBox] = useState<{ startX: number; startY: number; endX: number; endY: number; page: number } | null>(null);
+
+    const [pdfText, setPdfText] = useState<string>('');
 
     const handleAnnotationAdd = useCallback((annotation: Annotation) => {
         setAnnotations(prev => [...prev, annotation]);
@@ -275,42 +276,57 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
         }
     }, [handleMouseDown, handleMouseMove, handleMouseUp]);
 
+    const extractTextFromPDF = async () => {
+        if (!pdfDoc) return;
+
+        try {
+            let fullText = '';
+            console.log(`Extracting text from ${totalPages} pages.`);
+            for (let i = 1; i <= totalPages; i++) {
+                const page = await pdfDoc.getPage(i);
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items.map((item: any) => item.str).join(' ');
+                fullText += pageText + '\n\n';
+                console.log(`Extracted text from page ${i}.`);
+            }
+            setPdfText(fullText);
+            console.log(`PDF text state updated. Total length: ${fullText.length}`);
+            // Dispatch event with PDF text for AI Research Assistant
+            window.dispatchEvent(new CustomEvent('pdfTextUpdated', { detail: fullText }));
+            console.log('Dispatched pdfTextUpdated event.');
+        } catch (error) {
+            console.error('Error during PDF text extraction or event dispatch:', error);
+        }
+    };
+
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        console.log('File selected:', file?.name);
-        if (file && file.type === 'application/pdf') {
-            setPdfFile(file);
-            setScale(1.2);
+        if (!file) return;
 
-            try {
-                // Load PDF for viewing (using pdfjsLib)
-                console.log('Attempting to load PDF for viewing with pdfjsLib.');
-                const arrayBufferForPdfjs = await file.arrayBuffer(); // Get a fresh buffer
-                const pdf = await pdfjsLib.getDocument(arrayBufferForPdfjs).promise;
-                console.log('pdfjsLib document loaded:', pdf);
-                setPdfDoc(pdf);
-                setTotalPages(pdf.numPages);
-                console.log('Total pages:', pdf.numPages);
-                setCurrentPage(1); // Ensure current page is always at least 1 on load
+        setPdfFile(file);
+        const arrayBuffer = await file.arrayBuffer();
 
-                // Load PDF for annotations (using pdf-lib)
-                console.log('Attempting to load PDF for annotations with pdf-lib.');
-                const arrayBufferForPdfLib = await file.arrayBuffer(); // Get another fresh buffer
-                const pdfLibDocument = await PDFDocument.load(arrayBufferForPdfLib);
-                console.log('pdf-lib document loaded:', pdfLibDocument);
-                setPdfLibDoc(pdfLibDocument);
+        try {
+            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+            setPdfDoc(pdf);
+            setTotalPages(pdf.numPages);
+            setCurrentPage(1);
 
-            } catch (error) {
-                console.error('Error loading PDF:', error);
-                alert('Error loading PDF. Please ensure it is a valid PDF file.');
-                setPdfFile(null);
-                setPdfDoc(null);
-                setPdfLibDoc(null);
-                setTotalPages(0);
-                setCurrentPage(1);
-            }
-        } else {
-            console.log('No file selected or not a PDF.');
+            // Extract text after loading
+            console.log('Starting PDF text extraction...');
+            await extractTextFromPDF();
+            console.log('PDF text extraction finished.');
+
+            // Load PDF for annotations (using pdf-lib)
+            console.log('Attempting to load PDF for annotations with pdf-lib.');
+            const arrayBufferForPdfLib = await file.arrayBuffer(); // Get another fresh buffer
+            const pdfLibDocument = await PDFDocument.load(arrayBufferForPdfLib);
+            console.log('pdf-lib document loaded:', pdfLibDocument);
+            setPdfLibDoc(pdfLibDocument);
+
+        } catch (error) {
+            console.error('Error loading PDF:', error);
+            alert('Error loading PDF. Please ensure it is a valid PDF file.');
             setPdfFile(null);
             setPdfDoc(null);
             setPdfLibDoc(null);
@@ -507,202 +523,204 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
     }, [handleWheel, handleKeyDown]);
 
     return (
-        <div className="flex flex-col h-full bg-white/40 dark:bg-slate-800/40 rounded-lg shadow-lg">
-            <div className="flex justify-between items-center mb-4 p-4 border-b border-gray-200 dark:border-gray-700">
-                <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200/80">PDF Viewer</h2>
-                <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                        {pdfFile && totalPages > 0 && (
-                            <span className="text-sm text-gray-900 dark:text-white font-medium">
-                                {currentPage}/{totalPages}
+        <div className="relative h-full w-full">
+            <div className="flex flex-col h-full bg-white/40 dark:bg-slate-800/40 rounded-lg shadow-lg">
+                <div className="flex justify-between items-center mb-4 p-4 border-b border-gray-200 dark:border-gray-700">
+                    <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200/80">PDF Viewer</h2>
+                    <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-2">
+                            {pdfFile && totalPages > 0 && (
+                                <span className="text-sm text-gray-900 dark:text-white font-medium">
+                                    {currentPage}/{totalPages}
+                                </span>
+                            )}
+                            <button
+                                onClick={zoomOut}
+                                className="px-2 py-1 text-xs font-medium text-white bg-slate-600 rounded-md hover:bg-slate-700 transition-colors"
+                            >
+                                -
+                            </button>
+                            <span className="text-sm w-12 text-center text-gray-900 dark:text-white font-medium">
+                                {Math.round(scale * 100)}%
                             </span>
-                        )}
-                        <button
-                            onClick={zoomOut}
-                            className="px-2 py-1 text-xs font-medium text-white bg-slate-600 rounded-md hover:bg-slate-700 transition-colors"
-                        >
-                            -
-                        </button>
-                        <span className="text-sm w-12 text-center text-gray-900 dark:text-white font-medium">
-                            {Math.round(scale * 100)}%
-                        </span>
-                        <button
-                            onClick={zoomIn}
-                            className="px-2 py-1 text-xs font-medium text-white bg-slate-600 rounded-md hover:bg-slate-700 transition-colors"
-                        >
-                            +
-                        </button>
-                        <button
-                            onClick={() => setIsDrawingMode(!isDrawingMode)}
-                            className={`px-3 py-1 rounded text-sm ${isDrawingMode
-                                ? 'bg-blue-500 hover:bg-blue-600 text-white font-bold'
-                                : 'bg-gray-600 hover:bg-gray-700 text-white'
-                                }`}
-                        >
-                            {isDrawingMode ? 'Drawing Mode' : 'Enable Drawing'}
-                        </button>
-                        {isDrawingMode && (
-                            <input
-                                type="color"
-                                value={selectedColor}
-                                onChange={(e) => setSelectedColor(e.target.value)}
-                                className="w-6 h-6 rounded cursor-pointer"
-                            />
+                            <button
+                                onClick={zoomIn}
+                                className="px-2 py-1 text-xs font-medium text-white bg-slate-600 rounded-md hover:bg-slate-700 transition-colors"
+                            >
+                                +
+                            </button>
+                            <button
+                                onClick={() => setIsDrawingMode(!isDrawingMode)}
+                                className={`px-3 py-1 rounded text-sm ${isDrawingMode
+                                    ? 'bg-blue-500 hover:bg-blue-600 text-white font-bold'
+                                    : 'bg-gray-600 hover:bg-gray-700 text-white'
+                                    }`}
+                            >
+                                {isDrawingMode ? 'Drawing Mode' : 'Enable Drawing'}
+                            </button>
+                            {isDrawingMode && (
+                                <input
+                                    type="color"
+                                    value={selectedColor}
+                                    onChange={(e) => setSelectedColor(e.target.value)}
+                                    className="w-6 h-6 rounded cursor-pointer"
+                                />
+                            )}
+                        </div>
+                        {pdfFile && (
+                            <>
+                                <button
+                                    onClick={saveAnnotatedPDF}
+                                    className="px-3 py-1 rounded bg-green-600 hover:bg-green-700 text-white"
+                                >
+                                    Save PDF
+                                </button>
+                                <button
+                                    onClick={handleClosePDF}
+                                    className="p-1 rounded-full bg-red-600 hover:bg-red-700 text-white"
+                                    aria-label="Close PDF"
+                                >
+                                    <XMarkIcon className="h-5 w-5" />
+                                </button>
+                            </>
                         )}
                     </div>
-                    {pdfFile && (
-                        <>
-                            <button
-                                onClick={saveAnnotatedPDF}
-                                className="px-3 py-1 rounded bg-green-600 hover:bg-green-700 text-white"
-                            >
-                                Save PDF
-                            </button>
-                            <button
-                                onClick={handleClosePDF}
-                                className="p-1 rounded-full bg-red-600 hover:bg-red-700 text-white"
-                                aria-label="Close PDF"
-                            >
-                                <XMarkIcon className="h-5 w-5" />
-                            </button>
-                        </>
-                    )}
                 </div>
-            </div>
 
-            {!pdfFile ? (
-                <div className="flex-1 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-b-lg">
-                    <label className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-flex items-center">
-                        <svg className="fill-current w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                            <path d="M13 10V3a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1h8a1 1 0 001-1v-7h3l-4-4z" />
-                        </svg>
-                        <span>Upload PDF</span>
-                        <input
-                            type="file"
-                            accept=".pdf"
-                            className="hidden"
-                            onChange={handleFileUpload}
-                        />
-                    </label>
-                </div>
-            ) : (
-                <div className="flex-1 flex flex-col">
-                    <div className="flex-1 flex relative" style={{ minHeight: '80vh' }}>
-                        <div
-                            ref={pageContainerRef}
-                            className="flex-1 overflow-auto bg-gray-200 rounded-lg relative flex items-start justify-start p-4 transition-all duration-300 ease-in-out cursor-default"
-                            style={{
-                                scrollBehavior: 'smooth',
-                                WebkitOverflowScrolling: 'touch',
-                                height: '100%'
-                            }}
-                        >
+                {!pdfFile ? (
+                    <div className="flex-1 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-b-lg">
+                        <label className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-flex items-center">
+                            <svg className="fill-current w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <path d="M13 10V3a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1h8a1 1 0 001-1v-7h3l-4-4z" />
+                            </svg>
+                            <span>Upload PDF</span>
+                            <input
+                                type="file"
+                                accept=".pdf"
+                                className="hidden"
+                                onChange={handleFileUpload}
+                            />
+                        </label>
+                    </div>
+                ) : (
+                    <div className="flex-1 flex flex-col">
+                        <div className="flex-1 flex relative" style={{ minHeight: '80vh' }}>
                             <div
-                                className="relative shadow-lg transition-transform duration-300 ease-in-out"
+                                ref={pageContainerRef}
+                                className="flex-1 overflow-auto bg-gray-200 rounded-lg relative flex items-start justify-start p-4 transition-all duration-300 ease-in-out cursor-default"
                                 style={{
-                                    transform: `scale(${scale})`,
-                                    transformOrigin: 'top left',
-                                    height: totalHeight,
-                                    minWidth: '100%'
+                                    scrollBehavior: 'smooth',
+                                    WebkitOverflowScrolling: 'touch',
+                                    height: '100%'
                                 }}
                             >
-                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                                    <div key={pageNum} style={{ height: pageHeight }}>
-                                        <canvas
-                                            ref={pageNum === currentPage ? canvasRef : undefined}
-                                            className="block"
-                                        />
-                                        <div
-                                            ref={pageNum === currentPage ? textLayerRef : undefined}
-                                            className="textLayer absolute top-0 left-0 right-0 bottom-0 overflow-hidden"
-                                            style={{
-                                                userSelect: 'none',
-                                                cursor: isDrawingMode ? 'crosshair' : 'default',
-                                                pointerEvents: 'all'
-                                            }}
-                                            onMouseDown={isDrawingMode ? (e) => {
-                                                const rect = e.currentTarget.getBoundingClientRect();
-                                                const containerRect = pageContainerRef.current?.getBoundingClientRect();
-                                                if (!containerRect || !pageContainerRef.current) return;
+                                <div
+                                    className="relative shadow-lg transition-transform duration-300 ease-in-out"
+                                    style={{
+                                        transform: `scale(${scale})`,
+                                        transformOrigin: 'top left',
+                                        height: totalHeight,
+                                        minWidth: '100%'
+                                    }}
+                                >
+                                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                                        <div key={pageNum} style={{ height: pageHeight }}>
+                                            <canvas
+                                                ref={pageNum === currentPage ? canvasRef : undefined}
+                                                className="block"
+                                            />
+                                            <div
+                                                ref={pageNum === currentPage ? textLayerRef : undefined}
+                                                className="textLayer absolute top-0 left-0 right-0 bottom-0 overflow-hidden"
+                                                style={{
+                                                    userSelect: 'none',
+                                                    cursor: isDrawingMode ? 'crosshair' : 'default',
+                                                    pointerEvents: 'all'
+                                                }}
+                                                onMouseDown={isDrawingMode ? (e) => {
+                                                    const rect = e.currentTarget.getBoundingClientRect();
+                                                    const containerRect = pageContainerRef.current?.getBoundingClientRect();
+                                                    if (!containerRect || !pageContainerRef.current) return;
 
-                                                // Calculate position relative to the current page's viewport
-                                                const x = (e.clientX - containerRect.left) / scale;
-                                                const y = (e.clientY - containerRect.top) / scale;
+                                                    // Calculate position relative to the current page's viewport
+                                                    const x = (e.clientX - containerRect.left) / scale;
+                                                    const y = (e.clientY - containerRect.top) / scale;
 
-                                                setDrawBox({
-                                                    startX: x,
-                                                    startY: y,
-                                                    endX: x,
-                                                    endY: y,
-                                                    page: currentPage
-                                                });
-                                            } : undefined}
-                                            onMouseMove={isDrawingMode ? (e) => {
-                                                if (!drawBox) return;
-                                                const containerRect = pageContainerRef.current?.getBoundingClientRect();
-                                                if (!containerRect || !pageContainerRef.current) return;
+                                                    setDrawBox({
+                                                        startX: x,
+                                                        startY: y,
+                                                        endX: x,
+                                                        endY: y,
+                                                        page: currentPage
+                                                    });
+                                                } : undefined}
+                                                onMouseMove={isDrawingMode ? (e) => {
+                                                    if (!drawBox) return;
+                                                    const containerRect = pageContainerRef.current?.getBoundingClientRect();
+                                                    if (!containerRect || !pageContainerRef.current) return;
 
-                                                // Calculate position relative to the current page's viewport
-                                                const x = (e.clientX - containerRect.left) / scale;
-                                                const y = (e.clientY - containerRect.top) / scale;
+                                                    // Calculate position relative to the current page's viewport
+                                                    const x = (e.clientX - containerRect.left) / scale;
+                                                    const y = (e.clientY - containerRect.top) / scale;
 
-                                                // Only update if we're on the same page
-                                                if (currentPage === drawBox.page) {
-                                                    setDrawBox({ ...drawBox, endX: x, endY: y });
-                                                }
-                                            } : undefined}
-                                            onMouseUp={isDrawingMode ? (e) => {
-                                                if (!drawBox) return;
-                                                const { startX, startY, endX, endY, page } = drawBox;
+                                                    // Only update if we're on the same page
+                                                    if (currentPage === drawBox.page) {
+                                                        setDrawBox({ ...drawBox, endX: x, endY: y });
+                                                    }
+                                                } : undefined}
+                                                onMouseUp={isDrawingMode ? (e) => {
+                                                    if (!drawBox) return;
+                                                    const { startX, startY, endX, endY, page } = drawBox;
 
-                                                handleAnnotationAdd({
-                                                    id: Date.now().toString(),
-                                                    type: 'highlight',
-                                                    page: page,
-                                                    x: Math.min(startX, endX),
-                                                    y: Math.min(startY, endY),
-                                                    width: Math.abs(endX - startX),
-                                                    height: Math.abs(endY - startY),
-                                                    color: selectedColor
-                                                });
-                                                setDrawBox(null);
-                                            } : undefined}
-                                        >
-                                            {isDrawingMode && drawBox && drawBox.page === currentPage && (
+                                                    handleAnnotationAdd({
+                                                        id: Date.now().toString(),
+                                                        type: 'highlight',
+                                                        page: page,
+                                                        x: Math.min(startX, endX),
+                                                        y: Math.min(startY, endY),
+                                                        width: Math.abs(endX - startX),
+                                                        height: Math.abs(endY - startY),
+                                                        color: selectedColor
+                                                    });
+                                                    setDrawBox(null);
+                                                } : undefined}
+                                            >
+                                                {isDrawingMode && drawBox && drawBox.page === currentPage && (
+                                                    <div
+                                                        className="absolute pointer-events-none"
+                                                        style={{
+                                                            left: Math.min(drawBox.startX, drawBox.endX) * scale,
+                                                            top: Math.min(drawBox.startY, drawBox.endY) * scale,
+                                                            width: Math.abs(drawBox.endX - drawBox.startX) * scale,
+                                                            height: Math.abs(drawBox.endY - drawBox.startY) * scale,
+                                                            backgroundColor: selectedColor + '80',
+                                                            border: `2px solid ${selectedColor}`,
+                                                            zIndex: 10
+                                                        }}
+                                                    />
+                                                )}
+                                            </div>
+                                            <PDFAnnotations
+                                                pdfDoc={pdfLibDoc}
+                                                currentPage={pageNum}
+                                                scale={scale}
+                                                annotations={annotations.filter(a => a.page === pageNum)}
+                                                onAnnotationRemove={handleAnnotationRemove}
+                                            />
+                                            {pageNum < totalPages && (
                                                 <div
-                                                    className="absolute pointer-events-none"
-                                                    style={{
-                                                        left: Math.min(drawBox.startX, drawBox.endX) * scale,
-                                                        top: Math.min(drawBox.startY, drawBox.endY) * scale,
-                                                        width: Math.abs(drawBox.endX - drawBox.startX) * scale,
-                                                        height: Math.abs(drawBox.endY - drawBox.startY) * scale,
-                                                        backgroundColor: selectedColor + '80',
-                                                        border: `2px solid ${selectedColor}`,
-                                                        zIndex: 10
-                                                    }}
+                                                    className="w-full h-px bg-black opacity-30"
+                                                    style={{ marginTop: '1px' }}
                                                 />
                                             )}
                                         </div>
-                                        <PDFAnnotations
-                                            pdfDoc={pdfLibDoc}
-                                            currentPage={pageNum}
-                                            scale={scale}
-                                            annotations={annotations.filter(a => a.page === pageNum)}
-                                            onAnnotationRemove={handleAnnotationRemove}
-                                        />
-                                        {pageNum < totalPages && (
-                                            <div
-                                                className="w-full h-px bg-black opacity-30"
-                                                style={{ marginTop: '1px' }}
-                                            />
-                                        )}
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 };
