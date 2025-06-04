@@ -159,15 +159,17 @@ const App: React.FC = () => {
                                         <ChartBarIcon className="h-5 w-5" />
                                         <span>Analytics</span>
                                     </button>
-                                    <button
-                                        onClick={() => navigate('/settings')}
-                                        className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors"
-                                    >
-                                        <Cog6ToothIcon className="h-5 w-5" />
-                                        <span>Settings</span>
-                                    </button>
                                 </div>
                             </div>
+
+                            {/* Settings button in top right corner */}
+                            <button
+                                onClick={() => navigate('/settings')}
+                                className="fixed top-4 right-4 p-2 rounded-full bg-slate-600 hover:bg-slate-700 transition-colors"
+                                title="Settings"
+                            >
+                                <Cog6ToothIcon className="h-5 w-5" />
+                            </button>
 
                             {showThemeSelector && (
                                 <div className="mb-6">
@@ -233,8 +235,6 @@ const App: React.FC = () => {
                                     <Soundscape />
                                     <EnhancedTodoList />
                                     <HabitSummary />
-                                    <SessionHistory compact={true} />
-                                    <RitualBuilder />
                                     <QuoteGenerator />
                                 </div>
                             </div>

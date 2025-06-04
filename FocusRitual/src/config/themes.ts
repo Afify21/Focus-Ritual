@@ -89,8 +89,8 @@ export const themes: Theme[] = [
     },
     {
         id: 'harry-potter',
-        name: 'Harry Potter',
-        description: 'Immerse yourself in the magical world of Hogwarts',
+        name: 'Wizard Academy',
+        description: 'Immerse yourself in the magical world of Wizards',
         backgrounds: {
             focus: [
                 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748661256/background1_luqfku.mp4',
@@ -133,7 +133,7 @@ export const themes: Theme[] = [
     },
     {
         id: 'attack-on-titans',
-        name: 'Attack on Titans',
+        name: 'Titan Slayer',
         description: 'Enter the world of the Survey Corps',
         backgrounds: {
             focus: [
@@ -177,8 +177,8 @@ export const themes: Theme[] = [
     },
     {
         id: 'peaky-blinders',
-        name: 'Peaky Blinders',
-        description: 'Enter the world of the Shelby family',
+        name: 'Birmingham Gangster',
+        description: 'Enter the world of gangsters in Birmingham',
         backgrounds: {
             focus: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748705447/backgroundshelby2_ud1p1z.mov',
             break: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748705451/shelbyback1_ndljjh.mov'
