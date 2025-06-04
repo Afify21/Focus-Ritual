@@ -93,7 +93,7 @@ export const BackgroundManager: React.FC<BackgroundManagerProps> = ({
 
     // Update background when break state, playing state, or theme changes
     useEffect(() => {
-        let backgroundSource = isPlaying
+        let backgroundSource = isPlaying && !isBreak
             ? (Array.isArray(currentTheme.backgrounds.focus) ? currentTheme.backgrounds.focus[currentFocusBackgroundIndex] : currentTheme.backgrounds.focus)
             : currentTheme.backgrounds.break;
 

@@ -199,26 +199,18 @@ const QuoteGenerator: React.FC = () => {
 
     useEffect(() => {
         generateNewQuote();
+        // Set up auto-regeneration every minute
+        const interval = setInterval(generateNewQuote, 60000);
+        return () => clearInterval(interval);
     }, []);
 
     return (
-        <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 shadow-xl border border-white/10">
-            <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">Daily Inspiration</h2>
-                <button
-                    onClick={generateNewQuote}
-                    className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors"
-                    disabled={isAnimating}
-                >
-                    <SparklesIcon className="h-5 w-5" />
-                    <span>New Quote</span>
-                </button>
-            </div>
+        <div className="fixed bottom-4 left-4 max-w-xs bg-white/10 backdrop-blur-md rounded-xl p-4 shadow-xl border border-white/10">
             <div className={`transition-opacity duration-300 ${isAnimating ? 'opacity-0' : 'opacity-100'}`}>
-                <p className="text-lg mb-2 italic">"{currentQuote.text}"</p>
-                <p className="text-slate-400 text-sm">- {currentQuote.author}</p>
-                <div className="mt-2">
-                    <span className={`text-xs px-2 py-1 rounded-full ${currentQuote.type === 'motivation'
+                <p className="text-sm mb-1 italic">"{currentQuote.text}"</p>
+                <p className="text-slate-400 text-xs">- {currentQuote.author}</p>
+                <div className="mt-1">
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${currentQuote.type === 'motivation'
                         ? 'bg-blue-500/20 text-blue-400'
                         : 'bg-green-500/20 text-green-400'
                         }`}>

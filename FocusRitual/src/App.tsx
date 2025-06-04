@@ -127,13 +127,6 @@ const App: React.FC = () => {
                                 <h1 className="text-4xl font-bold">FocusRitual</h1>
                                 <div className="flex flex-wrap gap-2">
                                     <button
-                                        onClick={toggleFocusMode}
-                                        className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors"
-                                    >
-                                        <ArrowsPointingOutIcon className="h-5 w-5" />
-                                        <span>{isFocusMode ? 'Exit Focus Mode' : 'Focus Mode'}</span>
-                                    </button>
-                                    <button
                                         onClick={() => setShowThemeSelector(!showThemeSelector)}
                                         className="px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors"
                                     >
@@ -162,13 +155,13 @@ const App: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Settings button in top right corner */}
+                            {/* Focus Mode Button */}
                             <button
-                                onClick={() => navigate('/settings')}
-                                className="fixed top-4 right-4 p-2 rounded-full bg-slate-600 hover:bg-slate-700 transition-colors"
-                                title="Settings"
+                                onClick={toggleFocusMode}
+                                className="fixed right-8 top-1/2 -translate-y-1/2 flex flex-col items-center space-y-2 px-6 py-8 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg"
                             >
-                                <Cog6ToothIcon className="h-5 w-5" />
+                                <ArrowsPointingOutIcon className="h-8 w-8 text-white" />
+                                <span className="text-white font-medium text-lg">{isFocusMode ? 'Exit Focus' : 'Enter Focus'}</span>
                             </button>
 
                             {showThemeSelector && (
@@ -232,7 +225,25 @@ const App: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="space-y-6">
-                                    <Soundscape />
+                                    <div className="bg-white/10 backdrop-blur-md rounded-xl p-4">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h2 className="text-xl font-semibold">Ambient Sounds</h2>
+                                            <div className="flex items-center space-x-2">
+                                                <span className="text-white text-sm">Volume</span>
+                                                <input
+                                                    type="range"
+                                                    min="0"
+                                                    max="1"
+                                                    step="0.01"
+                                                    className="w-24 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                                />
+                                                <span className="text-white text-sm">🔊</span>
+                                            </div>
+                                        </div>
+                                        <div className="scale-90 origin-top">
+                                            <Soundscape compact={true} />
+                                        </div>
+                                    </div>
                                     <EnhancedTodoList />
                                     <HabitSummary />
                                     <QuoteGenerator />

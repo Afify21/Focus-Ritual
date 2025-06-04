@@ -111,32 +111,16 @@ const Soundscape: React.FC<SoundscapeProps> = ({ compact = false }) => {
         <div className={`${compact ? '' : 'bg-white/10 backdrop-blur-md rounded-xl p-6'}`}>
             <div className="flex items-center justify-between mb-4">
                 {!compact && <h2 className="text-xl font-semibold">Ambient Sounds</h2>}
-                <div className="flex items-center space-x-2">
-                    <span className="text-white text-sm">🔊</span>
-                    <input
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.01"
-                        value={volume}
-                        onChange={(e) => setVolume(parseFloat(e.target.value))}
-                        className={`${compact ? 'w-24' : 'w-32'} h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500`}
-                        style={{
-                            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${volume * 100}%, #4b5563 ${volume * 100}%, #4b5563 100%)`
-                        }}
-                    />
-                </div>
             </div>
             <div className={`grid ${compact ? 'grid-cols-4' : 'grid-cols-3'} gap-2`}>
                 {sounds.map((sound) => (
                     <button
                         key={sound.id}
                         onClick={() => handleSoundSelect(sound.id)}
-                        className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 ${
-                            selectedSound === sound.id
-                                ? 'bg-blue-500/20 text-blue-400'
-                                : 'bg-slate-700/50 hover:bg-slate-600/50'
-                        }`}
+                        className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 ${selectedSound === sound.id
+                            ? 'bg-blue-500/20 text-blue-400'
+                            : 'bg-slate-700/50 hover:bg-slate-600/50'
+                            }`}
                     >
                         <span className="text-xl mb-1">{sound.icon}</span>
                         <span className={`text-xs ${compact ? 'hidden' : ''}`}>{sound.name}</span>
