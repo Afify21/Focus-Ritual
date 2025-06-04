@@ -32,12 +32,44 @@ const SimplePDFViewer: React.FC<SimplePDFViewerProps> = ({ onClose }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const highlightColors = [
+        // Primary Colors
         { color: '#ffeb3b', name: 'Yellow' },
         { color: '#4caf50', name: 'Green' },
         { color: '#2196f3', name: 'Blue' },
         { color: '#f44336', name: 'Red' },
         { color: '#9c27b0', name: 'Purple' },
         { color: '#ff9800', name: 'Orange' },
+        // Pastel Colors
+        { color: '#ffcdd2', name: 'Light Red' },
+        { color: '#f8bbd0', name: 'Light Pink' },
+        { color: '#e1bee7', name: 'Light Purple' },
+        { color: '#d1c4e9', name: 'Light Indigo' },
+        { color: '#c5cae9', name: 'Light Blue' },
+        { color: '#bbdefb', name: 'Sky Blue' },
+        { color: '#b3e5fc', name: 'Light Cyan' },
+        { color: '#b2ebf2', name: 'Cyan' },
+        { color: '#b2dfdb', name: 'Teal' },
+        { color: '#c8e6c9', name: 'Light Green' },
+        { color: '#dcedc8', name: 'Lime' },
+        { color: '#f0f4c3', name: 'Light Yellow' },
+        { color: '#fff9c4', name: 'Pale Yellow' },
+        { color: '#ffe0b2', name: 'Peach' },
+        // Vibrant Colors
+        { color: '#ff1744', name: 'Bright Red' },
+        { color: '#d500f9', name: 'Bright Purple' },
+        { color: '#651fff', name: 'Deep Purple' },
+        { color: '#3d5afe', name: 'Indigo' },
+        { color: '#2979ff', name: 'Bright Blue' },
+        { color: '#00b0ff', name: 'Bright Cyan' },
+        { color: '#00e5ff', name: 'Electric Blue' },
+        { color: '#1de9b6', name: 'Turquoise' },
+        { color: '#00e676', name: 'Bright Green' },
+        { color: '#76ff03', name: 'Bright Lime' },
+        { color: '#c6ff00', name: 'Lime Yellow' },
+        { color: '#ffea00', name: 'Bright Yellow' },
+        { color: '#ffc400', name: 'Amber' },
+        { color: '#ff9100', name: 'Deep Orange' },
+        { color: '#ff3d00', name: 'Deep Red' },
     ];
 
     const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
@@ -223,8 +255,8 @@ const SimplePDFViewer: React.FC<SimplePDFViewerProps> = ({ onClose }) => {
                             <div className="w-5 h-5 rounded-full" style={{ backgroundColor: highlightColor }} />
                         </button>
                         {showColorPicker && (
-                            <div className="absolute right-0 mt-2 p-3 bg-white dark:bg-gray-800 rounded-lg shadow-lg z-50 w-48">
-                                <div className="grid grid-cols-2 gap-3">
+                            <div className="absolute right-0 mt-2 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg z-50 w-48">
+                                <div className="grid grid-cols-6 gap-1">
                                     {highlightColors.map(({ color, name }) => (
                                         <button
                                             key={color}
@@ -232,11 +264,13 @@ const SimplePDFViewer: React.FC<SimplePDFViewerProps> = ({ onClose }) => {
                                                 setHighlightColor(color);
                                                 setShowColorPicker(false);
                                             }}
-                                            className="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                                            className="group relative p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 flex flex-col items-center"
                                             title={name}
                                         >
-                                            <div className="w-6 h-6 rounded-full" style={{ backgroundColor: color }} />
-                                            <span className="text-sm text-gray-600 dark:text-gray-300">{name}</span>
+                                            <div
+                                                className="w-5 h-5 rounded-full border border-gray-200 dark:border-gray-700 group-hover:border-gray-300 dark:group-hover:border-gray-600 transition-colors"
+                                                style={{ backgroundColor: color }}
+                                            />
                                         </button>
                                     ))}
                                 </div>
@@ -247,7 +281,7 @@ const SimplePDFViewer: React.FC<SimplePDFViewerProps> = ({ onClose }) => {
                     {/* Highlight Button */}
                     <button
                         onClick={toggleHighlightMode}
-                        className={`p-2 rounded-md transition-colors ${isHighlightMode
+                        className={`p-2 rounded-md transition-colors flex items-center space-x-2 ${isHighlightMode
                             ? 'bg-blue-500 text-white'
                             : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                             }`}
@@ -266,6 +300,7 @@ const SimplePDFViewer: React.FC<SimplePDFViewerProps> = ({ onClose }) => {
                                 d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
                             />
                         </svg>
+                        <span className="text-sm">Highlight</span>
                     </button>
 
                     {/* Undo Button */}
