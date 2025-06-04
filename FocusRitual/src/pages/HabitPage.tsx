@@ -190,17 +190,28 @@ const HabitPage: React.FC = () => {
     const generateMockPatternAnalysis = (habits: Habit[]): string => {
         if (habits.length === 0) return "";
 
-        // Get completion counts by day of week
+        // Get completion counts by day of week and time of day
         const dayCompletions = [0, 0, 0, 0, 0, 0, 0]; // Sun-Sat
+        const timeCompletions = Array(24).fill(0); // Hour of day
         let totalCompletions = 0;
+        let morningCompletions = 0;
+        let afternoonCompletions = 0;
+        let eveningCompletions = 0;
 
         habits.forEach(habit => {
             Object.entries(habit.completionHistory).forEach(([dateStr, completed]) => {
                 if (completed) {
                     const date = new Date(dateStr);
-                    const day = date.getDay(); // 0 = Sun, 1 = Mon, etc.
+                    const day = date.getDay();
+                    const hour = date.getHours();
                     dayCompletions[day]++;
+                    timeCompletions[hour]++;
                     totalCompletions++;
+
+                    // Categorize by time of day
+                    if (hour >= 5 && hour < 12) morningCompletions++;
+                    else if (hour >= 12 && hour < 17) afternoonCompletions++;
+                    else eveningCompletions++;
                 }
             });
         });
@@ -214,7 +225,86 @@ const HabitPage: React.FC = () => {
         const minDay = dayCompletions.indexOf(Math.min(...dayCompletions));
         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-        return `Your most consistent day appears to be ${days[maxDay]}, while you tend to complete fewer habits on ${days[minDay]}. Consider scheduling important habits on your stronger days, and finding ways to boost motivation on ${days[minDay]}.`;
+        // Find most productive time of day
+        const timeOfDay = morningCompletions > afternoonCompletions && morningCompletions > eveningCompletions
+            ? "morning"
+            : afternoonCompletions > eveningCompletions
+                ? "afternoon"
+                : "evening";
+
+        // Find most productive hour
+        const mostProductiveHour = timeCompletions.indexOf(Math.max(...timeCompletions));
+        const hourDescription = mostProductiveHour < 12
+            ? `${mostProductiveHour} AM`
+            : `${mostProductiveHour - 12} PM`;
+
+        // Generate personalized insights
+        const insights = [];
+
+        // Time of day insight
+        insights.push(`You're most productive during the ${timeOfDay}. Consider scheduling your most challenging tasks during this time.`);
+
+        // Peak hour insight
+        insights.push(`Your peak productivity hour is around ${hourDescription}. This might be the best time for deep work or important tasks.`);
+
+        // Day of week insights
+        if (maxDay !== minDay) {
+            const productivityGap = dayCompletions[maxDay] - dayCompletions[minDay];
+            if (productivityGap > 2) {
+                insights.push(`You're significantly more productive on ${days[maxDay]}s compared to ${days[minDay]}s. Consider adjusting your schedule to take advantage of this pattern.`);
+            }
+        }
+
+        // Focus duration insights
+        const consecutiveCompletions = habits.reduce((max, habit) => {
+            let current = 0;
+            let maxConsecutive = 0;
+            Object.values(habit.completionHistory).forEach(completed => {
+                if (completed) {
+                    current++;
+                    maxConsecutive = Math.max(maxConsecutive, current);
+                } else {
+                    current = 0;
+                }
+            });
+            return Math.max(max, maxConsecutive);
+        }, 0);
+
+        if (consecutiveCompletions > 0) {
+            if (consecutiveCompletions <= 2) {
+                insights.push("You tend to work in shorter bursts. The Pomodoro technique (25-minute work sessions) might be more effective for you than longer sessions.");
+            } else if (consecutiveCompletions <= 4) {
+                insights.push("You work well in moderate-length sessions. Consider using 45-minute work blocks with 15-minute breaks.");
+            } else {
+                insights.push("You can maintain focus for extended periods. You might benefit from longer 90-minute deep work sessions.");
+            }
+        }
+
+        // Break pattern insights
+        const breakPatterns = habits.reduce<number[]>((patterns, habit) => {
+            let lastCompletion: string | null = null;
+            Object.entries(habit.completionHistory).forEach(([dateStr, completed]) => {
+                if (completed) {
+                    if (lastCompletion) {
+                        const hours = (new Date(dateStr).getTime() - new Date(lastCompletion).getTime()) / (1000 * 60 * 60);
+                        if (hours > 1) patterns.push(hours);
+                    }
+                    lastCompletion = dateStr;
+                }
+            });
+            return patterns;
+        }, []);
+
+        if (breakPatterns.length > 0) {
+            const avgBreakDuration = breakPatterns.reduce((sum, hours) => sum + hours, 0) / breakPatterns.length;
+            if (avgBreakDuration > 4) {
+                insights.push("You tend to take longer breaks between work sessions. Consider implementing more structured, shorter breaks to maintain momentum.");
+            } else if (avgBreakDuration < 1) {
+                insights.push("You take very short breaks between sessions. Remember to take longer breaks occasionally to prevent burnout.");
+            }
+        }
+
+        return insights.join(" ");
     };
 
     const generateMockRecommendations = (habits: Habit[]): string[] => {
@@ -294,8 +384,8 @@ const HabitPage: React.FC = () => {
                             <button
                                 onClick={() => setActiveTab('habits')}
                                 className={`pb-4 px-2 font-medium text-lg transition-colors ${activeTab === 'habits'
-                                        ? 'text-white border-b-2 border-blue-500'
-                                        : 'text-slate-400 hover:text-slate-200'
+                                    ? 'text-white border-b-2 border-blue-500'
+                                    : 'text-slate-400 hover:text-slate-200'
                                     }`}
                             >
                                 My Habits
@@ -303,8 +393,8 @@ const HabitPage: React.FC = () => {
                             <button
                                 onClick={() => setActiveTab('stats')}
                                 className={`pb-4 px-2 font-medium text-lg transition-colors ${activeTab === 'stats'
-                                        ? 'text-white border-b-2 border-blue-500'
-                                        : 'text-slate-400 hover:text-slate-200'
+                                    ? 'text-white border-b-2 border-blue-500'
+                                    : 'text-slate-400 hover:text-slate-200'
                                     }`}
                             >
                                 Statistics
@@ -312,8 +402,8 @@ const HabitPage: React.FC = () => {
                             <button
                                 onClick={() => setActiveTab('insights')}
                                 className={`pb-4 px-2 font-medium text-lg transition-colors ${activeTab === 'insights'
-                                        ? 'text-white border-b-2 border-blue-500'
-                                        : 'text-slate-400 hover:text-slate-200'
+                                    ? 'text-white border-b-2 border-blue-500'
+                                    : 'text-slate-400 hover:text-slate-200'
                                     }`}
                             >
                                 AI Insights
@@ -346,8 +436,8 @@ const HabitPage: React.FC = () => {
                                                 <button
                                                     onClick={() => setStatsPeriod('week')}
                                                     className={`px-4 py-2 text-sm rounded-l-md transition ${statsPeriod === 'week'
-                                                            ? 'bg-blue-600 text-white'
-                                                            : 'text-slate-300 hover:bg-slate-600'
+                                                        ? 'bg-blue-600 text-white'
+                                                        : 'text-slate-300 hover:bg-slate-600'
                                                         }`}
                                                 >
                                                     Last 7 Days
@@ -355,8 +445,8 @@ const HabitPage: React.FC = () => {
                                                 <button
                                                     onClick={() => setStatsPeriod('month')}
                                                     className={`px-4 py-2 text-sm rounded-r-md transition ${statsPeriod === 'month'
-                                                            ? 'bg-blue-600 text-white'
-                                                            : 'text-slate-300 hover:bg-slate-600'
+                                                        ? 'bg-blue-600 text-white'
+                                                        : 'text-slate-300 hover:bg-slate-600'
                                                         }`}
                                                 >
                                                     Last 30 Days
