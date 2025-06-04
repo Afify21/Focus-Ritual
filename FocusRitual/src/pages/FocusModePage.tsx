@@ -12,12 +12,20 @@ interface FocusModePageProps {
     onExitFocusMode: () => void;
     duration: number;
     onStateChange: (newState: any) => void;
+    volume: number;
+    selectedSound: string | null;
+    onSoundSelect: (soundId: string | null) => void;
+    onVolumeChange: (volume: number) => void;
 }
 
 const FocusModePage: React.FC<FocusModePageProps> = ({
     onExitFocusMode,
     duration,
     onStateChange,
+    volume,
+    selectedSound,
+    onSoundSelect,
+    onVolumeChange
 }) => {
     const [showPaint, setShowPaint] = useState(false);
 
@@ -73,8 +81,29 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
                         {/* Soundscapes */}
                         <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 relative">
                             <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-200">Ambient Sounds</h2>
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center space-x-2">
+                                    <span className="text-white text-sm">Volume</span>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="1"
+                                        step="0.01"
+                                        value={volume}
+                                        onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
+                                        className="w-24 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                    />
+                                    <span className="text-white text-sm">🔊</span>
+                                </div>
+                            </div>
                             <div className="scale-90 origin-top">
-                                <Soundscape compact={true} />
+                                <Soundscape
+                                    compact={true}
+                                    volume={volume}
+                                    onVolumeChange={onVolumeChange}
+                                    selectedSound={selectedSound}
+                                    onSoundSelect={onSoundSelect}
+                                />
                             </div>
                         </div>
 

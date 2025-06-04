@@ -3,9 +3,10 @@ import { ArrowLeftIcon } from '@heroicons/react/24/solid';
 import HabitTracker from '../components/HabitTracker';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import Analytics from '../components/Analytics';
 
 // Define tab type to fix linter errors
-type TabType = 'habits' | 'stats' | 'insights';
+type TabType = 'habits' | 'stats' | 'analytics';
 
 interface Habit {
     id: string;
@@ -372,13 +373,13 @@ const HabitPage: React.FC = () => {
                 {/* Header with back button */}
                 <div className="flex justify-between items-center mb-3 md:mb-6">
                     <div className="flex items-center">
-                        <button 
+                        <button
                             onClick={() => navigate('/')}
                             className={`mr-3 p-2 rounded-full ${currentTheme.colors.chatPromptButtonBg} ${currentTheme.colors.chatPromptButtonHoverBg} transition-colors`}
                         >
                             <ArrowLeftIcon className="h-5 w-5" />
                         </button>
-                        <h1 className="text-xl md:text-3xl font-bold">Habit Tracker</h1>
+                        <h1 className="text-xl md:text-3xl font-bold">Habits & Analytics</h1>
                     </div>
                 </div>
 
@@ -387,36 +388,33 @@ const HabitPage: React.FC = () => {
                     <div className="flex space-x-3 md:space-x-6 whitespace-nowrap">
                         <button
                             onClick={() => setActiveTab('habits')}
-                            className={`pb-2 md:pb-3 px-2 font-medium text-sm md:text-base transition-colors ${
-                                activeTab === 'habits' 
-                                    ? `${currentTheme.colors.chatHeaderText} border-b-2 border-blue-500` 
-                                    : 'text-slate-400 hover:text-slate-200'
-                            }`}
+                            className={`pb-2 md:pb-3 px-2 font-medium text-sm md:text-base transition-colors ${activeTab === 'habits'
+                                ? `${currentTheme.colors.chatHeaderText} border-b-2 border-blue-500`
+                                : 'text-slate-400 hover:text-slate-200'
+                                }`}
                         >
                             My Habits
                         </button>
                         <button
                             onClick={() => setActiveTab('stats')}
-                            className={`pb-2 md:pb-3 px-2 font-medium text-sm md:text-base transition-colors ${
-                                activeTab === 'stats' 
-                                    ? `${currentTheme.colors.chatHeaderText} border-b-2 border-blue-500` 
-                                    : 'text-slate-400 hover:text-slate-200'
-                            }`}
+                            className={`pb-2 md:pb-3 px-2 font-medium text-sm md:text-base transition-colors ${activeTab === 'stats'
+                                ? `${currentTheme.colors.chatHeaderText} border-b-2 border-blue-500`
+                                : 'text-slate-400 hover:text-slate-200'
+                                }`}
                         >
                             Statistics
                         </button>
                         <button
-                            onClick={() => setActiveTab('insights')}
-                            className={`pb-2 md:pb-3 px-2 font-medium text-sm md:text-base transition-colors ${
-                                activeTab === 'insights' 
-                                    ? `${currentTheme.colors.chatHeaderText} border-b-2 border-blue-500` 
-                                    : 'text-slate-400 hover:text-slate-200'
-                                    }`}
-                            >
-                                AI Insights
-                            </button>
-                        </div>
+                            onClick={() => setActiveTab('analytics')}
+                            className={`pb-2 md:pb-3 px-2 font-medium text-sm md:text-base transition-colors ${activeTab === 'analytics'
+                                ? `${currentTheme.colors.chatHeaderText} border-b-2 border-blue-500`
+                                : 'text-slate-400 hover:text-slate-200'
+                                }`}
+                        >
+                            Analytics
+                        </button>
                     </div>
+                </div>
 
                 {/* Content area */}
                 <div className="mt-3 md:mt-4">
@@ -425,7 +423,7 @@ const HabitPage: React.FC = () => {
                             <HabitTracker />
                         </div>
                     )}
-                    
+
                     {activeTab === 'stats' && (
                         <div className={`${currentTheme.colors.chatMessageListBg} backdrop-blur-sm p-8 rounded-xl shadow-xl`}>
                             {habits.length === 0 ? (
@@ -442,26 +440,25 @@ const HabitPage: React.FC = () => {
                                         <div className="inline-flex rounded-md bg-slate-700/70">
                                             <button
                                                 onClick={() => setStatsPeriod('week')}
-                                                className={`px-4 py-2 text-sm rounded-l-md transition ${
-                                                    statsPeriod === 'week' 
-                                                        ? 'bg-blue-600 text-white' 
-                                                        : 'text-slate-300 hover:bg-slate-600'
-                                                        }`}
-                                                >
-                                                    Last 7 Days
-                                                </button>
-                                                <button
-                                                    onClick={() => setStatsPeriod('month')}
-                                                    className={`px-4 py-2 text-sm rounded-r-md transition ${statsPeriod === 'month'
-                                                        ? 'bg-blue-600 text-white'
-                                                        : 'text-slate-300 hover:bg-slate-600'
-                                                }`}
+                                                className={`px-4 py-2 text-sm rounded-l-md transition ${statsPeriod === 'week'
+                                                    ? 'bg-blue-600 text-white'
+                                                    : 'text-slate-300 hover:bg-slate-600'
+                                                    }`}
+                                            >
+                                                Last 7 Days
+                                            </button>
+                                            <button
+                                                onClick={() => setStatsPeriod('month')}
+                                                className={`px-4 py-2 text-sm rounded-r-md transition ${statsPeriod === 'month'
+                                                    ? 'bg-blue-600 text-white'
+                                                    : 'text-slate-300 hover:bg-slate-600'
+                                                    }`}
                                             >
                                                 Last 30 Days
                                             </button>
                                         </div>
                                     </div>
-                                    
+
                                     {/* Summary metrics */}
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
                                         <div className="bg-slate-700/50 p-6 rounded-lg">
@@ -477,7 +474,7 @@ const HabitPage: React.FC = () => {
                                             <div className="text-5xl font-bold text-yellow-400">{calculateLongestStreak()}</div>
                                         </div>
                                     </div>
-                                    
+
                                     {/* Charts */}
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
                                         {/* Completion over time */}
@@ -487,7 +484,7 @@ const HabitPage: React.FC = () => {
                                                 <p className="text-slate-400">Chart visualization temporarily unavailable</p>
                                             </div>
                                         </div>
-                                        
+
                                         {/* Category breakdown */}
                                         <div className="bg-slate-700/30 p-6 rounded-lg">
                                             <h4 className="text-lg font-medium mb-4">Habits by Category</h4>
@@ -496,7 +493,7 @@ const HabitPage: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     {/* Most consistent and least consistent habits */}
                                     <div className="mt-8">
                                         <h4 className="text-lg font-medium mb-4">Habit Performance</h4>
@@ -545,72 +542,9 @@ const HabitPage: React.FC = () => {
                             )}
                         </div>
                     )}
-                    
-                    {activeTab === 'insights' && (
-                        <div className={`${currentTheme.colors.chatMessageListBg} backdrop-blur-sm p-8 rounded-xl shadow-xl`}>
-                            {habits.length === 0 ? (
-                                <div className="text-center py-12">
-                                    <h3 className="text-2xl font-medium text-slate-300 mb-4">No Data for Insights</h3>
-                                    <p className="text-slate-400">
-                                        Add some habits and start tracking them to receive AI-powered insights and recommendations.
-                                    </p>
-                                </div>
-                            ) : insights.data ? (
-                                <div>
-                                    <div className="flex justify-between items-start">
-                                        <h3 className="text-xl font-bold mb-6">AI Habit Insights</h3>
-                                        <button
-                                            onClick={getAIInsights}
-                                            className="px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg text-white transition-colors"
-                                        >
-                                            Refresh Analysis
-                                        </button>
-                                    </div>
-                                    
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        <div className="bg-slate-700/50 rounded-lg p-6">
-                                            <h4 className="text-lg font-medium mb-4 text-green-400">Streak Analysis</h4>
-                                            <p className="text-slate-300">{insights.data.streak_analysis}</p>
-                                        </div>
-                                        
-                                        <div className="bg-slate-700/50 rounded-lg p-6">
-                                            <h4 className="text-lg font-medium mb-4 text-blue-400">Pattern Recognition</h4>
-                                            <p className="text-slate-300">{insights.data.pattern_analysis}</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="mt-6 bg-slate-700/50 rounded-lg p-6">
-                                        <h4 className="text-lg font-medium mb-4 text-yellow-400">Personalized Recommendations</h4>
-                                        <ul className="list-disc pl-5 space-y-3">
-                                            {insights.data.recommendations.map((rec, i) => (
-                                                <li key={i} className="text-slate-300">{rec}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center py-12">
-                                    {insights.loading ? (
-                                        <div className="text-center">
-                                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mb-4"></div>
-                                            <p className="text-slate-300">Analyzing your habit data...</p>
-                                        </div>
-                                    ) : (
-                                        <div className="text-center">
-                                            <p className="text-slate-300 mb-4">
-                                                Get personalized insights about your habits and recommendations to improve.
-                                            </p>
-                                            <button
-                                                onClick={getAIInsights}
-                                                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white transition-colors"
-                                            >
-                                                Generate Insights
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
+
+                    {activeTab === 'analytics' && (
+                        <Analytics />
                     )}
                 </div>
             </div>

@@ -38,14 +38,30 @@ const sounds: Sound[] = [
 
 interface SoundscapeProps {
     compact?: boolean;
+    volume?: number;
+    onVolumeChange?: (volume: number) => void;
+    selectedSound?: string | null;
+    onSoundSelect?: (soundId: string | null) => void;
 }
 
-const Soundscape: React.FC<SoundscapeProps> = ({ compact = false }) => {
-    const [selectedSound, setSelectedSound] = useState<string | null>(null);
-    const [volume, setVolume] = useState(0.5);
+const Soundscape: React.FC<SoundscapeProps> = ({
+    compact = false,
+    volume = 0.5,
+    onVolumeChange,
+    selectedSound: externalSelectedSound,
+    onSoundSelect: externalOnSoundSelect
+}) => {
+    const [selectedSound, setSelectedSound] = useState<string | null>(externalSelectedSound || null);
     const [error, setError] = useState<string | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const { currentTheme } = useTheme();
+
+    // Sync with external state
+    useEffect(() => {
+        if (externalSelectedSound !== undefined) {
+            setSelectedSound(externalSelectedSound);
+        }
+    }, [externalSelectedSound]);
 
     // Preload ambient sounds
     useEffect(() => {
@@ -79,6 +95,7 @@ const Soundscape: React.FC<SoundscapeProps> = ({ compact = false }) => {
                 audioRef.current = null;
             }
             setSelectedSound(null);
+            externalOnSoundSelect?.(null);
             return;
         }
 
@@ -101,6 +118,7 @@ const Soundscape: React.FC<SoundscapeProps> = ({ compact = false }) => {
             await audio.play();
             audioRef.current = audio;
             setSelectedSound(soundId);
+            externalOnSoundSelect?.(soundId);
             setError(null);
         } catch (err) {
             setError('Failed to play audio. Please check your browser settings.');

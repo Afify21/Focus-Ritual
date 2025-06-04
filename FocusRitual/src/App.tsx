@@ -29,6 +29,8 @@ const App: React.FC = () => {
     const [showSpotify, setShowSpotify] = useState(false);
     const [showPaint, setShowPaint] = useState(false);
     const [isFocusMode, setIsFocusMode] = useState(false);
+    const [volume, setVolume] = useState(0.5);
+    const [selectedSound, setSelectedSound] = useState<string | null>(null);
     const [timerState, setTimerState] = useState({
         timeLeft: selectedTime * 60,
         isRunning: false,
@@ -108,6 +110,10 @@ const App: React.FC = () => {
                         }}
                         duration={selectedTime * 60}
                         onStateChange={handleTimerStateChange}
+                        volume={volume}
+                        selectedSound={selectedSound}
+                        onSoundSelect={setSelectedSound}
+                        onVolumeChange={setVolume}
                     />
                 } />
                 <Route path="/habits" element={<HabitPage />} />
@@ -124,7 +130,10 @@ const App: React.FC = () => {
                         />
                         <div className={`max-w-4xl mx-auto space-y-6 transition-all duration-300 ${isFocusMode ? 'mr-[50%]' : ''}`}>
                             <div className="flex justify-between items-center mb-8">
-                                <h1 className="text-4xl font-bold">FocusRitual</h1>
+                                <div className="flex items-center space-x-2">
+                                    <img src="/images/logo.png" alt="FocusRitual Logo" className="h-24 w-auto brightness-90" />
+                                    <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">FocusRitual</h1>
+                                </div>
                                 <div className="flex flex-wrap gap-2">
                                     <button
                                         onClick={() => setShowThemeSelector(!showThemeSelector)}
@@ -136,7 +145,7 @@ const App: React.FC = () => {
                                         onClick={() => navigate('/habits')}
                                         className="px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors"
                                     >
-                                        Habits
+                                        Habits & Analysis
                                     </button>
                                     <button
                                         onClick={() => navigate('/calendar')}
@@ -144,13 +153,6 @@ const App: React.FC = () => {
                                     >
                                         <CalendarIcon className="h-5 w-5" />
                                         <span>Calendar</span>
-                                    </button>
-                                    <button
-                                        onClick={() => navigate('/analytics')}
-                                        className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors"
-                                    >
-                                        <ChartBarIcon className="h-5 w-5" />
-                                        <span>Analytics</span>
                                     </button>
                                 </div>
                             </div>
@@ -235,13 +237,21 @@ const App: React.FC = () => {
                                                     min="0"
                                                     max="1"
                                                     step="0.01"
+                                                    value={volume}
+                                                    onChange={(e) => setVolume(parseFloat(e.target.value))}
                                                     className="w-24 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
                                                 />
                                                 <span className="text-white text-sm">🔊</span>
                                             </div>
                                         </div>
                                         <div className="scale-90 origin-top">
-                                            <Soundscape compact={true} />
+                                            <Soundscape
+                                                compact={true}
+                                                volume={volume}
+                                                onVolumeChange={setVolume}
+                                                selectedSound={selectedSound}
+                                                onSoundSelect={setSelectedSound}
+                                            />
                                         </div>
                                     </div>
                                     <EnhancedTodoList />
