@@ -104,10 +104,14 @@ const SimplePDFViewer: React.FC<SimplePDFViewerProps> = ({ onClose }) => {
         if (!pdfContainer) return;
 
         const containerRect = pdfContainer.getBoundingClientRect();
+        const pageElement = document.querySelector('.react-pdf__Page');
+        if (!pageElement) return;
 
-        // Calculate position relative to the PDF container
-        const x = (rect.left - containerRect.left) / scale;
-        const y = (containerRect.height - (rect.top - containerRect.top)) / scale; // Invert Y coordinate
+        const pageRect = pageElement.getBoundingClientRect();
+
+        // Calculate position relative to the page element
+        const x = (rect.left - pageRect.left) / scale;
+        const y = (rect.top - pageRect.top) / scale;
         const width = rect.width / scale;
         const height = rect.height / scale;
 
@@ -429,7 +433,7 @@ const SimplePDFViewer: React.FC<SimplePDFViewerProps> = ({ onClose }) => {
 
                     {/* PDF Document */}
                     <div className="flex-1 overflow-auto bg-gray-200 dark:bg-gray-700 p-4">
-                        <div className="mx-auto" style={{ width: 'fit-content' }}>
+                        <div className="mx-auto relative" style={{ width: 'fit-content' }}>
                             <Document
                                 file={pdfFile}
                                 onLoadSuccess={onDocumentLoadSuccess}
@@ -453,10 +457,10 @@ const SimplePDFViewer: React.FC<SimplePDFViewerProps> = ({ onClose }) => {
                                         key={index}
                                         className="absolute pointer-events-none"
                                         style={{
-                                            left: annotation.rect.x * scale,
-                                            top: annotation.rect.y * scale,
-                                            width: annotation.rect.width * scale,
-                                            height: annotation.rect.height * scale,
+                                            left: `${annotation.rect.x}px`,
+                                            top: `${annotation.rect.y}px`,
+                                            width: `${annotation.rect.width}px`,
+                                            height: `${annotation.rect.height}px`,
                                             backgroundColor: annotation.color,
                                             opacity: 0.3,
                                             mixBlendMode: 'multiply'
