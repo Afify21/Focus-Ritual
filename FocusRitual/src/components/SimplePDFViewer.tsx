@@ -109,7 +109,7 @@ const SimplePDFViewer: React.FC<SimplePDFViewerProps> = ({ onClose }) => {
 
         const pageRect = pageElement.getBoundingClientRect();
 
-        // Calculate position relative to the page element
+        // Calculate position relative to the page element, accounting for scale
         const x = (rect.left - pageRect.left) / scale;
         const y = (rect.top - pageRect.top) / scale;
         const width = rect.width / scale;
@@ -136,6 +136,10 @@ const SimplePDFViewer: React.FC<SimplePDFViewerProps> = ({ onClose }) => {
             const arrayBuffer = await pdfFile.arrayBuffer();
             const pdfDoc = await PDFDocument.load(arrayBuffer);
 
+            // Get the first page to get its dimensions
+            const firstPage = pdfDoc.getPage(0);
+            const { width: pageWidth, height: pageHeight } = firstPage.getSize();
+
             // Add annotations to each page
             annotations.forEach(annotation => {
                 const page = pdfDoc.getPage(annotation.page - 1);
@@ -145,12 +149,19 @@ const SimplePDFViewer: React.FC<SimplePDFViewerProps> = ({ onClose }) => {
                 const color = hexToRgb(annotation.color);
                 if (!color) return;
 
+                // Calculate the position in PDF coordinates
+                // PDF coordinates start from bottom-left, while our coordinates start from top-left
+                const pdfX = x;
+                const pdfY = pageHeight - y - height; // Flip Y coordinate
+                const pdfWidth = width;
+                const pdfHeight = height;
+
                 // Add highlight annotation
                 page.drawRectangle({
-                    x,
-                    y,
-                    width,
-                    height,
+                    x: pdfX,
+                    y: pdfY,
+                    width: pdfWidth,
+                    height: pdfHeight,
                     color: rgb(color.r / 255, color.g / 255, color.b / 255),
                     opacity: 0.3
                 });
@@ -176,6 +187,14 @@ const SimplePDFViewer: React.FC<SimplePDFViewerProps> = ({ onClose }) => {
             alert('Error saving PDF. Please try again.');
             setIsLoading(false);
         }
+    };
+
+    const handleUndoHighlight = () => {
+        setAnnotations(prev => {
+            const newAnnotations = [...prev];
+            newAnnotations.pop(); // Remove the last annotation
+            return newAnnotations;
+        });
     };
 
     // Helper function to convert hex color to RGB
@@ -245,6 +264,31 @@ const SimplePDFViewer: React.FC<SimplePDFViewerProps> = ({ onClose }) => {
                                 strokeLinejoin="round"
                                 strokeWidth={2}
                                 d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                            />
+                        </svg>
+                    </button>
+
+                    {/* Undo Button */}
+                    <button
+                        onClick={handleUndoHighlight}
+                        disabled={annotations.length === 0}
+                        className={`p-2 rounded-md transition-colors ${annotations.length === 0
+                            ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                            : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                            }`}
+                        title="Undo Last Highlight"
+                    >
+                        <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
                             />
                         </svg>
                     </button>
@@ -457,10 +501,10 @@ const SimplePDFViewer: React.FC<SimplePDFViewerProps> = ({ onClose }) => {
                                         key={index}
                                         className="absolute pointer-events-none"
                                         style={{
-                                            left: `${annotation.rect.x}px`,
-                                            top: `${annotation.rect.y}px`,
-                                            width: `${annotation.rect.width}px`,
-                                            height: `${annotation.rect.height}px`,
+                                            left: `${annotation.rect.x * scale}px`,
+                                            top: `${annotation.rect.y * scale}px`,
+                                            width: `${annotation.rect.width * scale}px`,
+                                            height: `${annotation.rect.height * scale}px`,
                                             backgroundColor: annotation.color,
                                             opacity: 0.3,
                                             mixBlendMode: 'multiply'
