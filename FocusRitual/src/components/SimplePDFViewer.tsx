@@ -107,7 +107,7 @@ const SimplePDFViewer: React.FC<SimplePDFViewerProps> = ({ onClose }) => {
 
         // Calculate position relative to the PDF container
         const x = (rect.left - containerRect.left) / scale;
-        const y = (rect.top - containerRect.top) / scale;
+        const y = (containerRect.height - (rect.top - containerRect.top)) / scale; // Invert Y coordinate
         const width = rect.width / scale;
         const height = rect.height / scale;
 
@@ -120,7 +120,6 @@ const SimplePDFViewer: React.FC<SimplePDFViewerProps> = ({ onClose }) => {
         };
 
         setAnnotations(prev => [...prev, newAnnotation]);
-        selection.removeAllRanges();
     };
 
     const handleSavePDF = async () => {
@@ -201,8 +200,8 @@ const SimplePDFViewer: React.FC<SimplePDFViewerProps> = ({ onClose }) => {
                             <div className="w-5 h-5 rounded-full" style={{ backgroundColor: highlightColor }} />
                         </button>
                         {showColorPicker && (
-                            <div className="absolute right-0 mt-2 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg z-50">
-                                <div className="grid grid-cols-3 gap-2">
+                            <div className="absolute right-0 mt-2 p-3 bg-white dark:bg-gray-800 rounded-lg shadow-lg z-50 w-48">
+                                <div className="grid grid-cols-2 gap-3">
                                     {highlightColors.map(({ color, name }) => (
                                         <button
                                             key={color}
@@ -210,11 +209,11 @@ const SimplePDFViewer: React.FC<SimplePDFViewerProps> = ({ onClose }) => {
                                                 setHighlightColor(color);
                                                 setShowColorPicker(false);
                                             }}
-                                            className="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 flex flex-col items-center"
+                                            className="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
                                             title={name}
                                         >
-                                            <div className="w-6 h-6 rounded-full mb-1" style={{ backgroundColor: color }} />
-                                            <span className="text-xs text-gray-600 dark:text-gray-300">{name}</span>
+                                            <div className="w-6 h-6 rounded-full" style={{ backgroundColor: color }} />
+                                            <span className="text-sm text-gray-600 dark:text-gray-300">{name}</span>
                                         </button>
                                     ))}
                                 </div>
@@ -446,6 +445,24 @@ const SimplePDFViewer: React.FC<SimplePDFViewerProps> = ({ onClose }) => {
                                     onMouseUp={handleTextSelection}
                                 />
                             </Document>
+                            {/* Render highlights */}
+                            {annotations
+                                .filter(annotation => annotation.page === pageNumber)
+                                .map((annotation, index) => (
+                                    <div
+                                        key={index}
+                                        className="absolute pointer-events-none"
+                                        style={{
+                                            left: annotation.rect.x * scale,
+                                            top: annotation.rect.y * scale,
+                                            width: annotation.rect.width * scale,
+                                            height: annotation.rect.height * scale,
+                                            backgroundColor: annotation.color,
+                                            opacity: 0.3,
+                                            mixBlendMode: 'multiply'
+                                        }}
+                                    />
+                                ))}
                         </div>
                     </div>
                 </div>
