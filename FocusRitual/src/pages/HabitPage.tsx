@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeftIcon } from '@heroicons/react/24/solid';
 import HabitTracker from '../components/HabitTracker';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
+
+// Define tab type to fix linter errors
+type TabType = 'habits' | 'stats' | 'insights';
 
 interface Habit {
     id: string;
@@ -21,9 +25,10 @@ interface Habit {
 
 const HabitPage: React.FC = () => {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'habits' | 'stats' | 'insights'>('habits');
+    const [activeTab, setActiveTab] = useState<TabType>('habits');
     const [habits, setHabits] = useState<Habit[]>([]);
     const [statsPeriod, setStatsPeriod] = useState<'week' | 'month'>('week');
+    const { currentTheme } = useTheme();
     const [insights, setInsights] = useState<{
         loading: boolean;
         data: {
@@ -362,47 +367,49 @@ const HabitPage: React.FC = () => {
     };
 
     return (
-        <div className="fixed inset-0 bg-slate-900 overflow-y-auto">
-            <div className="min-h-screen text-white p-6">
-                <div className="max-w-6xl mx-auto">
-                    {/* Header with back button */}
-                    <div className="flex justify-between items-center mb-8">
-                        <div className="flex items-center">
-                            <button
-                                onClick={() => navigate('/')}
-                                className="mr-4 p-2 rounded-full bg-slate-700 hover:bg-slate-600 transition-colors"
-                            >
-                                <ArrowLeftIcon className="h-5 w-5" />
-                            </button>
-                            <h1 className="text-3xl font-bold">Habit Tracker</h1>
-                        </div>
+        <div className={`min-h-screen text-white p-1 sm:p-3 md:p-4 ${currentTheme.colors.chatWindowBg} overflow-x-hidden`}>
+            <div className="w-full max-w-5xl mx-auto">
+                {/* Header with back button */}
+                <div className="flex justify-between items-center mb-3 md:mb-6">
+                    <div className="flex items-center">
+                        <button 
+                            onClick={() => navigate('/')}
+                            className={`mr-3 p-2 rounded-full ${currentTheme.colors.chatPromptButtonBg} ${currentTheme.colors.chatPromptButtonHoverBg} transition-colors`}
+                        >
+                            <ArrowLeftIcon className="h-5 w-5" />
+                        </button>
+                        <h1 className="text-xl md:text-3xl font-bold">Habit Tracker</h1>
                     </div>
+                </div>
 
-                    {/* Tabs navigation */}
-                    <div className="mb-8 border-b border-slate-700">
-                        <div className="flex space-x-8">
-                            <button
-                                onClick={() => setActiveTab('habits')}
-                                className={`pb-4 px-2 font-medium text-lg transition-colors ${activeTab === 'habits'
-                                    ? 'text-white border-b-2 border-blue-500'
+                {/* Tabs navigation */}
+                <div className="mb-3 md:mb-6 border-b border-slate-700 overflow-x-auto no-scrollbar">
+                    <div className="flex space-x-3 md:space-x-6 whitespace-nowrap">
+                        <button
+                            onClick={() => setActiveTab('habits')}
+                            className={`pb-2 md:pb-3 px-2 font-medium text-sm md:text-base transition-colors ${
+                                activeTab === 'habits' 
+                                    ? `${currentTheme.colors.chatHeaderText} border-b-2 border-blue-500` 
                                     : 'text-slate-400 hover:text-slate-200'
-                                    }`}
-                            >
-                                My Habits
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('stats')}
-                                className={`pb-4 px-2 font-medium text-lg transition-colors ${activeTab === 'stats'
-                                    ? 'text-white border-b-2 border-blue-500'
+                            }`}
+                        >
+                            My Habits
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('stats')}
+                            className={`pb-2 md:pb-3 px-2 font-medium text-sm md:text-base transition-colors ${
+                                activeTab === 'stats' 
+                                    ? `${currentTheme.colors.chatHeaderText} border-b-2 border-blue-500` 
                                     : 'text-slate-400 hover:text-slate-200'
-                                    }`}
-                            >
-                                Statistics
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('insights')}
-                                className={`pb-4 px-2 font-medium text-lg transition-colors ${activeTab === 'insights'
-                                    ? 'text-white border-b-2 border-blue-500'
+                            }`}
+                        >
+                            Statistics
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('insights')}
+                            className={`pb-2 md:pb-3 px-2 font-medium text-sm md:text-base transition-colors ${
+                                activeTab === 'insights' 
+                                    ? `${currentTheme.colors.chatHeaderText} border-b-2 border-blue-500` 
                                     : 'text-slate-400 hover:text-slate-200'
                                     }`}
                             >
@@ -411,32 +418,33 @@ const HabitPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Content area */}
-                    <div className="mt-6">
-                        {activeTab === 'habits' && (
-                            <div className="bg-slate-800 p-8 rounded-xl shadow-xl">
-                                <HabitTracker />
-                            </div>
-                        )}
-
-                        {activeTab === 'stats' && (
-                            <div className="bg-slate-800 p-8 rounded-xl shadow-xl">
-                                {habits.length === 0 ? (
-                                    <div className="text-center py-12">
-                                        <h3 className="text-2xl font-medium text-slate-300 mb-4">No Statistics Available</h3>
-                                        <p className="text-slate-400">
-                                            Add some habits and start tracking them to see statistics.
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <>
-                                        {/* Period selector */}
-                                        <div className="flex justify-end mb-6">
-                                            <div className="inline-flex rounded-md bg-slate-700/70">
-                                                <button
-                                                    onClick={() => setStatsPeriod('week')}
-                                                    className={`px-4 py-2 text-sm rounded-l-md transition ${statsPeriod === 'week'
-                                                        ? 'bg-blue-600 text-white'
+                {/* Content area */}
+                <div className="mt-3 md:mt-4">
+                    {activeTab === 'habits' && (
+                        <div className={`${currentTheme.colors.chatMessageListBg} backdrop-blur-sm p-3 sm:p-4 md:p-6 rounded-xl shadow-xl overflow-hidden`}>
+                            <HabitTracker />
+                        </div>
+                    )}
+                    
+                    {activeTab === 'stats' && (
+                        <div className={`${currentTheme.colors.chatMessageListBg} backdrop-blur-sm p-8 rounded-xl shadow-xl`}>
+                            {habits.length === 0 ? (
+                                <div className="text-center py-12">
+                                    <h3 className="text-2xl font-medium text-slate-300 mb-4">No Statistics Available</h3>
+                                    <p className="text-slate-400">
+                                        Add some habits and start tracking them to see statistics.
+                                    </p>
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Period selector */}
+                                    <div className="flex justify-end mb-6">
+                                        <div className="inline-flex rounded-md bg-slate-700/70">
+                                            <button
+                                                onClick={() => setStatsPeriod('week')}
+                                                className={`px-4 py-2 text-sm rounded-l-md transition ${
+                                                    statsPeriod === 'week' 
+                                                        ? 'bg-blue-600 text-white' 
                                                         : 'text-slate-300 hover:bg-slate-600'
                                                         }`}
                                                 >
@@ -447,164 +455,163 @@ const HabitPage: React.FC = () => {
                                                     className={`px-4 py-2 text-sm rounded-r-md transition ${statsPeriod === 'month'
                                                         ? 'bg-blue-600 text-white'
                                                         : 'text-slate-300 hover:bg-slate-600'
-                                                        }`}
-                                                >
-                                                    Last 30 Days
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        {/* Summary metrics */}
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-                                            <div className="bg-slate-700/50 p-6 rounded-lg">
-                                                <h4 className="text-lg font-medium mb-2">Average Streak</h4>
-                                                <div className="text-5xl font-bold text-blue-400">{calculateAverageStreak()}</div>
-                                            </div>
-                                            <div className="bg-slate-700/50 p-6 rounded-lg">
-                                                <h4 className="text-lg font-medium mb-2">Completion Rate</h4>
-                                                <div className="text-5xl font-bold text-green-400">{calculateCompletionRate()}%</div>
-                                            </div>
-                                            <div className="bg-slate-700/50 p-6 rounded-lg">
-                                                <h4 className="text-lg font-medium mb-2">Longest Streak</h4>
-                                                <div className="text-5xl font-bold text-yellow-400">{calculateLongestStreak()}</div>
-                                            </div>
-                                        </div>
-
-                                        {/* Charts */}
-                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-                                            {/* Completion over time */}
-                                            <div className="bg-slate-700/30 p-6 rounded-lg">
-                                                <h4 className="text-lg font-medium mb-4">Completion Rate Over Time</h4>
-                                                <div className="h-80 flex items-center justify-center">
-                                                    <p className="text-slate-400">Chart visualization temporarily unavailable</p>
-                                                </div>
-                                            </div>
-
-                                            {/* Category breakdown */}
-                                            <div className="bg-slate-700/30 p-6 rounded-lg">
-                                                <h4 className="text-lg font-medium mb-4">Habits by Category</h4>
-                                                <div className="h-80 flex items-center justify-center">
-                                                    <p className="text-slate-400">Chart visualization temporarily unavailable</p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Most consistent and least consistent habits */}
-                                        <div className="mt-8">
-                                            <h4 className="text-lg font-medium mb-4">Habit Performance</h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                <div className="bg-slate-700/30 p-4 rounded-lg">
-                                                    <h5 className="text-md font-medium mb-2 text-green-400">Most Consistent</h5>
-                                                    {habits.length > 0 ? (
-                                                        <div className="space-y-2">
-                                                            {[...habits]
-                                                                .sort((a, b) => b.streak - a.streak)
-                                                                .slice(0, 3)
-                                                                .map(habit => (
-                                                                    <div key={habit.id} className="flex justify-between items-center p-2 bg-slate-600/50 rounded">
-                                                                        <span>{habit.name}</span>
-                                                                        <span className="text-yellow-300">{habit.streak} days</span>
-                                                                    </div>
-                                                                ))
-                                                            }
-                                                        </div>
-                                                    ) : (
-                                                        <p className="text-slate-400 text-sm">No data available</p>
-                                                    )}
-                                                </div>
-                                                <div className="bg-slate-700/30 p-4 rounded-lg">
-                                                    <h5 className="text-md font-medium mb-2 text-red-400">Needs Attention</h5>
-                                                    {habits.length > 0 ? (
-                                                        <div className="space-y-2">
-                                                            {[...habits]
-                                                                .sort((a, b) => a.streak - b.streak)
-                                                                .slice(0, 3)
-                                                                .map(habit => (
-                                                                    <div key={habit.id} className="flex justify-between items-center p-2 bg-slate-600/50 rounded">
-                                                                        <span>{habit.name}</span>
-                                                                        <span className="text-slate-300">{habit.streak} days</span>
-                                                                    </div>
-                                                                ))
-                                                            }
-                                                        </div>
-                                                    ) : (
-                                                        <p className="text-slate-400 text-sm">No data available</p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        )}
-
-                        {activeTab === 'insights' && (
-                            <div className="bg-slate-800 p-8 rounded-xl shadow-xl">
-                                {habits.length === 0 ? (
-                                    <div className="text-center py-12">
-                                        <h3 className="text-2xl font-medium text-slate-300 mb-4">No Data for Insights</h3>
-                                        <p className="text-slate-400">
-                                            Add some habits and start tracking them to receive AI-powered insights and recommendations.
-                                        </p>
-                                    </div>
-                                ) : insights.data ? (
-                                    <div>
-                                        <div className="flex justify-between items-start">
-                                            <h3 className="text-xl font-bold mb-6">AI Habit Insights</h3>
-                                            <button
-                                                onClick={getAIInsights}
-                                                className="px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg text-white transition-colors"
+                                                }`}
                                             >
-                                                Refresh Analysis
+                                                Last 30 Days
                                             </button>
                                         </div>
-
-                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                            <div className="bg-slate-700/50 rounded-lg p-6">
-                                                <h4 className="text-lg font-medium mb-4 text-green-400">Streak Analysis</h4>
-                                                <p className="text-slate-300">{insights.data.streak_analysis}</p>
-                                            </div>
-
-                                            <div className="bg-slate-700/50 rounded-lg p-6">
-                                                <h4 className="text-lg font-medium mb-4 text-blue-400">Pattern Recognition</h4>
-                                                <p className="text-slate-300">{insights.data.pattern_analysis}</p>
-                                            </div>
+                                    </div>
+                                    
+                                    {/* Summary metrics */}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                                        <div className="bg-slate-700/50 p-6 rounded-lg">
+                                            <h4 className="text-lg font-medium mb-2">Average Streak</h4>
+                                            <div className="text-5xl font-bold text-blue-400">{calculateAverageStreak()}</div>
                                         </div>
-
-                                        <div className="mt-6 bg-slate-700/50 rounded-lg p-6">
-                                            <h4 className="text-lg font-medium mb-4 text-yellow-400">Personalized Recommendations</h4>
-                                            <ul className="list-disc pl-5 space-y-3">
-                                                {insights.data.recommendations.map((rec, i) => (
-                                                    <li key={i} className="text-slate-300">{rec}</li>
-                                                ))}
-                                            </ul>
+                                        <div className="bg-slate-700/50 p-6 rounded-lg">
+                                            <h4 className="text-lg font-medium mb-2">Completion Rate</h4>
+                                            <div className="text-5xl font-bold text-green-400">{calculateCompletionRate()}%</div>
+                                        </div>
+                                        <div className="bg-slate-700/50 p-6 rounded-lg">
+                                            <h4 className="text-lg font-medium mb-2">Longest Streak</h4>
+                                            <div className="text-5xl font-bold text-yellow-400">{calculateLongestStreak()}</div>
                                         </div>
                                     </div>
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center py-12">
-                                        {insights.loading ? (
-                                            <div className="text-center">
-                                                <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mb-4"></div>
-                                                <p className="text-slate-300">Analyzing your habit data...</p>
+                                    
+                                    {/* Charts */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+                                        {/* Completion over time */}
+                                        <div className="bg-slate-700/30 p-6 rounded-lg">
+                                            <h4 className="text-lg font-medium mb-4">Completion Rate Over Time</h4>
+                                            <div className="h-80 flex items-center justify-center">
+                                                <p className="text-slate-400">Chart visualization temporarily unavailable</p>
                                             </div>
-                                        ) : (
-                                            <div className="text-center">
-                                                <p className="text-slate-300 mb-4">
-                                                    Get personalized insights about your habits and recommendations to improve.
-                                                </p>
-                                                <button
-                                                    onClick={getAIInsights}
-                                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white transition-colors"
-                                                >
-                                                    Generate Insights
-                                                </button>
+                                        </div>
+                                        
+                                        {/* Category breakdown */}
+                                        <div className="bg-slate-700/30 p-6 rounded-lg">
+                                            <h4 className="text-lg font-medium mb-4">Habits by Category</h4>
+                                            <div className="h-80 flex items-center justify-center">
+                                                <p className="text-slate-400">Chart visualization temporarily unavailable</p>
                                             </div>
-                                        )}
+                                        </div>
                                     </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                                    
+                                    {/* Most consistent and least consistent habits */}
+                                    <div className="mt-8">
+                                        <h4 className="text-lg font-medium mb-4">Habit Performance</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="bg-slate-700/30 p-4 rounded-lg">
+                                                <h5 className="text-md font-medium mb-2 text-green-400">Most Consistent</h5>
+                                                {habits.length > 0 ? (
+                                                    <div className="space-y-2">
+                                                        {[...habits]
+                                                            .sort((a, b) => b.streak - a.streak)
+                                                            .slice(0, 3)
+                                                            .map(habit => (
+                                                                <div key={habit.id} className="flex justify-between items-center p-2 bg-slate-600/50 rounded">
+                                                                    <span>{habit.name}</span>
+                                                                    <span className="text-yellow-300">{habit.streak} days</span>
+                                                                </div>
+                                                            ))
+                                                        }
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-slate-400 text-sm">No data available</p>
+                                                )}
+                                            </div>
+                                            <div className="bg-slate-700/30 p-4 rounded-lg">
+                                                <h5 className="text-md font-medium mb-2 text-red-400">Needs Attention</h5>
+                                                {habits.length > 0 ? (
+                                                    <div className="space-y-2">
+                                                        {[...habits]
+                                                            .sort((a, b) => a.streak - b.streak)
+                                                            .slice(0, 3)
+                                                            .map(habit => (
+                                                                <div key={habit.id} className="flex justify-between items-center p-2 bg-slate-600/50 rounded">
+                                                                    <span>{habit.name}</span>
+                                                                    <span className="text-slate-300">{habit.streak} days</span>
+                                                                </div>
+                                                            ))
+                                                        }
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-slate-400 text-sm">No data available</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    )}
+                    
+                    {activeTab === 'insights' && (
+                        <div className={`${currentTheme.colors.chatMessageListBg} backdrop-blur-sm p-8 rounded-xl shadow-xl`}>
+                            {habits.length === 0 ? (
+                                <div className="text-center py-12">
+                                    <h3 className="text-2xl font-medium text-slate-300 mb-4">No Data for Insights</h3>
+                                    <p className="text-slate-400">
+                                        Add some habits and start tracking them to receive AI-powered insights and recommendations.
+                                    </p>
+                                </div>
+                            ) : insights.data ? (
+                                <div>
+                                    <div className="flex justify-between items-start">
+                                        <h3 className="text-xl font-bold mb-6">AI Habit Insights</h3>
+                                        <button
+                                            onClick={getAIInsights}
+                                            className="px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg text-white transition-colors"
+                                        >
+                                            Refresh Analysis
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        <div className="bg-slate-700/50 rounded-lg p-6">
+                                            <h4 className="text-lg font-medium mb-4 text-green-400">Streak Analysis</h4>
+                                            <p className="text-slate-300">{insights.data.streak_analysis}</p>
+                                        </div>
+                                        
+                                        <div className="bg-slate-700/50 rounded-lg p-6">
+                                            <h4 className="text-lg font-medium mb-4 text-blue-400">Pattern Recognition</h4>
+                                            <p className="text-slate-300">{insights.data.pattern_analysis}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="mt-6 bg-slate-700/50 rounded-lg p-6">
+                                        <h4 className="text-lg font-medium mb-4 text-yellow-400">Personalized Recommendations</h4>
+                                        <ul className="list-disc pl-5 space-y-3">
+                                            {insights.data.recommendations.map((rec, i) => (
+                                                <li key={i} className="text-slate-300">{rec}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-12">
+                                    {insights.loading ? (
+                                        <div className="text-center">
+                                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+                                            <p className="text-slate-300">Analyzing your habit data...</p>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center">
+                                            <p className="text-slate-300 mb-4">
+                                                Get personalized insights about your habits and recommendations to improve.
+                                            </p>
+                                            <button
+                                                onClick={getAIInsights}
+                                                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white transition-colors"
+                                            >
+                                                Generate Insights
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

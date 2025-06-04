@@ -5,12 +5,19 @@ const path = require('path');
 const audioRoutes = require('./routes/audioRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const habitRoutes = require('./routes/habitRoutes');
+const personalizationRoutes = require('./routes/personalizationRoutes');
+const connectDB = require('./config/database');
 
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Connect to MongoDB
+connectDB()
+    .then(() => console.log('MongoDB connected successfully'))
+    .catch(err => console.error('MongoDB connection error:', err));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -28,6 +35,7 @@ app.use('/audio', express.static(path.join(__dirname, '../public/audio')));
 app.use('/api/audio', audioRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/habits', habitRoutes);
+app.use('/api/personalization', personalizationRoutes);
 
 // Start server
 const PORT = process.env.PORT || 5002;

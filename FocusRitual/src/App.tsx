@@ -7,15 +7,21 @@ import SpotifyPlayer from './components/SpotifyPlayer';
 import ChatAssistant from './components/ChatAssistant';
 import QuoteGenerator from './components/QuoteGenerator';
 import Paint from './components/Paint/Paint';
-import { PlayCircleIcon, ArrowsPointingOutIcon, XMarkIcon, MusicalNoteIcon, PencilIcon } from '@heroicons/react/24/solid';
+import UpcomingEvents from './components/UpcomingEvents';
+import EnhancedTodoList from './components/EnhancedTodoList';
+import { PlayCircleIcon, ArrowsPointingOutIcon, XMarkIcon, MusicalNoteIcon, PencilIcon, CalendarIcon, ChartBarIcon, Cog6ToothIcon } from '@heroicons/react/24/solid';
 import Callback from './pages/Callback';
 import FocusModePage from './pages/FocusModePage';
 import HabitPage from './pages/HabitPage';
+import CalendarPage from './pages/CalendarPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import SettingsPage from './pages/SettingsPage';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { useTheme } from './context/ThemeContext';
 import { ThemeSelector } from './components/ThemeSelector';
 import { BackgroundManager } from './components/BackgroundManager';
 import HabitSummary from './components/HabitSummary';
+import SessionHistory from './components/SessionHistory';
 
 const App: React.FC = () => {
     const [selectedTime, setSelectedTime] = useState(25);
@@ -105,6 +111,9 @@ const App: React.FC = () => {
                     />
                 } />
                 <Route path="/habits" element={<HabitPage />} />
+                <Route path="/calendar" element={<CalendarPage />} />
+                <Route path="/analytics" element={<AnalyticsPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/" element={
                     <div className="min-h-screen text-white p-4">
                         <BackgroundManager
@@ -116,7 +125,7 @@ const App: React.FC = () => {
                         <div className={`max-w-4xl mx-auto space-y-6 transition-all duration-300 ${isFocusMode ? 'mr-[50%]' : ''}`}>
                             <div className="flex justify-between items-center mb-8">
                                 <h1 className="text-4xl font-bold">FocusRitual</h1>
-                                <div className="flex space-x-2">
+                                <div className="flex flex-wrap gap-2">
                                     <button
                                         onClick={toggleFocusMode}
                                         className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors"
@@ -135,6 +144,27 @@ const App: React.FC = () => {
                                         className="px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors"
                                     >
                                         Habits
+                                    </button>
+                                    <button
+                                        onClick={() => navigate('/calendar')}
+                                        className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors"
+                                    >
+                                        <CalendarIcon className="h-5 w-5" />
+                                        <span>Calendar</span>
+                                    </button>
+                                    <button
+                                        onClick={() => navigate('/analytics')}
+                                        className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors"
+                                    >
+                                        <ChartBarIcon className="h-5 w-5" />
+                                        <span>Analytics</span>
+                                    </button>
+                                    <button
+                                        onClick={() => navigate('/settings')}
+                                        className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors"
+                                    >
+                                        <Cog6ToothIcon className="h-5 w-5" />
+                                        <span>Settings</span>
                                     </button>
                                 </div>
                             </div>
@@ -176,6 +206,7 @@ const App: React.FC = () => {
                                             onStateChange={handleTimerStateChange}
                                         />
                                     )}
+                                    <UpcomingEvents compact={true} />
                                     <div className="bg-white/10 backdrop-blur-md rounded-xl p-4">
                                         <div className="flex items-center justify-between">
                                             <h2 className="text-xl font-semibold">Media Players</h2>
@@ -200,7 +231,9 @@ const App: React.FC = () => {
                                 </div>
                                 <div className="space-y-6">
                                     <Soundscape />
+                                    <EnhancedTodoList />
                                     <HabitSummary />
+                                    <SessionHistory compact={true} />
                                     <RitualBuilder />
                                     <QuoteGenerator />
                                 </div>
