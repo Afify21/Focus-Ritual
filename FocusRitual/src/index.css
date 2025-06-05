@@ -15,3 +15,60 @@ code {
     font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
         monospace;
 }
+
+body.theme-default {
+  background: #1e293b;
+  color: #fff;
+  --main-bg: #1e293b;
+  --window-bg: rgba(30,41,59,0.95);
+  --window-header-bg: #334155;
+  --window-header-text: #fff;
+  --window-border: #334155;
+  --window-text: #fff;
+  --taskbar-bg: #1e293b;
+  --taskbar-text: #fff;
+}
+body.theme-harry-potter {
+  background: #F5ECCE;
+  color: #FFD700;
+  --main-bg: #23232B;
+  --window-bg: #23232B;
+  --window-header-bg: #7F0909;
+  --window-header-text: #F6E3B0;
+  --window-border: #BFA77A;
+  --window-text: #F6E3B0;
+  --taskbar-bg: #3B2F2F;
+  --taskbar-text: #F6E3B0;
+}
+body.theme-attack-on-titans {
+  background: #222831;
+  color: #00ADB5;
+  --main-bg: #222831;
+  --window-bg: rgba(34,40,49,0.95);
+  --window-header-bg: #393E46;
+  --window-header-text: #00ADB5;
+  --window-border: #00ADB5;
+  --window-text: #00ADB5;
+  --taskbar-bg: #393E46;
+  --taskbar-text: #00ADB5;
+}
+body.theme-peaky-blinders {
+  background: #1A1A1A;
+  color: #C4A777;
+  --main-bg: #1A1A1A;
+  --window-bg: rgba(26,26,26,0.95);
+  --window-header-bg: #2C2C2C;
+  --window-header-text: #C4A777;
+  --window-border: #C4A777;
+  --window-text: #C4A777;
+  --taskbar-bg: #2C2C2C;
+  --taskbar-text: #C4A777;
+}
+
+.bg-main {
+  background: var(--main-bg, #1e293b);
+}
+
+.window-content, .window-content h1, .window-content h2, .window-content h3, .window-content h4, .window-content h5, .window-content h6, .window-content p, .window-content span, .window-content label {
+  color: var(--window-text, #F6E3B0) !important;
+}

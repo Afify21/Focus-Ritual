@@ -7,6 +7,7 @@ import ChatAssistant from '../components/ChatAssistant';
 import Soundscape from '../components/Soundscape';
 import { ThemeSelector } from '../components/ThemeSelector';
 import Paint from '../components/Paint/Paint';
+import { BackgroundManager } from '../components/BackgroundManager';
 
 interface FocusModePageProps {
     onExitFocusMode: () => void;
@@ -28,12 +29,16 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
     onVolumeChange
 }) => {
     const [showPaint, setShowPaint] = useState(false);
+    const [selectedDuration, setSelectedDuration] = useState(1500); // default 25m
+    const [pdfUrl, setPdfUrl] = useState<string>(''); // Add state for PDF URL
 
     return (
-        <div className="min-h-screen text-slate-800 dark:text-white p-4 relative">
-            {showPaint && <Paint width={500} height={400} />}
-            <div className="container mx-auto h-full">
-                <div className="flex justify-between items-center mb-4 relative z-50">
+        <div className="min-h-screen text-white p-4 relative overflow-hidden">
+            {/* Animated Theme Background */}
+            <BackgroundManager isFocusMode={true} isPlaying={true} isBreak={false} isReset={false} morePrevalent={true} />
+            {showPaint && <Paint />}
+            <div className="h-full w-full relative z-10">
+                <div className="flex justify-between items-center mb-4 relative z-50 px-2 md:px-8">
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Focus Mode</h1>
                     <button
                         onClick={onExitFocusMode}
@@ -44,14 +49,20 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
                     </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-[3fr_1fr] gap-6 h-[calc(100vh-60px)] relative z-10">
+                <div className="grid grid-cols-1 md:grid-cols-[3fr_1fr] gap-6 h-[calc(100vh-60px)] w-full relative z-10 px-2 md:px-8">
                     {/* Left column for PDF viewer and YouTube player */}
                     <div className="space-y-6 h-full">
                         {/* Wrapper for Paint Button and PDF Viewer */}
                         <div className="relative">
                             {/* PDF Viewer Container with fixed height and overflow hidden */}
-                            <div className="bg-white/40 dark:bg-slate-800/40 backdrop-blur-md rounded-xl overflow-hidden h-[calc(60%-12px)]">
-                                <PDFViewer />
+                            <div className="bg-transparent rounded-xl overflow-hidden h-[calc(60%-12px)]">
+                                {pdfUrl ? (
+                                    <PDFViewer url={pdfUrl} />
+                                ) : (
+                                    <div className="flex items-center justify-center h-full">
+                                        <p className="text-slate-500">No PDF loaded</p>
+                                    </div>
+                                )}
                             </div>
                             {/* Paint Button - outside PDF Viewer container */}
                             <button
@@ -63,7 +74,7 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
                             </button>
                         </div>
                         {/* YouTube Player Container with fixed height */}
-                        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 h-[calc(40%-12px)] relative">
+                        <div className="bg-transparent rounded-xl p-4 h-[calc(40%-12px)] relative">
                             <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-200">YouTube Player</h2>
                             <div className="h-[calc(100%-3rem)]">
                                 <YouTubePlayer onClose={() => { }} isFocusMode={true} />
@@ -73,13 +84,24 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
 
                     {/* Right column for Timer, Soundscapes, and Theme Selector */}
                     <div className="space-y-4">
-                        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 relative">
+                        <div className="bg-transparent rounded-xl p-4 relative">
                             <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-200">Timer</h2>
-                            <Timer duration={duration} onStateChange={onStateChange} isMinimized={true} />
+                            <div className="flex gap-2 mb-4">
+                                {[{label: '25m', value: 1500}, {label: '50m', value: 3000}, {label: '90m', value: 5400}].map(opt => (
+                                    <button
+                                        key={opt.value}
+                                        onClick={() => setSelectedDuration(opt.value)}
+                                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${selectedDuration === opt.value ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+                            <Timer duration={selectedDuration} onStateChange={onStateChange} isMinimized={true} />
                         </div>
 
                         {/* Soundscapes */}
-                        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 relative">
+                        <div className="bg-transparent rounded-xl p-4 relative">
                             <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-200">Ambient Sounds</h2>
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center space-x-2">
@@ -108,19 +130,15 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
                         </div>
 
                         {/* Theme Selector */}
-                        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 relative">
+                        <div className="bg-transparent rounded-xl p-4 relative">
                             <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-200">Theme</h2>
                             <div className="flex flex-wrap gap-2">
                                 <ThemeSelector compact={true} />
                             </div>
                         </div>
+                        {/* Optional children, e.g. quote generator */}
+                        {children}
                     </div>
-                </div>
-            </div>
-            {/* Chat Assistant rendered at the highest level */}
-            <div className="fixed inset-0 z-[999999] pointer-events-none">
-                <div className="absolute inset-0 pointer-events-none">
-                    <ChatAssistant />
                 </div>
             </div>
         </div>

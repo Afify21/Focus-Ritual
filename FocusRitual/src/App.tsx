@@ -1,27 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import Timer from './components/Timer';
-import Soundscape from './components/Soundscape';
-import RitualBuilder from './components/RitualBuilder';
-import YouTubePlayer from './components/YouTubePlayer';
-import SpotifyPlayer from './components/SpotifyPlayer';
-import ChatAssistant from './components/ChatAssistant';
-import QuoteGenerator from './components/QuoteGenerator';
-import Paint from './components/Paint/Paint';
-import UpcomingEvents from './components/UpcomingEvents';
-import EnhancedTodoList from './components/EnhancedTodoList';
-import { PlayCircleIcon, ArrowsPointingOutIcon, XMarkIcon, MusicalNoteIcon, PencilIcon, CalendarIcon, ChartBarIcon, Cog6ToothIcon } from '@heroicons/react/24/solid';
-import Callback from './pages/Callback';
-import FocusModePage from './pages/FocusModePage';
-import HabitPage from './pages/HabitPage';
-import CalendarPage from './pages/CalendarPage';
-import AnalyticsPage from './pages/AnalyticsPage';
-import SettingsPage from './pages/SettingsPage';
-import { Routes, Route, useNavigate } from 'react-router-dom';
-import { useTheme } from './context/ThemeContext';
-import { ThemeSelector } from './components/ThemeSelector';
-import { BackgroundManager } from './components/BackgroundManager';
-import HabitSummary from './components/HabitSummary';
-import SessionHistory from './components/SessionHistory';
+import React from 'react';
+import Desktop from './components/Desktop';
 
 const App: React.FC = () => {
     const [selectedTime, setSelectedTime] = useState(25);
@@ -306,4 +284,4 @@ const App: React.FC = () => {
     );
 };
 
-export default App; 
+export default App;

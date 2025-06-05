@@ -1,239 +1,107 @@
 import React, { useRef, useState, useEffect } from 'react';
 
-type ResizeDirection = 'right' | 'left' | 'bottom' | 'top' | 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
-interface ResizeStart {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    direction?: ResizeDirection;
-}
-
 interface PaintProps {
-    width: number;
-    height: number;
+    onSave?: (dataUrl: string) => void;
 }
 
-const Paint: React.FC<PaintProps> = ({ width, height }) => {
+const Paint: React.FC<PaintProps> = ({ onSave }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
+    const contextRef = useRef<CanvasRenderingContext2D | null>(null);
     const [isDrawing, setIsDrawing] = useState(false);
     const [color, setColor] = useState('#000000');
     const [brushSize, setBrushSize] = useState(5);
     const [isEraser, setIsEraser] = useState(false);
-    const [position, setPosition] = useState({ x: window.innerWidth / 2 - width / 2, y: window.innerHeight / 2 - height / 2 });
-    const [size, setSize] = useState({ width, height });
-    const [isDragging, setIsDragging] = useState(false);
-    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-    const [isMaximized, setIsMaximized] = useState(false);
-    const [isExpanded, setIsExpanded] = useState(false);
-    const [originalSize, setOriginalSize] = useState({ width, height });
-    const [originalPosition, setOriginalPosition] = useState({ x: window.innerWidth / 2 - width / 2, y: window.innerHeight / 2 - height / 2 });
 
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+        canvas.width = 800;
+        canvas.height = 600;
+        canvas.style.width = '800px';
+        canvas.style.height = '600px';
 
-        // Save the current canvas content
-        const tempCanvas = document.createElement('canvas');
-        const tempCtx = tempCanvas.getContext('2d');
-        if (!tempCtx) return;
+        const context = canvas.getContext('2d');
+        if (!context) return;
 
-        tempCanvas.width = canvas.width;
-        tempCanvas.height = canvas.height;
-        tempCtx.drawImage(canvas, 0, 0);
+        context.lineCap = 'round';
+        context.strokeStyle = color;
+        context.lineWidth = brushSize;
+        contextRef.current = context;
 
-        // Resize the main canvas
-        canvas.width = size.width;
-        canvas.height = size.height;
+        // Set white background
+        context.fillStyle = 'white';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+    }, []);
 
-        // Restore the content
-        ctx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, size.width, size.height);
+    useEffect(() => {
+        if (!contextRef.current) return;
+        contextRef.current.strokeStyle = isEraser ? '#FFFFFF' : color;
+        contextRef.current.lineWidth = brushSize;
+    }, [color, brushSize, isEraser]);
 
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-    }, [size.width, size.height]);
-
-    const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        if (isDragging) return;
-
+    const startDrawing = (e: React.MouseEvent) => {
         const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+        if (!canvas || !contextRef.current) return;
 
         const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.strokeStyle = isEraser ? 'white' : color;
-        ctx.lineWidth = brushSize;
+        contextRef.current.beginPath();
+        contextRef.current.moveTo(x, y);
         setIsDrawing(true);
     };
 
-    const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        if (!isDrawing || isDragging) return;
+    const draw = (e: React.MouseEvent) => {
+        if (!isDrawing || !contextRef.current || !canvasRef.current) return;
 
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        const rect = canvas.getBoundingClientRect();
+        const rect = canvasRef.current.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
-        ctx.lineTo(x, y);
-        ctx.stroke();
+        contextRef.current.lineTo(x, y);
+        contextRef.current.stroke();
     };
 
     const stopDrawing = () => {
+        if (!contextRef.current) return;
+        contextRef.current.closePath();
         setIsDrawing(false);
     };
 
     const clearCanvas = () => {
         const canvas = canvasRef.current;
-        if (!canvas) return;
+        const context = contextRef.current;
+        if (!canvas || !context) return;
 
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, size.width, size.height);
-    };
-
-    const saveDrawing = () => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        const link = document.createElement('a');
-        link.download = 'drawing.png';
-        link.href = canvas.toDataURL();
-        link.click();
+        context.fillStyle = 'white';
+        context.fillRect(0, 0, canvas.width, canvas.height);
     };
 
     const toggleEraser = () => {
         setIsEraser(!isEraser);
     };
 
-    const navBarRef = useRef<HTMLDivElement>(null);
-    const [isNavDragging, setIsNavDragging] = useState(false);
-    const [navDragStart, setNavDragStart] = useState({ x: 0, y: 0 });
+    const saveDrawing = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
 
-    const handleNavMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-        setIsNavDragging(true);
-        setNavDragStart({
-            x: e.clientX - position.x,
-            y: e.clientY - position.y
-        });
-    };
-
-    const handleNavMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (isNavDragging) {
-            const newX = e.clientX - navDragStart.x;
-            const newY = e.clientY - navDragStart.y;
-            setPosition({
-                x: Math.max(0, Math.min(window.innerWidth - size.width, newX)),
-                y: Math.max(0, Math.min(window.innerHeight - size.height, newY))
-            });
-        }
-    };
-
-    const handleNavMouseUp = () => setIsNavDragging(false);
-
-    useEffect(() => {
-        const handleGlobalMouseUp = () => setIsNavDragging(false);
-        window.addEventListener('mouseup', handleGlobalMouseUp);
-        return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
-    }, []);
-
-    const handleExpand = () => {
-        if (!isExpanded) {
-            setOriginalSize(size);
-            setOriginalPosition(position);
-            setSize({
-                width: Math.min(window.innerWidth - 64, size.width * 1.5),
-                height: Math.min(window.innerHeight - 200, size.height * 1.5)
-            });
-            // Center the expanded window
-            setPosition({
-                x: window.innerWidth / 2 - (size.width * 1.5) / 2,
-                y: window.innerHeight / 2 - (size.height * 1.5) / 2
-            });
+        const dataUrl = canvas.toDataURL('image/png');
+        if (onSave) {
+            onSave(dataUrl);
         } else {
-            setSize(originalSize);
-            setPosition(originalPosition);
+            const link = document.createElement('a');
+            link.download = 'drawing.png';
+            link.href = dataUrl;
+            link.click();
         }
-        setIsExpanded(!isExpanded);
     };
-
-    const handleMaximize = () => {
-        if (!isMaximized) {
-            setOriginalSize(size);
-            setOriginalPosition(position);
-            setSize({
-                width: window.innerWidth - 32, // Leave some padding
-                height: window.innerHeight - 200 // Leave space for controls
-            });
-            setPosition({ x: 16, y: 16 });
-        } else {
-            setSize(originalSize);
-            setPosition(originalPosition);
-        }
-        setIsMaximized(!isMaximized);
-    };
-
-    // Calculate total height: nav bar (32px) + controls row (min 64px) + canvas (size.height) + padding (16px top + 16px bottom)
-    const controlsHeight = 64; // px, adjust as needed
-    const navBarHeight = 32; // px
-    const verticalPadding = 32; // px (16px top + 16px bottom)
-    const totalHeight = navBarHeight + controlsHeight + size.height + verticalPadding;
 
     return (
-        <div
-            ref={containerRef}
-            className="fixed bg-white/40 dark:bg-slate-800/40 rounded-lg shadow-lg z-[999999] overflow-hidden"
-            style={{
-                left: position.x,
-                top: position.y,
-                width: size.width,
-                height: totalHeight,
-                minWidth: 320,
-                minHeight: 400,
-            }}
-        >
-            {/* Draggable Nav Bar */}
-            <div
-                ref={navBarRef}
-                className="h-8 bg-slate-600 rounded-t-lg cursor-move flex items-center px-4 select-none"
-                onMouseDown={handleNavMouseDown}
-                onMouseMove={handleNavMouseMove}
-                onMouseUp={handleNavMouseUp}
-                onMouseLeave={handleNavMouseUp}
-            >
-                <div className="text-white text-sm font-medium flex-grow">Paint</div>
-                <button
-                    onClick={handleMaximize}
-                    className="ml-2 px-2 py-1 text-xs font-medium text-white bg-slate-500 rounded-md hover:bg-slate-700"
-                >
-                    {isMaximized ? 'Minimize' : 'Maximize'}
-                </button>
-                <button
-                    onClick={handleExpand}
-                    className="ml-2 px-2 py-1 text-xs font-medium text-white bg-slate-500 rounded-md hover:bg-slate-700"
-                >
-                    {isExpanded ? 'Shrink' : 'Expand'}
-                </button>
-            </div>
+        <div className="flex flex-col h-full">
             {/* Controls Row */}
-            <div className="flex flex-wrap items-center gap-2 px-4 py-2 border-b border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-800/60" style={{ minHeight: controlsHeight }}>
+            <div className="flex items-center gap-4 p-3 bg-slate-700/50">
                 <input
                     type="color"
                     value={color}
@@ -269,18 +137,14 @@ const Paint: React.FC<PaintProps> = ({ width, height }) => {
                 </button>
             </div>
             {/* Canvas Area */}
-            <div className="p-2">
+            <div className="flex-1 overflow-hidden bg-white rounded-lg">
                 <canvas
                     ref={canvasRef}
                     onMouseDown={startDrawing}
                     onMouseMove={draw}
                     onMouseUp={stopDrawing}
                     onMouseLeave={stopDrawing}
-                    className="border border-gray-300 rounded-lg cursor-crosshair bg-white"
-                    style={{
-                        width: size.width - 16, // Account for padding
-                        height: size.height - 16 // Account for padding
-                    }}
+                    className="w-full h-full"
                 />
             </div>
         </div>

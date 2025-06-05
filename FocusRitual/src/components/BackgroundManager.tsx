@@ -11,6 +11,7 @@ interface BackgroundManagerProps {
     isPlaying: boolean;
     isBreak: boolean;
     isReset: boolean;
+    morePrevalent?: boolean;
 }
 
 const VIDEO_ROTATION_INTERVAL = 10 * 60 * 1000; // 10 minutes in milliseconds
@@ -20,6 +21,7 @@ export const BackgroundManager: React.FC<BackgroundManagerProps> = ({
     isPlaying,
     isBreak,
     isReset,
+    morePrevalent = false,
 }) => {
     const { currentTheme } = useTheme();
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -140,13 +142,13 @@ export const BackgroundManager: React.FC<BackgroundManagerProps> = ({
     return (
         <div className="fixed inset-0 -z-10 overflow-hidden">
             {currentTheme.id === 'default' ? (
-                <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" />
+                <div className={`absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 ${isFocusMode && morePrevalent ? 'opacity-0' : morePrevalent ? 'opacity-100' : 'opacity-90'}`} />
             ) : (
                 <>
-                    <div className="absolute inset-0 bg-slate-900" />
+                    <div className={`absolute inset-0 bg-slate-900 ${(isFocusMode && morePrevalent) ? 'opacity-0' : morePrevalent ? 'opacity-70' : 'opacity-90'}`} />
                     <video
                         ref={videoRef}
-                        className="absolute inset-0 w-full h-full object-cover"
+                        className={`absolute inset-0 w-full h-full object-cover ${morePrevalent ? 'opacity-100' : 'opacity-80'}`}
                         autoPlay
                         loop
                         muted
@@ -155,7 +157,7 @@ export const BackgroundManager: React.FC<BackgroundManagerProps> = ({
                     />
                     <img
                         ref={imgRef}
-                        className="absolute inset-0 w-full h-full object-cover"
+                        className={`absolute inset-0 w-full h-full object-cover ${morePrevalent ? 'opacity-100' : 'opacity-80'}`}
                         alt="Background"
                         style={{ display: 'none' }}
                     />

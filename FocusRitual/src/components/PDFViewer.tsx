@@ -21,6 +21,7 @@ try {
 }
 
 interface PDFViewerProps {
+    url: string;
     onClose?: () => void;
 }
 
@@ -41,13 +42,20 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
     const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
     const [pdfLibDoc, setPdfLibDoc] = useState<PDFDocument | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(0);
-    const [scale, setScale] = useState(1.2);
-    const [annotations, setAnnotations] = useState<Annotation[]>([]);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [scale, setScale] = useState(1);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [currentSearchIndex, setCurrentSearchIndex] = useState(-1);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [pageHeight, setPageHeight] = useState(0);
+    const [totalHeight, setTotalHeight] = useState(0);
+    const [isDrawingMode, setIsDrawingMode] = useState(false);
+    const [annotations, setAnnotations] = useState<any[]>([]);
+
     const pageContainerRef = useRef<HTMLDivElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
     const textLayerRef = useRef<HTMLDivElement>(null);
-    const [isScrolling, setIsScrolling] = useState(false);
     const scrollTimeoutRef = useRef<NodeJS.Timeout>();
     const [scrollPosition, setScrollPosition] = useState(0);
     const [totalHeight, setTotalHeight] = useState(0);
@@ -756,7 +764,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                 }
                 break;
         }
-    }, [currentPage, totalPages, isScrolling]);
+    }, []);
 
     useEffect(() => {
         const container = pageContainerRef.current;
@@ -1200,7 +1208,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                                 )}
                             </div>
                         </div>
-                    </div>
+                    </Document>
                 )}
             </div>
 

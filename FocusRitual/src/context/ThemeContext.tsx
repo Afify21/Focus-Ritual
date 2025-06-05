@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Theme, themes } from '../config/themes';
 
 interface ThemeContextType {
@@ -19,6 +19,17 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             setCurrentTheme(theme);
         }
     };
+
+    // Apply theme class to body
+    useEffect(() => {
+        document.body.classList.remove(...availableThemes.map(t => `theme-${t.id}`));
+        document.body.classList.add(`theme-${currentTheme.id}`);
+
+        // Set CSS variables for theme colors
+        Object.entries(currentTheme.colors).forEach(([key, value]) => {
+            document.body.style.setProperty(`--${key}`, value);
+        });
+    }, [currentTheme, availableThemes]);
 
     return (
         <ThemeContext.Provider value={{ currentTheme, setTheme, availableThemes }}>
