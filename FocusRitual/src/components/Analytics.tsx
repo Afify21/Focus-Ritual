@@ -230,185 +230,130 @@ const Analytics: React.FC = () => {
   };
   
   return (
-    <div className={`${currentTheme.colors.chatMessageListBg} backdrop-blur-sm p-4 rounded-xl shadow-xl`}>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold flex items-center">
-          <ChartBarIcon className="h-6 w-6 mr-2 text-blue-400" />
-          Analytics
-        </h2>
-        
-        <div className="flex space-x-2">
-          <button
-            onClick={() => setTimeRange('week')}
-            className={`px-3 py-1 text-sm rounded ${
-              timeRange === 'week' 
-                ? 'bg-blue-600 text-white' 
-                : 'bg-slate-700 text-slate-300'
-            }`}
-          >
-            Week
-          </button>
-          <button
-            onClick={() => setTimeRange('month')}
-            className={`px-3 py-1 text-sm rounded ${
-              timeRange === 'month' 
-                ? 'bg-blue-600 text-white' 
-                : 'bg-slate-700 text-slate-300'
-            }`}
-          >
-            Month
-          </button>
-          <button
-            onClick={() => setTimeRange('year')}
-            className={`px-3 py-1 text-sm rounded ${
-              timeRange === 'year' 
-                ? 'bg-blue-600 text-white' 
-                : 'bg-slate-700 text-slate-300'
-            }`}
-          >
-            Year
-          </button>
+    <div className="space-y-8">
+      {/* Summary metrics */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div>
+          <div className="text-sm text-slate-400 mb-1">Habit Completion</div>
+          <div className="text-2xl font-bold text-blue-400">{completionRate}%</div>
+        </div>
+        <div>
+          <div className="text-sm text-slate-400 mb-1">Focus Time</div>
+          <div className="text-2xl font-bold text-green-400">{totalFocusHours}h</div>
+        </div>
+        <div>
+          <div className="text-sm text-slate-400 mb-1">Avg. Productivity</div>
+          <div className="text-2xl font-bold text-yellow-400">{averageProductivity}/10</div>
+        </div>
+        <div>
+          <div className="text-sm text-slate-400 mb-1">Upcoming Events</div>
+          <div className="text-2xl font-bold text-purple-400">{upcomingEventsCount}</div>
         </div>
       </div>
       
-      {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Habit completion chart */}
+        <div>
+          <h3 className="text-md font-medium mb-4">Habit Completion Rate</h3>
+          <div className="h-60 flex items-end space-x-1">
+            {habitCompletionData.map((data, index) => (
+              <div 
+                key={index} 
+                className="flex-1 flex flex-col items-center justify-end h-full"
+              >
+                <div 
+                  className="w-full bg-blue-600/70 rounded-t"
+                  style={{ 
+                    height: `${(data.completionRate / maxCompletionRate) * 80}%`,
+                    minHeight: data.completionRate > 0 ? '4px' : '0'
+                  }}
+                ></div>
+                <div className="text-xs text-slate-400 mt-1 transform -rotate-45 origin-top-left whitespace-nowrap">
+                  {data.date}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      ) : (
-        <div className="space-y-8">
-          {/* Summary metrics */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-slate-700/50 p-4 rounded-lg">
-              <div className="text-sm text-slate-400 mb-1">Habit Completion</div>
-              <div className="text-2xl font-bold text-blue-400">{completionRate}%</div>
-            </div>
-            
-            <div className="bg-slate-700/50 p-4 rounded-lg">
-              <div className="text-sm text-slate-400 mb-1">Focus Time</div>
-              <div className="text-2xl font-bold text-green-400">{totalFocusHours}h</div>
-            </div>
-            
-            <div className="bg-slate-700/50 p-4 rounded-lg">
-              <div className="text-sm text-slate-400 mb-1">Avg. Productivity</div>
-              <div className="text-2xl font-bold text-yellow-400">{averageProductivity}/10</div>
-            </div>
-            
-            <div className="bg-slate-700/50 p-4 rounded-lg">
-              <div className="text-sm text-slate-400 mb-1">Upcoming Events</div>
-              <div className="text-2xl font-bold text-purple-400">{upcomingEventsCount}</div>
-            </div>
+        
+        {/* Focus session duration chart */}
+        <div>
+          <h3 className="text-md font-medium mb-4">Focus Time (minutes)</h3>
+          <div className="h-60 flex items-end space-x-1">
+            {sessionDurationData.map((data, index) => (
+              <div 
+                key={index} 
+                className="flex-1 flex flex-col items-center justify-end h-full"
+              >
+                <div 
+                  className="w-full bg-green-600/70 rounded-t"
+                  style={{ 
+                    height: `${(data.minutes / maxSessionMinutes) * 80}%`,
+                    minHeight: data.minutes > 0 ? '4px' : '0'
+                  }}
+                ></div>
+                <div className="text-xs text-slate-400 mt-1 transform -rotate-45 origin-top-left whitespace-nowrap">
+                  {data.date}
+                </div>
+              </div>
+            ))}
           </div>
-          
-          {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Habit completion chart */}
-            <div className="bg-slate-700/30 p-4 rounded-lg">
-              <h3 className="text-md font-medium mb-4">Habit Completion Rate</h3>
-              
-              <div className="h-60 flex items-end space-x-1">
-                {habitCompletionData.map((data, index) => (
-                  <div 
-                    key={index} 
-                    className="flex-1 flex flex-col items-center justify-end h-full"
-                  >
-                    <div 
-                      className="w-full bg-blue-600/70 rounded-t"
-                      style={{ 
-                        height: `${(data.completionRate / maxCompletionRate) * 80}%`,
-                        minHeight: data.completionRate > 0 ? '4px' : '0'
-                      }}
-                    ></div>
-                    <div className="text-xs text-slate-400 mt-1 transform -rotate-45 origin-top-left whitespace-nowrap">
-                      {data.date}
-                    </div>
+        </div>
+      </div>
+      
+      {/* Insights */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top habits */}
+        <div>
+          <h3 className="text-md font-medium mb-3">Top Performing Habits</h3>
+          {topHabits.length > 0 ? (
+            <div className="space-y-3">
+              {topHabits.map(habit => (
+                <div key={habit.id} className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium">{habit.name}</div>
+                    <div className="text-xs text-slate-400">{habit.category}</div>
                   </div>
-                ))}
+                  <div className="flex items-center text-yellow-400">
+                    <span className="font-bold mr-1">{habit.streak}</span>
+                    <span className="text-xs">days</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-slate-400 text-sm italic">No habit data available yet.</p>
+          )}
+        </div>
+        
+        {/* Productivity insights */}
+        <div>
+          <h3 className="text-md font-medium mb-3">Productivity Insights</h3>
+          <div className="space-y-4">
+            <div>
+              <div className="text-sm text-slate-300 mb-1">Most productive day</div>
+              <div className="font-medium text-green-400">{mostProductiveDay()}</div>
+            </div>
+            
+            <div>
+              <div className="text-sm text-slate-300 mb-1">Focus sessions</div>
+              <div className="font-medium text-blue-400">
+                {sessions.filter(s => s.completed).length} completed / {sessions.length} total
               </div>
             </div>
             
-            {/* Focus session duration chart */}
-            <div className="bg-slate-700/30 p-4 rounded-lg">
-              <h3 className="text-md font-medium mb-4">Focus Time (minutes)</h3>
-              
-              <div className="h-60 flex items-end space-x-1">
-                {sessionDurationData.map((data, index) => (
-                  <div 
-                    key={index} 
-                    className="flex-1 flex flex-col items-center justify-end h-full"
-                  >
-                    <div 
-                      className="w-full bg-green-600/70 rounded-t"
-                      style={{ 
-                        height: `${(data.minutes / maxSessionMinutes) * 80}%`,
-                        minHeight: data.minutes > 0 ? '4px' : '0'
-                      }}
-                    ></div>
-                    <div className="text-xs text-slate-400 mt-1 transform -rotate-45 origin-top-left whitespace-nowrap">
-                      {data.date}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          
-          {/* Insights */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Top habits */}
-            <div className="bg-slate-700/30 p-4 rounded-lg">
-              <h3 className="text-md font-medium mb-3">Top Performing Habits</h3>
-              
-              {topHabits.length > 0 ? (
-                <div className="space-y-3">
-                  {topHabits.map(habit => (
-                    <div key={habit.id} className="flex items-center justify-between bg-slate-700/50 p-3 rounded">
-                      <div>
-                        <div className="font-medium">{habit.name}</div>
-                        <div className="text-xs text-slate-400">{habit.category}</div>
-                      </div>
-                      <div className="flex items-center text-yellow-400">
-                        <span className="font-bold mr-1">{habit.streak}</span>
-                        <span className="text-xs">days</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-slate-400 text-sm italic">No habit data available yet.</p>
-              )}
-            </div>
-            
-            {/* Productivity insights */}
-            <div className="bg-slate-700/30 p-4 rounded-lg">
-              <h3 className="text-md font-medium mb-3">Productivity Insights</h3>
-              
-              <div className="space-y-4">
-                <div className="bg-slate-700/50 p-3 rounded">
-                  <div className="text-sm text-slate-300 mb-1">Most productive day</div>
-                  <div className="font-medium text-green-400">{mostProductiveDay()}</div>
-                </div>
-                
-                <div className="bg-slate-700/50 p-3 rounded">
-                  <div className="text-sm text-slate-300 mb-1">Focus sessions</div>
-                  <div className="font-medium text-blue-400">
-                    {sessions.filter(s => s.completed).length} completed / {sessions.length} total
-                  </div>
-                </div>
-                
-                <div className="bg-slate-700/50 p-3 rounded">
-                  <div className="text-sm text-slate-300 mb-1">Recommendation</div>
-                  <div className="font-medium text-purple-400">
-                    {averageProductivity < 5 
-                      ? "Try shorter focus sessions to improve productivity" 
-                      : "Your focus sessions are effective, keep up the good work!"}
-                  </div>
-                </div>
+            <div>
+              <div className="text-sm text-slate-300 mb-1">Recommendation</div>
+              <div className="font-medium text-purple-400">
+                {averageProductivity < 5 
+                  ? "Try shorter focus sessions to improve productivity" 
+                  : "Your focus sessions are effective, keep up the good work!"}
               </div>
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

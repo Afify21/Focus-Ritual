@@ -26,62 +26,49 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ onClose, isFocusMode }) =
     };
 
     return (
-        <div className={`${isFocusMode ? 'h-full w-full' : 'fixed bottom-4 left-4 w-80'} z-50 transition-all duration-300`}>
-            <div className={`relative ${isFocusMode ? 'h-full' : ''} bg-slate-800 rounded-xl overflow-hidden shadow-lg`}>
-                <div className="absolute top-4 right-4 z-10 flex space-x-2">
-                    {!isFocusMode && (
-                        <button
-                            onClick={() => setIsExpanded(!isExpanded)}
-                            className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 transition-colors"
-                        >
-                            {isExpanded ? (
-                                <ArrowsPointingInIcon className="h-5 w-5" />
-                            ) : (
-                                <ArrowsPointingOutIcon className="h-5 w-5" />
-                            )}
-                        </button>
-                    )}
-                    <button
-                        onClick={onClose}
-                        className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 transition-colors"
-                    >
-                        <XMarkIcon className="h-5 w-5" />
-                    </button>
-                </div>
-
-                {videoId ? (
-                    <div className={`w-full ${isFocusMode ? 'h-full' : isExpanded ? 'h-[400px]' : 'aspect-video'}`}>
-                        <iframe
-                            width="100%"
-                            height="100%"
-                            src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
-                            title="YouTube video player"
-                            frameBorder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                            className="rounded-xl w-full h-full"
-                        />
-                    </div>
-                ) : (
-                    <div className="p-4 h-full flex items-center justify-center">
-                        <form onSubmit={handleSubmit} className="space-y-4 w-full">
-                            <input
-                                type="text"
-                                value={url}
-                                onChange={(e) => setUrl(e.target.value)}
-                                placeholder="Enter YouTube URL"
-                                className="w-full px-4 py-2 rounded-lg bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-600"
-                            />
-                            <button
-                                type="submit"
-                                className="w-full px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors"
-                            >
-                                Load Video
-                            </button>
-                        </form>
-                    </div>
-                )}
+        <div className={`${isFocusMode ? 'h-full w-full' : 'h-full w-full'} z-50 transition-all duration-300 flex flex-col flex-1 min-h-0`} style={{ background: 'var(--window-bg, #23232B)', color: 'var(--window-text, #F6E3B0)', borderRadius: 12 }}>
+            <div className="absolute top-10 right-4 z-10 flex space-x-2">
+                <button
+                    onClick={onClose}
+                    className="p-2 rounded-lg"
+                    style={{ background: 'var(--window-header-bg, #334155)', color: 'var(--window-header-text, #fff)' }}
+                >
+                    <XMarkIcon className="h-5 w-5" />
+                </button>
             </div>
+            {videoId ? (
+                <div className="flex-1 w-full h-full flex flex-col min-h-0 relative overflow-hidden">
+                    <iframe
+                        src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
+                        title="YouTube video player"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="w-full h-full min-h-0 min-w-0 block pointer-events-auto aspect-video bg-[var(--window-bg,#23232B)]"
+                        style={{ height: '100%', width: '100%' }}
+                    />
+                </div>
+            ) : (
+                <div className="p-4 h-full flex flex-col items-center justify-center flex-1 min-h-0" style={{ background: 'var(--window-bg, #23232B)' }}>
+                    <form onSubmit={handleSubmit} className="space-y-4 w-full">
+                        <input
+                            type="text"
+                            value={url}
+                            onChange={(e) => setUrl(e.target.value)}
+                            placeholder="Enter YouTube URL"
+                            className="w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2"
+                            style={{ background: 'var(--window-bg, #23232B)', color: 'var(--window-text, #F6E3B0)', border: '1px solid var(--window-border, #BFA77A)' }}
+                        />
+                        <button
+                            type="submit"
+                            className="w-full px-4 py-2 rounded-lg transition-colors"
+                            style={{ background: 'var(--window-header-bg, #334155)', color: 'var(--window-header-text, #fff)' }}
+                        >
+                            Load Video
+                        </button>
+                    </form>
+                </div>
+            )}
         </div>
     );
 };
