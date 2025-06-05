@@ -368,8 +368,8 @@ const HabitPage: React.FC = () => {
     };
 
     return (
-        <div className={`min-h-screen text-white p-1 sm:p-3 md:p-4 ${currentTheme.colors.chatWindowBg} overflow-x-hidden`}>
-            <div className="w-full max-w-5xl mx-auto">
+        <div className={`h-screen w-screen text-white ${currentTheme.colors.chatWindowBg} overflow-x-hidden`}>
+            <div className="w-full h-full max-w-5xl mx-auto p-1 sm:p-3 md:p-4">
                 {/* Header with back button */}
                 <div className="flex justify-between items-center mb-3 md:mb-6">
                     <div className="flex items-center">

@@ -86,7 +86,7 @@ const App: React.FC = () => {
     }, []);
 
     return (
-        <div className="min-h-screen text-white p-4">
+        <div className="min-h-screen text-white">
             <BackgroundManager
                 isFocusMode={isFocusMode}
                 isPlaying={timerState.isRunning}
