@@ -68,10 +68,11 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange, isMinimized = fa
                 }
             });
 
-            // Start the break timer automatically
+            // Start the break timer automatically after a short delay
             setTimeout(() => {
                 setIsRunning(true);
                 setHasStarted(true);
+                setIsPaused(false);
             }, 1000);
         } else {
             // Break timer completed, reset to work timer
@@ -81,6 +82,13 @@ const Timer: React.FC<TimerProps> = ({ duration, onStateChange, isMinimized = fa
             setIsRunning(false);
             setHasStarted(false);
             setIsPaused(false);
+
+            // Start the work timer automatically after a short delay
+            setTimeout(() => {
+                setIsRunning(true);
+                setHasStarted(true);
+                setIsPaused(false);
+            }, 1000);
         }
     }, [isBreak, duration]);
 

@@ -49,11 +49,7 @@ const App: React.FC = () => {
         setSelectedTime(minutes);
         setTimerState(prev => ({
             ...prev,
-            timeLeft: minutes * 60,
-            isRunning: false,
-            isBreak: false,
-            isPaused: false,
-            hasStarted: false
+            timeLeft: !prev.hasStarted ? minutes * 60 : prev.timeLeft,
         }));
     };
 
@@ -64,12 +60,6 @@ const App: React.FC = () => {
             navigate('/focus');
         } else {
             navigate('/');
-            setTimerState(prev => ({
-                ...prev,
-                isRunning: false,
-                isPaused: false,
-                hasStarted: false
-            }));
         }
     };
 
@@ -101,12 +91,6 @@ const App: React.FC = () => {
                         onExitFocusMode={() => {
                             setIsFocusMode(false);
                             navigate('/');
-                            setTimerState(prev => ({
-                                ...prev,
-                                isRunning: false,
-                                isPaused: false,
-                                hasStarted: false
-                            }));
                         }}
                         duration={selectedTime * 60}
                         onStateChange={handleTimerStateChange}
