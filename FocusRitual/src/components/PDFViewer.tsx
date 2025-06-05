@@ -52,44 +52,33 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
     const [totalHeight, setTotalHeight] = useState(0);
     const [isDrawingMode, setIsDrawingMode] = useState(false);
     const [annotations, setAnnotations] = useState<any[]>([]);
-
-    const pageContainerRef = useRef<HTMLDivElement>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const textLayerRef = useRef<HTMLDivElement>(null);
-    const scrollTimeoutRef = useRef<NodeJS.Timeout>();
-    const [scrollPosition, setScrollPosition] = useState(0);
-    const [totalHeight, setTotalHeight] = useState(0);
-    const [pageHeight, setPageHeight] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [isScrolling, setIsScrolling] = useState(false);
     const [isHighlightMode, setIsHighlightMode] = useState(false);
     const [selectedColor, setSelectedColor] = useState('#ffeb3b');
     const [horizontalScroll, setHorizontalScroll] = useState(0);
     const [showHorizontalNav, setShowHorizontalNav] = useState(false);
-
-    // State and handlers for text selection/highlighting
     const [isSelecting, setIsSelecting] = useState(false);
     const [selection, setSelection] = useState<{ startX: number; startY: number; endX: number; endY: number } | null>(null);
-
-    // Add new state for text selection
     const [selectedText, setSelectedText] = useState<{ text: string; rect: DOMRect } | null>(null);
-
-    // Add a new state for tracking text selection
     const [selectedTextRanges, setSelectedTextRanges] = useState<Range[]>([]);
-
-    // Add new state for drawing mode
-    const [isDrawingMode, setIsDrawingMode] = useState(false);
     const [drawBox, setDrawBox] = useState<{ startX: number; startY: number; endX: number; endY: number; page: number } | null>(null);
     const [isUnderlineMode, setIsUnderlineMode] = useState(false);
     const [isNoteMode, setIsNoteMode] = useState(false);
     const [showNoteInputModal, setShowNoteInputModal] = useState(false);
     const [currentNoteText, setCurrentNoteText] = useState('');
     const [notePosition, setNotePosition] = useState<{ x: number; y: number; page: number } | null>(null);
-
     const [pdfText, setPdfText] = useState<string>('');
     const [rotation, setRotation] = useState<number>(0);
     const [isPageLoading, setIsPageLoading] = useState<boolean>(false);
     const [showTextExtractModal, setShowTextExtractModal] = useState<boolean>(false);
     const [extractedTextContent, setExtractedTextContent] = useState<string>('');
 
+    const pageContainerRef = useRef<HTMLDivElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const textLayerRef = useRef<HTMLDivElement>(null);
+    const scrollTimeoutRef = useRef<NodeJS.Timeout>();
+    const [scrollPosition, setScrollPosition] = useState(0);
     const debouncedSetCurrentPage = useRef<((page: number) => void) | null>(null);
 
     const handleAnnotationAdd = useCallback((annotation: Annotation) => {
@@ -1208,7 +1197,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ onClose }) => {
                                 )}
                             </div>
                         </div>
-                    </Document>
+                    </div>
                 )}
             </div>
 

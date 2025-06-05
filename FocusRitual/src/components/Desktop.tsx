@@ -23,15 +23,13 @@ const WINDOW_DEFS = [
   {
     id: 'focus',
     title: 'Focus Mode',
-    width: 900,
+    width: 800,
     height: 700,
     render: (props: { onClose: () => void; timerState?: any; setTimerState?: (state: any) => void; children?: React.ReactNode; }) => (
       <FocusModePage
         onExitFocusMode={props.onClose}
         duration={1500}
-        onStateChange={props.setTimerState || (() => {})}
-        timerState={props.timerState}
-        setTimerState={props.setTimerState || (() => {})}
+        onStateChange={props.setTimerState || (() => { })}
       >
         {props.children}
       </FocusModePage>
@@ -154,7 +152,7 @@ const Desktop: React.FC = () => {
       {!isFocusModeActive && (
         <div className="fixed top-4 left-4 z-[10000] flex flex-col gap-2">
           <div className="flex gap-2 mb-1">
-            {[{label: '25m', value: 1500}, {label: '50m', value: 3000}, {label: '90m', value: 5400}].map(opt => (
+            {[{ label: '25m', value: 1500 }, { label: '50m', value: 3000 }, { label: '90m', value: 5400 }].map(opt => (
               <button
                 key={opt.value}
                 onClick={() => setTimerDuration(opt.value)}
@@ -176,30 +174,30 @@ const Desktop: React.FC = () => {
       {/* Windows */}
       {windows.filter(w => !w.isMinimized).map(w => (
         w.id === 'focus' ? (
-        <Window
-          key={w.id}
-          id={w.id}
-          title={w.title}
-          x={w.x}
-          y={w.y}
-          width={w.width}
-          height={w.height}
-          zIndex={w.zIndex}
-          isMinimized={w.isMinimized}
-          isMaximized={w.isMaximized}
-          onMinimize={handleMinimize}
-          onMaximize={handleMaximize}
-          onClose={handleClose}
-          onFocus={bringToFront}
-          onMove={handleMove}
-          onResize={handleResize}
-          disableDragResize={w.id === 'focus' || w.locked}
-          onlyCloseButton={w.id === 'focus' ? true : undefined}
-          locked={w.locked}
-          onLock={handleLock}
-        >
+          <Window
+            key={w.id}
+            id={w.id}
+            title={w.title}
+            x={w.x}
+            y={w.y}
+            width={w.width}
+            height={w.height}
+            zIndex={w.zIndex}
+            isMinimized={w.isMinimized}
+            isMaximized={w.isMaximized}
+            onMinimize={handleMinimize}
+            onMaximize={handleMaximize}
+            onClose={handleClose}
+            onFocus={bringToFront}
+            onMove={handleMove}
+            onResize={handleResize}
+            disableDragResize={w.id === 'focus' || w.locked}
+            onlyCloseButton={w.id === 'focus' ? true : undefined}
+            locked={w.locked}
+            onLock={handleLock}
+          >
             {w.render({ onClose: () => handleClose(w.id), timerState, setTimerState, children: <div className="flex justify-center mt-2"><QuoteGenerator /></div> })}
-        </Window>
+          </Window>
         ) : (
           <FloatingWrapper
             key={w.id}

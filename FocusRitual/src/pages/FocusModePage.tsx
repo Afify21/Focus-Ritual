@@ -12,25 +12,35 @@ import { BackgroundManager } from '../components/BackgroundManager';
 interface FocusModePageProps {
     onExitFocusMode: () => void;
     duration: number;
-    onStateChange: (newState: any) => void;
-    volume: number;
-    selectedSound: string | null;
-    onSoundSelect: (soundId: string | null) => void;
-    onVolumeChange: (volume: number) => void;
+    onStateChange: (state: any) => void;
+    volume?: number;
+    selectedSound?: string | null;
+    onSoundSelect?: (sound: string | null) => void;
+    onVolumeChange?: (volume: number) => void;
+    children?: React.ReactNode;
 }
 
 const FocusModePage: React.FC<FocusModePageProps> = ({
     onExitFocusMode,
     duration,
     onStateChange,
-    volume,
-    selectedSound,
-    onSoundSelect,
-    onVolumeChange
+    volume = 0.5,
+    selectedSound = null,
+    onSoundSelect = () => { },
+    onVolumeChange = () => { },
+    children
 }) => {
     const [showPaint, setShowPaint] = useState(false);
-    const [selectedDuration, setSelectedDuration] = useState(1500); // default 25m
-    const [pdfUrl, setPdfUrl] = useState<string>(''); // Add state for PDF URL
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+    const [timerState, setTimerState] = useState({
+        timeLeft: duration,
+        isRunning: false,
+        isBreak: false,
+        isPaused: false,
+        completedSessions: 0,
+        hasStarted: false,
+        isReset: false
+    });
 
     return (
         <div className="min-h-screen text-white p-4 relative overflow-hidden">
@@ -57,7 +67,7 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
                             {/* PDF Viewer Container with fixed height and overflow hidden */}
                             <div className="bg-transparent rounded-xl overflow-hidden h-[calc(60%-12px)]">
                                 {pdfUrl ? (
-                                    <PDFViewer url={pdfUrl} />
+                                    <PDFViewer onClose={() => setPdfUrl(null)} />
                                 ) : (
                                     <div className="flex items-center justify-center h-full">
                                         <p className="text-slate-500">No PDF loaded</p>
@@ -87,17 +97,17 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
                         <div className="bg-transparent rounded-xl p-4 relative">
                             <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-200">Timer</h2>
                             <div className="flex gap-2 mb-4">
-                                {[{label: '25m', value: 1500}, {label: '50m', value: 3000}, {label: '90m', value: 5400}].map(opt => (
+                                {[{ label: '25m', value: 1500 }, { label: '50m', value: 3000 }, { label: '90m', value: 5400 }].map(opt => (
                                     <button
                                         key={opt.value}
-                                        onClick={() => setSelectedDuration(opt.value)}
-                                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${selectedDuration === opt.value ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+                                        onClick={() => setTimerState({ ...timerState, timeLeft: opt.value, isReset: false })}
+                                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${timerState.timeLeft === opt.value ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
                                     >
                                         {opt.label}
                                     </button>
                                 ))}
                             </div>
-                            <Timer duration={selectedDuration} onStateChange={onStateChange} isMinimized={true} />
+                            <Timer duration={timerState.timeLeft} onStateChange={onStateChange} isMinimized={true} />
                         </div>
 
                         {/* Soundscapes */}

@@ -188,15 +188,19 @@ const QuoteGenerator: React.FC = () => {
     const [isAnimating, setIsAnimating] = useState(false);
     const { currentTheme } = useTheme();
 
+    const generateNewQuote = () => {
+        setIsAnimating(true);
+        setTimeout(() => {
+            const randomIndex = Math.floor(Math.random() * quotes.length);
+            setCurrentQuote(quotes[randomIndex]);
+            setIsAnimating(false);
+        }, 300);
+    };
+
     // Auto-alternate quotes every 1-2 minutes
     useEffect(() => {
         const interval = setInterval(() => {
-            setIsAnimating(true);
-            setTimeout(() => {
-                const randomIndex = Math.floor(Math.random() * quotes.length);
-                setCurrentQuote(quotes[randomIndex]);
-                setIsAnimating(false);
-            }, 300);
+            generateNewQuote();
         }, 60000 + Math.floor(Math.random() * 60000)); // 60-120s
         return () => clearInterval(interval);
     }, []);
@@ -209,10 +213,6 @@ const QuoteGenerator: React.FC = () => {
             setCurrentQuote(quotes[randomIndex]);
             setIsAnimating(false);
         }, 300);
-    };
-
-    useEffect(() => {
-        generateNewQuote();
     }, []);
 
     return (
