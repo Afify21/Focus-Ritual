@@ -6,6 +6,7 @@ const audioRoutes = require('./routes/audioRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const habitRoutes = require('./routes/habitRoutes');
 const personalizationRoutes = require('./routes/personalizationRoutes');
+const authRoutes = require('./routes/authRoutes');
 const connectDB = require('./config/database');
 
 const app = express();
@@ -36,6 +37,7 @@ app.use('/api/audio', audioRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/habits', habitRoutes);
 app.use('/api/personalization', personalizationRoutes);
+app.use('/api/auth', authRoutes);
 
 // Start server
 const PORT = process.env.PORT || 5002;
