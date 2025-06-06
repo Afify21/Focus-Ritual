@@ -56,8 +56,11 @@ code {
     position: absolute;
     background-color: var(--primary);
     border-radius: 50%;
-    filter: blur(1px);
+    filter: blur(2px);
     animation: float 15s infinite linear;
+    box-shadow: 0 0 10px var(--primary),
+        0 0 20px var(--primary),
+        0 0 30px var(--primary);
 }
 
 @keyframes float {
@@ -65,10 +68,12 @@ code {
     0%,
     100% {
         transform: translateY(0);
+        opacity: 0.3;
     }
 
     50% {
         transform: translateY(-20px);
+        opacity: 0.8;
     }
 }
 

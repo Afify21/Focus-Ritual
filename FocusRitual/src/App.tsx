@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';backg
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import LoginPage from './pages/LoginPage';
@@ -27,6 +27,31 @@ const App: React.FC = () => {
     const navigate = useNavigate();
     const { currentTheme } = useTheme();
 
+    // Initialize particles
+    useEffect(() => {
+        const particlesContainer = document.getElementById('particles');
+        if (particlesContainer) {
+            const particleCount = 30;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+
+                const size = Math.random() * 4 + 2;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
+                particle.style.opacity = (Math.random() * 0.5 + 0.3).toString();
+                const duration = Math.random() * 10 + 10;
+                particle.style.animationDuration = `${duration.toString()}s`;
+                particle.style.animationDelay = `${(Math.random() * 10).toString()}s`;
+
+                particlesContainer.appendChild(particle);
+            }
+        }
+    }, []);
+
     const handleVolumeChange = (newVolume: number) => {
         setVolume(newVolume * 100);
     };
@@ -49,6 +74,7 @@ const App: React.FC = () => {
 
     return (
         <div className="min-h-screen flex flex-col text-white">
+            <div id="particles" className="particles"></div>
             <Header />
             <Routes>
                 <Route path="/login" element={<LoginPage />} />
