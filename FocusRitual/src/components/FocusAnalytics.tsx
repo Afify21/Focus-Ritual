@@ -4,7 +4,7 @@ import { Habit } from '../services/HabitReminderService';
 import { ChartBarIcon, ClockIcon, ExclamationTriangleIcon, LightBulbIcon } from '@heroicons/react/24/outline';
 
 interface FocusAnalyticsProps {
-    habit: Habit;
+    habit?: Habit; // Make habit optional
 }
 
 const FocusAnalytics: React.FC<FocusAnalyticsProps> = ({ habit }) => {
@@ -16,13 +16,18 @@ const FocusAnalytics: React.FC<FocusAnalyticsProps> = ({ habit }) => {
         const analyticsService = FocusAnalyticsService.getInstance();
         analyticsService.loadFocusData();
 
-        const patterns = analyticsService.analyzeFocusPatterns(habit.id);
-        const recommendations = analyticsService.generateRecommendations(habit.id);
+        // If no specific habit is provided, analyze overall focus patterns
+        const patterns = habit 
+            ? analyticsService.analyzeFocusPatterns(habit.id)
+            : analyticsService.analyzeOverallFocusPatterns();
+        const recommendations = habit
+            ? analyticsService.generateRecommendations(habit.id)
+            : analyticsService.generateOverallRecommendations();
 
         setPatterns(patterns);
         setRecommendations(recommendations);
         setIsLoading(false);
-    }, [habit.id]);
+    }, [habit?.id]);
 
     if (isLoading) {
         return (
@@ -65,7 +70,7 @@ const FocusAnalytics: React.FC<FocusAnalyticsProps> = ({ habit }) => {
             </div>
 
             {/* Focus Drop Points */}
-            {patterns.focusDropPoints.length > 0 && (
+            {patterns.focusDropPoints?.length > 0 && (
                 <div className="bg-slate-700/50 p-4 rounded-lg">
                     <div className="flex items-center mb-2">
                         <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400 mr-2" />
@@ -78,7 +83,7 @@ const FocusAnalytics: React.FC<FocusAnalyticsProps> = ({ habit }) => {
             )}
 
             {/* Common Distractions */}
-            {patterns.commonDistractions.length > 0 && (
+            {patterns.commonDistractions?.length > 0 && (
                 <div className="bg-slate-700/50 p-4 rounded-lg">
                     <div className="flex items-center mb-2">
                         <ExclamationTriangleIcon className="h-5 w-5 text-red-400 mr-2" />
@@ -93,7 +98,7 @@ const FocusAnalytics: React.FC<FocusAnalyticsProps> = ({ habit }) => {
             )}
 
             {/* Personalized Recommendations */}
-            {recommendations.length > 0 && (
+            {recommendations?.length > 0 && (
                 <div className="bg-slate-700/50 p-4 rounded-lg">
                     <div className="flex items-center mb-4">
                         <LightBulbIcon className="h-5 w-5 text-yellow-400 mr-2" />

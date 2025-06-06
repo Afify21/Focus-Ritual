@@ -374,7 +374,7 @@ const ChatAssistant: React.FC = () => {
     );
 
     return (
-        <div className="fixed bottom-4 right-4 z-[999999]">
+        <div className="fixed bottom-4 right-4 z-[999999] pointer-events-none">
             {!isOpen ? (
                 <div className="pointer-events-auto">
                     <button
@@ -393,7 +393,7 @@ const ChatAssistant: React.FC = () => {
                     disabled={isInFocusMode}
                 >
                     <div className="pointer-events-auto" style={{ position: 'relative', zIndex: 999999 }}>
-                        <div className={chatWindowClasses}>
+                        <div className={`${chatWindowClasses} mb-16`}>
                             {chatWindowInnerContent}
                         </div>
                     </div>

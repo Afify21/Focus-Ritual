@@ -27,15 +27,6 @@ const Header: React.FC = () => {
                         </div>
                         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2/3 h-[2px] bg-gradient-to-r from-teal-400/0 via-emerald-400 to-teal-400/0 opacity-0 group-hover/nav:opacity-100 transition-opacity"></div>
                     </Link>
-                    <Link to="/habits" className="relative px-4 py-2 rounded-lg text-white hover:text-white transition-all group/nav">
-                        <div className="flex items-center space-x-2">
-                            <div className="w-4 h-4 flex items-center justify-center group-hover/nav:bg-teal-600/30 group-hover/nav:rounded-full transition-all">
-                                <i className="fas fa-tasks text-sm group-hover/nav:scale-125 transition-transform"></i>
-                            </div>
-                            <span>Habits</span>
-                        </div>
-                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2/3 h-[2px] bg-gradient-to-r from-teal-400/0 via-emerald-400 to-teal-400/0 opacity-0 group-hover/nav:opacity-100 transition-opacity"></div>
-                    </Link>
                     <Link to="/calendar" className="relative px-4 py-2 rounded-lg text-white hover:text-white transition-all group/nav">
                         <div className="flex items-center space-x-2">
                             <div className="w-4 h-4 flex items-center justify-center group-hover/nav:bg-teal-600/30 group-hover/nav:rounded-full transition-all">

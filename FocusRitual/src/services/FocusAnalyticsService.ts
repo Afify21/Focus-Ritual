@@ -54,6 +54,26 @@ export class FocusAnalyticsService {
             };
         }
 
+        return this.calculatePatterns(sessions);
+    }
+
+    // Analyze overall focus patterns across all habits
+    analyzeOverallFocusPatterns(): FocusPattern {
+        const allSessions = Array.from(this.focusData.values()).flat();
+        if (allSessions.length === 0) {
+            return {
+                averageFocusDuration: 0,
+                mostProductiveTime: 'Not enough data',
+                commonDistractions: [],
+                focusDropPoints: []
+            };
+        }
+
+        return this.calculatePatterns(allSessions);
+    }
+
+    // Helper method to calculate patterns from a set of sessions
+    private calculatePatterns(sessions: any[]): FocusPattern {
         // Calculate average focus duration
         const totalDuration = sessions.reduce((sum, session) => sum + session.duration, 0);
         const averageDuration = totalDuration / sessions.length;
@@ -82,9 +102,20 @@ export class FocusAnalyticsService {
         };
     }
 
-    // Generate personalized recommendations
+    // Generate personalized recommendations for a specific habit
     generateRecommendations(habitId: string): FocusRecommendation[] {
         const patterns = this.analyzeFocusPatterns(habitId);
+        return this.generateRecommendationsFromPatterns(patterns);
+    }
+
+    // Generate overall recommendations across all habits
+    generateOverallRecommendations(): FocusRecommendation[] {
+        const patterns = this.analyzeOverallFocusPatterns();
+        return this.generateRecommendationsFromPatterns(patterns);
+    }
+
+    // Helper method to generate recommendations from patterns
+    private generateRecommendationsFromPatterns(patterns: FocusPattern): FocusRecommendation[] {
         const recommendations: FocusRecommendation[] = [];
 
         // Duration-based recommendations

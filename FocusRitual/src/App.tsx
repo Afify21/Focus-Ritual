@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import LoginPage from './pages/LoginPage';
@@ -15,6 +15,9 @@ import ChatAssistant from './components/ChatAssistant';
 import ThreeDBackground from './components/ThreeDBackground';
 import { useTheme } from './context/ThemeContext';
 import HabitSummary from './components/HabitSummary';
+import EnhancedTodoList from './components/EnhancedTodoList';
+import { ThemeSelector } from './components/ThemeSelector';
+import { PaintBrushIcon } from '@heroicons/react/24/outline';
 
 const App: React.FC = () => {
     const [showYouTube, setShowYouTube] = useState(false);
@@ -47,10 +50,8 @@ const App: React.FC = () => {
     const appBackgroundClass = currentTheme.id === 'default' ? 'default-gradient-background' : currentTheme.colors.chatWindowBg;
 
     return (
-        <div className={`min-h-screen text-white ${appBackgroundClass}`}>
-            <ThreeDBackground />
+        <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-black text-white">
             <Header />
-
             <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
@@ -68,23 +69,33 @@ const App: React.FC = () => {
                 <Route path="/analytics" element={<NewAnalyticsPage />} />
                 <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/" element={(
-                    <main className="container mx-auto px-4 py-8">
+                    <main className="container mx-auto px-4 py-8 flex-grow">
                         <div className="grid grid-cols-1 lg:grid-cols-[3fr_1fr] gap-6">
                             <div className="space-y-6">
                                 <div className="w-full">
                                     <TimerSection />
                                 </div>
-                                <div className="w-1/2">
-                                    <SoundscapeControls
-                                        volume={volume}
-                                        onVolumeChange={(e) => setVolume(Number(e.target.value))}
-                                        selectedSound={selectedSound}
-                                        onSoundSelect={handleSoundSelect}
-                                    />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <SoundscapeControls
+                                            volume={volume}
+                                            onVolumeChange={(e) => setVolume(Number(e.target.value))}
+                                            selectedSound={selectedSound}
+                                            onSoundSelect={handleSoundSelect}
+                                        />
+                                    </div>
+                                    <div className={`${currentTheme.colors.chatMessageListBg} backdrop-blur-md rounded-xl p-4 relative h-full`}>
+                                        <h2 className={`text-base font-bold mb-3 glow-teal flex items-center`}>
+                                            <PaintBrushIcon className="w-5 h-5 text-teal-400 mr-2" />
+                                            Theme
+                                        </h2>
+                                        <ThemeSelector compact={true} />
+                                    </div>
                                 </div>
                             </div>
                             <div className="space-y-6">
                                 <HabitSummary />
+                                <EnhancedTodoList />
                             </div>
                         </div>
                     </main>
@@ -94,7 +105,7 @@ const App: React.FC = () => {
             <Footer />
 
             {/* Static Chat Assistant at bottom right */}
-            <div className="fixed bottom-4 right-4 z-[999999]">
+            <div className="fixed bottom-4 right-4 z-[999999] pointer-events-none">
                 <ChatAssistant />
             </div>
         </div>

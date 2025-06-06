@@ -4,21 +4,21 @@ const authController = require('../controllers/authController');
 const { authenticate } = require('../middleware/auth');
 
 /**
- * @route   POST /api/auth/register
+ * @route   POST /auth/register
  * @desc    Register a new user
  * @access  Public
  */
 router.post('/register', authController.register);
 
 /**
- * @route   POST /api/auth/login
+ * @route   POST /auth/login
  * @desc    Login a user
  * @access  Public
  */
 router.post('/login', authController.login);
 
 /**
- * @route   GET /api/auth/me
+ * @route   GET /auth/me
  * @desc    Get current user data
  * @access  Private
  */

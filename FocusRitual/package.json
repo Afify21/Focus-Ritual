@@ -2,7 +2,6 @@
     "name": "focus-ritual",
     "version": "0.1.0",
     "private": true,
-    "proxy": "http://localhost:5002",
     "dependencies": {
         "@headlessui/react": "^2.2.4",
         "@heroicons/react": "^2.2.0",
@@ -13,6 +12,7 @@
         "autoprefixer": "^10.4.16",
         "axios": "^1.9.0",
         "date-fns": "^4.1.0",
+        "http-proxy-middleware": "^2.0.9",
         "pdf-lib": "^1.17.1",
         "pdfjs-dist": "^3.11.174",
         "postcss": "^8.4.31",
@@ -26,7 +26,7 @@
         "react-router-dom": "^6.30.1",
         "react-scripts": "5.0.1",
         "rehype-raw": "^7.0.0",
-        "remark-gfm": "^4.0.1",
+        "remark-gfm": "^4.0.0",
         "tailwindcss": "^3.3.0",
         "three": "^0.177.0",
         "typescript": "^4.9.5",
@@ -38,12 +38,6 @@
         "test": "react-scripts test",
         "eject": "react-scripts eject",
         "postinstall": "mkdir -p public/workers && cp node_modules/pdfjs-dist/build/pdf.worker.min.js public/workers/"
-    },
-    "eslintConfig": {
-        "extends": [
-            "react-app",
-            "react-app/jest"
-        ]
     },
     "browserslist": {
         "production": [

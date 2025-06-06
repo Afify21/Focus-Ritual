@@ -39,8 +39,7 @@ class PersonalizedInsightsService {
             // Extract relevant data for the prompt
             const {
                 focusSessions = [],
-                habits = [],
-                contextData = []
+                habits = []
             } = userData;
 
             // Calculate basic metrics for the prompt
@@ -110,13 +109,11 @@ Don't mention that you're analyzing data or that this is AI-generated.
                 success: true,
                 insights
             };
-
         } catch (error) {
-            console.error('Error generating personalized insights:', error);
+            console.error('Error generating focus insights:', error);
             return {
                 success: false,
-                error: 'Failed to generate insights',
-                details: error.message
+                error: 'Failed to generate insights'
             };
         }
     }
@@ -193,4 +190,4 @@ specifically for this user based on their unique situation.
     }
 }
 
-module.exports = new PersonalizedInsightsService(); 
+module.exports = PersonalizedInsightsService; 

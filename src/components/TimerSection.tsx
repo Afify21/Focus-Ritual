@@ -1,16 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import DataService from '../services/DataService';
-// Remove TasksList import since we're not using it anymore
-// TODO: Import actual icon components if using react-icons or similar
 
-// Define props interface if needed
-// interface TimerSectionProps {
-//   duration: number; // Example: default duration in minutes
-//   onStateChange: (state: any) => void; // Example: to report timer state changes up
-// }
-
-// const TimerSection: React.FC<TimerSectionProps> = ({ duration, onStateChange }) => {
 const TimerSection: React.FC = () => {
     const [minutes, setMinutes] = useState(25);
     const [seconds, setSeconds] = useState(0);
@@ -18,7 +8,6 @@ const TimerSection: React.FC = () => {
     const [breakMinutes, setBreakMinutes] = useState(5);
     const [completedSessions, setCompletedSessions] = useState(0);
     const [isFocusModeReady, setIsFocusModeReady] = useState(false);
-    const [originalFocusTime, setOriginalFocusTime] = useState(25);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -51,7 +40,6 @@ const TimerSection: React.FC = () => {
         };
     }, [isRunning]);
 
-    // Format time to always show 2 digits
     const formatTime = (time: number) => {
         return time < 10 ? `0${time}` : time;
     };
@@ -61,34 +49,19 @@ const TimerSection: React.FC = () => {
     }, []);
 
     const handleReset = useCallback(() => {
-        setMinutes(originalFocusTime);
+        setMinutes(25);
         setSeconds(0);
         setIsRunning(false);
-    }, [originalFocusTime]);
+    }, []);
 
     const handleSkip = useCallback(() => {
-        // Track the completed session
-        DataService.Sessions.addSession({
-            startTime: new Date().toISOString(),
-            endTime: new Date().toISOString(),
-            duration: minutes * 60 + seconds, // Convert to seconds
-            completed: true
-        });
-
-        // Reset timer to original focus time setting
-        setMinutes(originalFocusTime);
+        setMinutes(breakMinutes);
         setSeconds(0);
-        // Stop the timer if it's running
-        setIsRunning(false);
-        // Increment completed sessions
-        setCompletedSessions(prev => prev + 1);
-    }, [minutes, seconds, originalFocusTime]);
+    }, [breakMinutes]);
 
     const handleFocusTimeChange = useCallback((delta: number) => {
-        const newTime = Math.max(1, Math.min(60, originalFocusTime + delta));
-        setOriginalFocusTime(newTime);
-        setMinutes(newTime);
-    }, [originalFocusTime]);
+        setMinutes(prev => Math.max(1, Math.min(60, prev + delta)));
+    }, []);
 
     const handleBreakTimeChange = useCallback((delta: number) => {
         setBreakMinutes(prev => Math.max(1, Math.min(30, prev + delta)));
@@ -106,9 +79,12 @@ const TimerSection: React.FC = () => {
             <div className="flex justify-end items-start mb-8">
                 <button
                     onClick={handleFocusModeToggle}
-                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-500 hover:to-teal-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-white font-medium"
+                    className="relative inline-flex items-center cursor-pointer"
                 >
-                    FOCUS MODE
+                    <div className={`w-14 h-8 rounded-full shadow-inner relative flex items-center justify-center transition-all duration-300 ${isFocusModeReady ? 'bg-gradient-to-r from-teal-500 to-teal-600 shadow-teal-500/30' : 'bg-gray-700 shadow-gray-600/30'}`}>
+                        {isFocusModeReady && <span className="text-xs font-medium text-white z-10">GO</span>}
+                    </div>
+                    <div className={`absolute top-1/2 transform -translate-y-1/2 bg-gradient-to-b from-gray-100 to-white rounded-full h-6 w-6 border border-gray-300 transition-all duration-300 ${isFocusModeReady ? 'right-1' : 'left-1'}`}></div>
                 </button>
             </div>
 
@@ -192,4 +168,4 @@ const TimerSection: React.FC = () => {
     );
 };
 
-export default TimerSection;
+export default TimerSection; 

@@ -5,38 +5,25 @@ const User = require('../models/User');
 /**
  * Authentication middleware to verify JWT tokens
  */
-exports.authenticate = async (req, res, next) => {
+exports.authenticate = (req, res, next) => {
     try {
         // Get token from header
-        const token = req.header('Authorization')?.replace('Bearer ', '');
-        
-        if (!token) {
-            return res.status(401).json({ error: 'No authentication token, access denied' });
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'No token provided' });
         }
-        
+
+        const token = authHeader.split(' ')[1];
+
         // Verify token
         const decoded = jwt.verify(token, authConfig.jwt.secret);
         
-        // Find user by ID
-        const user = await User.findOne({ userId: decoded.userId });
-        
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-        
-        // Check if email verification is required
-        if (authConfig.emailVerification.required && !user.emailVerified) {
-            return res.status(403).json({ error: 'Email not verified, please verify your email address' });
-        }
-        
-        // Add user object to request
-        req.user = user;
-        req.userId = user.userId;
-        
+        // Add user ID to request
+        req.userId = decoded.userId;
         next();
     } catch (error) {
-        console.error('Authentication error:', error.message);
-        res.status(401).json({ error: 'Invalid token, authentication failed' });
+        console.error('Auth middleware error:', error);
+        res.status(401).json({ error: 'Invalid token' });
     }
 };
 

@@ -1,52 +1,73 @@
-require('dotenv').config();
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
-const path = require('path');
-const audioRoutes = require('./routes/audioRoutes');
-const chatRoutes = require('./routes/chatRoutes');
-const habitRoutes = require('./routes/habitRoutes');
-const personalizationRoutes = require('./routes/personalizationRoutes');
+const dotenv = require('dotenv');
 const authRoutes = require('./routes/authRoutes');
-const connectDB = require('./config/database');
+const habitRoutes = require('./routes/habitRoutes');
+const insightRoutes = require('./routes/insightRoutes');
+const chatRoutes = require('./routes/chatRoutes');
+
+dotenv.config();
 
 const app = express();
 
 // Middleware
-app.use(cors({
-    origin: ['http://localhost:3000', 'http://localhost:5173'], // Add your frontend URLs
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
-}));
+app.use(cors());
 app.use(express.json());
 
-// Connect to MongoDB
-connectDB()
-    .then(() => console.log('MongoDB connected successfully'))
-    .catch(err => console.error('MongoDB connection error:', err));
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/habits', habitRoutes);
+app.use('/api/insights', insightRoutes);
+app.use('/api/chat', chatRoutes);
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-    console.error('Server error:', err);
-    res.status(500).json({
-        error: 'Internal server error',
-        details: err.message
-    });
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
 });
 
-// Serve static files from the public directory
-app.use('/audio', express.static(path.join(__dirname, '../public/audio')));
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
-// Routes
-app.use('/api/audio', audioRoutes);
-app.use('/api/chat', chatRoutes);
-app.use('/api/habits', habitRoutes);
-app.use('/api/personalization', personalizationRoutes);
-app.use('/api/auth', authRoutes);
+// Find an available port
+const findAvailablePort = async (startPort) => {
+  const net = require('net');
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.listen(startPort, () => {
+      const { port } = server.address();
+      server.close(() => resolve(port));
+    });
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        resolve(findAvailablePort(startPort + 1));
+      } else {
+        reject(err);
+      }
+    });
+  });
+};
 
 // Start server
-const PORT = process.env.PORT || 5002;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-    console.log(`Please open http://localhost:${PORT} in your browser`);
-}); 
+const startServer = async () => {
+  try {
+    const port = await findAvailablePort(5002);
+    app.listen(port, () => {
+      console.log(`Server running on port ${port}`);
+      console.log(`Please open http://localhost:${port} in your browser`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer(); 

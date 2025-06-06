@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTheme } from '../context/ThemeContext';
+import { PaintBrushIcon } from '@heroicons/react/24/outline';
 
 interface ThemeSelectorProps {
     compact?: boolean;
@@ -10,20 +11,22 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ compact = false })
 
     if (compact) {
         return (
-            <>
+            <div className="grid grid-cols-2 gap-2">
                 {availableThemes.map((theme) => (
                     <button
                         key={theme.id}
                         onClick={() => setTheme(theme.id)}
-                        className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${currentTheme.id === theme.id
-                                ? 'bg-blue-600 hover:bg-blue-700'
-                                : 'bg-slate-600 hover:bg-slate-700'
-                            }`}
+                        className={`flex flex-col items-center justify-center p-4 rounded-lg transition-all duration-200 ${
+                            currentTheme.id === theme.id
+                                ? 'bg-teal-600/20 hover:bg-teal-600/30 text-teal-100'
+                                : 'bg-slate-800/50 hover:bg-slate-700/50 text-slate-300'
+                        }`}
                     >
-                        {theme.name}
+                        <span className="text-sm font-medium">{theme.name}</span>
+                        <span className="text-xs text-slate-400 mt-1">{theme.description?.split(' ')[0]}</span>
                     </button>
                 ))}
-            </>
+            </div>
         );
     }
 
@@ -35,10 +38,11 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ compact = false })
                     <button
                         key={theme.id}
                         onClick={() => setTheme(theme.id)}
-                        className={`text-left p-3 rounded-lg border transition-all duration-200 ${currentTheme.id === theme.id
-                                ? 'border-blue-500 bg-blue-600/20 text-white'
+                        className={`text-left p-3 rounded-lg border transition-all duration-200 ${
+                            currentTheme.id === theme.id
+                                ? 'border-teal-500 bg-teal-600/20 text-white'
                                 : 'border-slate-600 bg-slate-700/20 text-white hover:border-slate-500 hover:bg-slate-600/20'
-                            }`}
+                        }`}
                     >
                         <h3 className="font-medium text-sm">{theme.name}</h3>
                         <p className="text-xs text-slate-300 mt-1">{theme.description}</p>

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './NewAnalyticsPage.css'; // Import the CSS file
+import Analytics from '../components/Analytics';
 
 const NewAnalyticsPage: React.FC = () => {
     const particlesRef = useRef<HTMLDivElement>(null);
@@ -68,53 +69,106 @@ const NewAnalyticsPage: React.FC = () => {
                     </div>
                 </header>
 
-                <section className="dashboard-stats">
-                    <div className="stat-card">
-                        <div className="stat-header">
-                            <div className="stat-title">Current Streak</div>
-                            <div className="stat-icon">
-                                <i className="fas fa-fire"></i>
-                            </div>
-                        </div>
-                        <div className="stat-value">14</div>
-                        <div className="stat-change">
-                            <i className="fas fa-arrow-up"></i> 3 days
-                        </div>
-                    </div>
-                    <div className="stat-card">
-                        <div className="stat-header">
-                            <div className="stat-title">Habits Completed</div>
-                            <div className="stat-icon">
-                                <i className="fas fa-check-double"></i>
-                            </div>
-                        </div>
-                        <div className="stat-value">85%</div>
-                        <div className="stat-change negative">
-                            <i className="fas fa-arrow-down"></i> 5% today
+                {/* Analytics Section */}
+                <section className="section">
+                    <Analytics />
+                </section>
+
+                {/* Stats and AI Insights Section */}
+                <section className="section">
+                    <div className="section-header">
+                        <h2 className="section-title">
+                            <i className="fas fa-robot"></i>
+                            Your AI Insights
+                        </h2>
+                        <div className="section-actions">
+                            <button className="btn btn-outline" title="View all insights">
+                                <i className="fas fa-list"></i> View All
+                            </button>
                         </div>
                     </div>
-                    <div className="stat-card">
-                        <div className="stat-header">
-                            <div className="stat-title">Goals Achieved</div>
-                            <div className="stat-icon">
-                                <i className="fas fa-trophy"></i>
+
+                    {/* Stats Cards moved here */}
+                    <div className="stats-grid mb-6">
+                        <div className="stat-card">
+                            <div className="stat-header">
+                                <div className="stat-title">Current Streak</div>
+                                <div className="stat-icon">
+                                    <i className="fas fa-fire"></i>
+                                </div>
+                            </div>
+                            <div className="stat-value">14</div>
+                            <div className="stat-change">
+                                <i className="fas fa-arrow-up"></i> 3 days
                             </div>
                         </div>
-                        <div className="stat-value">3/5</div>
-                        <div className="stat-change">
-                            <i className="fas fa-clock"></i> 2 pending
+                        <div className="stat-card">
+                            <div className="stat-header">
+                                <div className="stat-title">Habits Completed</div>
+                                <div className="stat-icon">
+                                    <i className="fas fa-check-double"></i>
+                                </div>
+                            </div>
+                            <div className="stat-value">85%</div>
+                            <div className="stat-change negative">
+                                <i className="fas fa-arrow-down"></i> 5% today
+                            </div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-header">
+                                <div className="stat-title">Goals Achieved</div>
+                                <div className="stat-icon">
+                                    <i className="fas fa-trophy"></i>
+                                </div>
+                            </div>
+                            <div className="stat-value">3/5</div>
+                            <div className="stat-change">
+                                <i className="fas fa-clock"></i> 2 pending
+                            </div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-header">
+                                <div className="stat-title">Mood Score</div>
+                                <div className="stat-icon">
+                                    <i className="fas fa-smile-beam"></i>
+                                </div>
+                            </div>
+                            <div className="stat-value">7.8</div>
+                            <div className="stat-change">
+                                <i className="fas fa-arrow-up"></i> 1.2 from avg
+                            </div>
                         </div>
                     </div>
-                    <div className="stat-card">
-                        <div className="stat-header">
-                            <div className="stat-title">Mood Score</div>
-                            <div className="stat-icon">
-                                <i className="fas fa-smile-beam"></i>
+
+                    <div className="ai-insights">
+                        <div className="insight-card">
+                            <div className="insight-header">
+                                <div className="insight-icon">
+                                    <i className="fas fa-brain"></i>
+                                </div>
+                                <div className="insight-title">Optimized Morning Routine</div>
                             </div>
+                            <div className="insight-text">
+                                Your meditation habit has consistently improved your morning productivity. Try moving it 15
+                                minutes earlier to maximize focus before breakfast.
+                            </div>
+                            <div className="insight-tag">Habit Optimization</div>
+                            <div className="insight-tag">Productivity</div>
                         </div>
-                        <div className="stat-value">7.8</div>
-                        <div className="stat-change">
-                            <i className="fas fa-arrow-up"></i> 1.2 from avg
+                        
+                        <div className="insight-card">
+                            <div className="insight-header">
+                                <div className="insight-icon">
+                                    <i className="fas fa-heartbeat"></i>
+                                </div>
+                                <div className="insight-title">Energy Slump Pattern</div>
+                            </div>
+                            <div className="insight-text">
+                                Your energy consistently dips between 2-4pm. Consider scheduling a short walk or
+                                protein-rich snack during this time to maintain performance.
+                            </div>
+                            <div className="insight-tag">Energy</div>
+                            <div className="insight-tag">Patterns</div>
                         </div>
                     </div>
                 </section>
@@ -187,51 +241,6 @@ const NewAnalyticsPage: React.FC = () => {
                                     </div>
                                 ))}
                             </div>
-                        </div>
-                    </div>
-                </section>
-
-                <section className="section">
-                    <div className="section-header">
-                        <h2 className="section-title">
-                            <i className="fas fa-robot"></i>
-                            Your AI Insights
-                        </h2>
-                        <div className="section-actions">
-                            <button className="btn btn-outline" title="View all insights">
-                                <i className="fas fa-list"></i> View All
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="ai-insights">
-                        <div className="insight-card">
-                            <div className="insight-header">
-                                <div className="insight-icon">
-                                    <i className="fas fa-brain"></i>
-                                </div>
-                                <div className="insight-title">Optimized Morning Routine</div>
-                            </div>
-                            <div className="insight-text">
-                                Your meditation habit has consistently improved your morning productivity. Try moving it 15
-                                minutes earlier to maximize focus before breakfast.
-                            </div>
-                            <div className="insight-tag">Habit Optimization</div>
-                            <div className="insight-tag">Productivity</div>
-                        </div>
-                        <div className="insight-card">
-                            <div className="insight-header">
-                                <div className="insight-icon">
-                                    <i className="fas fa-heartbeat"></i>
-                                </div>
-                                <div className="insight-title">Energy Slump Pattern</div>
-                            </div>
-                            <div className="insight-text">
-                                Your energy consistently dips between 2-4pm. Consider scheduling a short walk or
-                                protein-rich snack during this time to maintain performance.
-                            </div>
-                            <div className="insight-tag">Energy</div>
-                            <div className="insight-tag">Patterns</div>
                         </div>
                     </div>
                 </section>
