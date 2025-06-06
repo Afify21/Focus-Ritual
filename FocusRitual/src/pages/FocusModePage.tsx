@@ -7,6 +7,7 @@ import ChatAssistant from '../components/ChatAssistant';
 import Soundscape from '../components/Soundscape';
 import { ThemeSelector } from '../components/ThemeSelector';
 import Paint from '../components/Paint/Paint';
+import { useTheme } from '../context/ThemeContext';
 
 interface FocusModePageProps {
     onExitFocusMode: () => void;
@@ -28,16 +29,18 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
     onVolumeChange
 }) => {
     const [showPaint, setShowPaint] = useState(false);
+    const { currentTheme } = useTheme();
+    const { colors } = currentTheme;
 
     return (
-        <div className="min-h-screen text-slate-800 dark:text-white p-4 relative">
+        <div className={`min-h-screen p-4 relative ${colors.chatWindowBg} ${colors.chatInputText}`}>
             {showPaint && <Paint width={500} height={400} />}
             <div className="container mx-auto h-full">
                 <div className="flex justify-between items-center mb-4 relative z-50">
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Focus Mode</h1>
+                    <h1 className={`text-2xl font-bold ${colors.chatInputText}`}>Focus Mode</h1>
                     <button
                         onClick={onExitFocusMode}
-                        className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors cursor-pointer text-white"
+                        className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors cursor-pointer ${colors.chatPromptButtonBg} ${colors.chatPromptButtonHoverBg} ${colors.chatPromptButtonText}`}
                     >
                         <XMarkIcon className="h-5 w-5" />
                         <span>Exit Focus Mode</span>
@@ -50,21 +53,21 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
                         {/* Wrapper for Paint Button and PDF Viewer */}
                         <div className="relative">
                             {/* PDF Viewer Container with fixed height and overflow hidden */}
-                            <div className="bg-white/40 dark:bg-slate-800/40 backdrop-blur-md rounded-xl overflow-hidden h-[calc(60%-12px)]">
+                            <div className={`${colors.chatMessageListBg} backdrop-blur-md rounded-xl overflow-hidden h-[calc(60%-12px)]`}>
                                 <PDFViewer />
                             </div>
                             {/* Paint Button - outside PDF Viewer container */}
                             <button
                                 onClick={() => setShowPaint(!showPaint)}
-                                className="absolute -top-8 right-0 flex items-center space-x-1 px-2 py-1 rounded-lg bg-blue-500 hover:bg-blue-600 transition-colors text-white text-sm z-10"
+                                className={`absolute -top-8 right-0 flex items-center space-x-1 px-2 py-1 rounded-lg transition-colors text-sm z-10 ${colors.chatPromptButtonBg} ${colors.chatPromptButtonHoverBg} ${colors.chatPromptButtonText}`}
                             >
                                 <PencilIcon className="h-4 w-4" />
                                 <span>{showPaint ? 'Hide Paint' : 'Show Paint'}</span>
                             </button>
                         </div>
                         {/* YouTube Player Container with fixed height */}
-                        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 h-[calc(40%-12px)] relative">
-                            <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-200">YouTube Player</h2>
+                        <div className={`${colors.chatMessageListBg} backdrop-blur-md rounded-xl p-4 h-[calc(40%-12px)] relative`}>
+                            <h2 className={`text-xl font-semibold mb-4 ${colors.chatInputText}`}>YouTube Player</h2>
                             <div className="h-[calc(100%-3rem)]">
                                 <YouTubePlayer onClose={() => { }} isFocusMode={true} />
                             </div>
@@ -73,17 +76,17 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
 
                     {/* Right column for Timer, Soundscapes, and Theme Selector */}
                     <div className="space-y-4">
-                        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 relative">
-                            <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-200">Timer</h2>
+                        <div className={`${colors.chatMessageListBg} backdrop-blur-md rounded-xl p-4 relative`}>
+                            <h2 className={`text-xl font-semibold mb-4 ${colors.chatInputText}`}>Timer</h2>
                             <Timer duration={duration} onStateChange={onStateChange} isMinimized={true} />
                         </div>
 
                         {/* Soundscapes */}
-                        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 relative">
-                            <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-200">Ambient Sounds</h2>
+                        <div className={`${colors.chatMessageListBg} backdrop-blur-md rounded-xl p-4 relative`}>
+                            <h2 className={`text-xl font-semibold mb-4 ${colors.chatInputText}`}>Ambient Sounds</h2>
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center space-x-2">
-                                    <span className="text-white text-sm">Volume</span>
+                                    <span className={`${colors.chatInputText} text-sm`}>Volume</span>
                                     <input
                                         type="range"
                                         min="0"
@@ -91,9 +94,9 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
                                         step="0.01"
                                         value={volume}
                                         onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
-                                        className="w-24 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                        className={`w-24 h-2 rounded-lg appearance-none cursor-pointer ${colors.chatInputBorder} ${colors.chatSendButtonBg.replace('/90', '').replace('dark:', '').replace('bg-', 'accent-')}`}
                                     />
-                                    <span className="text-white text-sm">🔊</span>
+                                    <span className={`${colors.chatInputText} text-sm`}>🔊</span>
                                 </div>
                             </div>
                             <div className="scale-90 origin-top">
@@ -108,8 +111,8 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
                         </div>
 
                         {/* Theme Selector */}
-                        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 relative">
-                            <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-200">Theme</h2>
+                        <div className={`${colors.chatMessageListBg} backdrop-blur-md rounded-xl p-4 relative`}>
+                            <h2 className={`text-xl font-semibold mb-4 ${colors.chatInputText}`}>Theme</h2>
                             <div className="flex flex-wrap gap-2">
                                 <ThemeSelector compact={true} />
                             </div>

@@ -379,7 +379,7 @@ const ChatAssistant: React.FC = () => {
                 <div className="pointer-events-auto">
                     <button
                         onClick={() => setIsOpen(true)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg flex items-center justify-center"
+                        className={`rounded-full p-3 shadow-lg flex items-center justify-center ${colors.chatSendButtonBg} ${colors.chatSendButtonHoverBg} ${colors.chatSendButtonText}`}
                         style={{ width: '48px', height: '48px' }}
                         type="button"
                     >

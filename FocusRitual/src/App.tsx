@@ -10,7 +10,10 @@ import MediaPlayerSection from './components/MediaPlayerSection';
 import SoundscapeControls from './components/SoundscapeControls';
 import FocusModePage from './pages/FocusModePage';
 import NewAnalyticsPage from './pages/NewAnalyticsPage';
+import CalendarPage from './pages/CalendarPage';
 import ChatAssistant from './components/ChatAssistant';
+import ThreeDBackground from './components/ThreeDBackground';
+import { useTheme } from './context/ThemeContext';
 
 const App: React.FC = () => {
     const [showYouTube, setShowYouTube] = useState(false);
@@ -18,6 +21,7 @@ const App: React.FC = () => {
     const [volume, setVolume] = useState(50);
     const [selectedSound, setSelectedSound] = useState<string | null>(null);
     const navigate = useNavigate();
+    const { currentTheme } = useTheme();
 
     const handleVolumeChange = (newVolume: number) => {
         setVolume(newVolume * 100);
@@ -39,8 +43,11 @@ const App: React.FC = () => {
         console.log('Focus mode state changed:', state);
     };
 
+    const appBackgroundClass = currentTheme.id === 'default' ? 'default-gradient-background' : currentTheme.colors.chatWindowBg;
+
     return (
-        <div className="min-h-screen bg-gray-900 text-white">
+        <div className={`min-h-screen text-white ${appBackgroundClass}`}>
+            <ThreeDBackground />
             <Header />
 
             <Routes>
@@ -58,6 +65,7 @@ const App: React.FC = () => {
                     />
                 } />
                 <Route path="/analytics" element={<NewAnalyticsPage />} />
+                <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/" element={(
                     <main className="container mx-auto px-4 py-8">
                         <div className="space-y-8">

@@ -13,9 +13,9 @@ const Footer: React.FC = () => {
                     {/* TODO: Replace with actual links and icon components */}
                     <div className="flex space-x-6">
                         <a href="#" className="hover:text-teal-400 transition"><i className="fab fa-twitter"></i></a>
-                        <a href="#" className="hover:text-teal-400 transition"><i className="fab fa-instagram"></i></a>
-                        <a href="#" className="hover:text-teal-400 transition"><i className="fab fa-github"></i></a>
-                        <a href="#" className="hover:text-teal-400 transition"><i className="fab fa-discord"></i></a>
+                        <a href="https://www.instagram.com/focus.ritual/" className="hover:text-teal-400 transition" target="_blank" rel="noopener noreferrer"><i className="fab fa-instagram"></i></a>
+                        <a href="https://github.com/Afify21/Focus-Ritual" className="hover:text-teal-400 transition" target="_blank" rel="noopener noreferrer"><i className="fab fa-github"></i></a>
+                        <a href="https://discord.gg/F7XJeY44" className="hover:text-teal-400 transition" target="_blank" rel="noopener noreferrer"><i className="fab fa-discord"></i></a>
                     </div>
                 </div>
                 <div className="border-t border-gray-800 mt-8 pt-8 text-sm text-center">

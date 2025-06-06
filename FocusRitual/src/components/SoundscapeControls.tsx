@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
+import { useTheme } from '../context/ThemeContext';
 // TODO: Import actual icon components if using react-icons or similar
 
 // Define props interface
@@ -15,12 +16,51 @@ const SoundscapeControls: React.FC<SoundscapeControlsProps> = ({
     selectedSound,
     onSoundSelect
 }) => {
+    const { currentTheme } = useTheme();
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+
     const soundscapes = [
         { id: 'library', name: 'Library', description: 'Scholarly', icon: 'book' },
         { id: 'night', name: 'Night', description: 'Peaceful', icon: 'moon' },
         { id: 'fireplace', name: 'Fireplace', description: 'Cozy', icon: 'fire' },
         { id: 'rain', name: 'Rain', description: 'Relaxing', icon: 'cloud-rain' }
     ];
+
+    // Effect to handle audio playback
+    useEffect(() => {
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.removeAttribute('src');
+            audioRef.current.load();
+        }
+
+        if (selectedSound && currentTheme.soundscapes[selectedSound as keyof typeof currentTheme.soundscapes]) {
+            const soundUrl = currentTheme.soundscapes[selectedSound as keyof typeof currentTheme.soundscapes];
+            audioRef.current = new Audio(soundUrl);
+            audioRef.current.loop = true;
+            audioRef.current.volume = volume / 100; // Set initial volume
+            audioRef.current.play().catch(error => console.error('Error playing soundscape:', error));
+        } else {
+            audioRef.current = null; // Clear audio element if no sound is selected
+        }
+
+        // Cleanup function
+        return () => {
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current.removeAttribute('src');
+                audioRef.current.load();
+                audioRef.current = null; // Ensure cleanup clears the ref
+            }
+        };
+    }, [selectedSound, currentTheme.soundscapes]); // Re-run effect when selectedSound or theme soundscapes change
+
+    // Effect to handle volume changes
+    useEffect(() => {
+        if (audioRef.current) {
+            audioRef.current.volume = volume / 100;
+        }
+    }, [volume]); // Re-run effect when volume changes
 
     return (
         <div className="gradient-bg rounded-xl p-6 mb-8 shadow-lg border border-gray-800">
@@ -47,7 +87,6 @@ const SoundscapeControls: React.FC<SoundscapeControlsProps> = ({
                 <div className="flex items-center space-x-4">
                     {/* Replace with actual icon component */}
                     <i className="fas fa-volume-off text-gray-400"></i>
-                    {/* TODO: Connect input range to volume state and handler */}
                     <input
                         type="range"
                         min="0"

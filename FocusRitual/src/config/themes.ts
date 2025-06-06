@@ -43,13 +43,19 @@ export interface Theme {
         // Icons within chat messages if any specific
         messageTimestampText: string;
     };
+    soundscapes: { // New section for soundscape URLs
+        library: string;
+        night: string;
+        fireplace: string;
+        rain: string;
+    }
 }
 
 export const themes: Theme[] = [
     {
         id: 'default',
         name: 'Default',
-        description: 'Default theme',
+        description: 'Default theme based on logo colors.',
         backgrounds: {
             focus: '/themes/default/backgrounds/focus.jpg',
             break: '/themes/default/backgrounds/break.jpg'
@@ -59,32 +65,49 @@ export const themes: Theme[] = [
             break: ''
         },
         colors: {
-            chatWindowBg: 'bg-gray-900/90 dark:bg-gray-900/90',
-            chatHeaderBg: 'bg-gray-800/90 dark:bg-gray-800/90',
-            chatHeaderText: 'text-white',
-            chatHeaderIcon: 'text-gray-300',
-            chatHeaderIconHoverBg: 'hover:bg-gray-700/95 dark:hover:bg-gray-700/95',
-            chatMessageListBg: 'bg-gray-800/80 dark:bg-gray-800/80',
-            chatInputAreaBg: 'bg-gray-800/90 dark:bg-gray-800/90',
-            chatInputBorder: 'border-gray-700 dark:border-gray-700',
-            chatInputBg: 'bg-gray-700/95 dark:bg-gray-700/95',
-            chatInputText: 'text-white dark:text-white',
-            chatInputPlaceholderText: 'placeholder-gray-400 dark:placeholder-gray-400',
-            chatSendButtonBg: 'bg-blue-600/90 dark:bg-blue-600/90',
-            chatSendButtonText: 'text-white',
-            chatSendButtonHoverBg: 'hover:bg-blue-700/95 dark:hover:bg-blue-700/95',
-            chatPromptButtonBg: 'bg-gray-700/80 dark:bg-gray-700/80',
-            chatPromptButtonText: 'text-white dark:text-white',
-            chatPromptButtonHoverBg: 'hover:bg-gray-600/90 dark:hover:bg-gray-600/90',
-            userMessageBg: 'bg-blue-600/90 dark:bg-blue-600/90',
-            userMessageText: 'text-white',
-            assistantMessageBg: 'bg-gray-700/90 dark:bg-gray-700/90',
-            assistantMessageText: 'text-white dark:text-white',
-            assistantMessageCodeBg: 'bg-gray-600/90 dark:bg-gray-600/90',
-            assistantMessageCodeText: 'text-white dark:text-white',
-            scrollbarThumb: 'dark:scrollbar-thumb-gray-600/90 scrollbar-thumb-gray-600/90',
-            scrollbarTrack: 'dark:scrollbar-track-gray-800/80 scrollbar-track-gray-800/80',
-            messageTimestampText: 'opacity-70',
+            // Applied colors from the provided palette
+            chatWindowBg: 'bg-[#000000]/90 dark:bg-[#000000]/90', // --darker
+            chatHeaderBg: 'bg-[#002024]/90 dark:bg-[#002024]/90', // --dark
+            chatHeaderText: 'text-[#04d9d9]', // --primary
+            chatHeaderIcon: 'text-[#04d9d9]', // --primary
+            chatHeaderIconHoverBg: 'hover:bg-gray-800/95 dark:hover:bg-gray-800/95', // Using a dark gray for hover
+            chatMessageListBg: 'bg-[#000000]/80 dark:bg-[#000000]/80', // --darker
+
+            // Chat Input Area
+            chatInputAreaBg: 'bg-[#002024]/90 dark:bg-[#002024]/90', // --dark
+            chatInputBorder: 'border-[#04d9d9]', // --primary
+            chatInputBg: 'bg-[#002024]/95 dark:bg-[#002024]/95', // Slightly lighter dark for input field
+            chatInputText: 'text-[#FFFFFF]', // --light
+            chatInputPlaceholderText: 'placeholder-[#888888] dark:placeholder-[#888888]', // --gray-dark
+            chatSendButtonBg: 'bg-[#04d9d9]/90 dark:bg-[#04d9d9]/90', // --primary
+            chatSendButtonText: 'text-[#FFFFFF]', // --light
+            chatSendButtonHoverBg: 'hover:bg-[#2cfffe]/95 dark:hover:bg-[#2cfffe]/95', // --primary-light for hover
+            chatPromptButtonBg: 'bg-[#002024]/80 dark:bg-[#002024]/80', // --dark (for secondary button)
+            chatPromptButtonText: 'text-[#04d9d9]', // --primary
+            chatPromptButtonHoverBg: 'hover:bg-gray-700/90 dark:hover:bg-gray-700/90', // Darker gray hover
+
+            // Messages
+            userMessageBg: 'bg-[#04d9d9]/90 dark:bg-[#04d9d9]/90', // --primary for user messages
+            userMessageText: 'text-[#000000]', // --darker (contrast)
+            assistantMessageBg: 'bg-[#002024]/90 dark:bg-[#002024]/90', // --dark for assistant messages
+            assistantMessageText: 'text-[#FFFFFF]', // --light
+            assistantMessageCodeBg: 'bg-gray-700/90 dark:bg-gray-700/90', // A dark gray for code blocks
+            assistantMessageCodeText: 'text-[#04d9d9]', // --primary
+
+            // Scrollbar
+            scrollbarThumb: 'scrollbar-thumb-[#002024]/90 dark:scrollbar-thumb-[#002024]/90', // --dark
+            scrollbarTrack: 'scrollbar-track-[#000000]/80 dark:scrollbar-track-[#000000]/80', // --darker
+
+            // Other text (used elsewhere in UI, e.g., timestamps, secondary info)
+            messageTimestampText: 'text-[#BDBDBD]', // --gray
+
+            // Note: The --glow effect (box-shadow) needs to be applied in individual components using inline styles or a CSS class.
+        },
+        soundscapes: {
+            library: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748658336/librarysounds_caxbfr.mov',
+            night: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748658654/night_qnkzkz.mov',
+            fireplace: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748658326/Fireplace_hztxh2.mov',
+            rain: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748658330/rain.mp3_yyqqdk.mov',
         }
     },
     {
@@ -129,6 +152,12 @@ export const themes: Theme[] = [
             scrollbarThumb: 'scrollbar-thumb-[#B8860B]/90 dark:scrollbar-thumb-[#DAA520]/90',
             scrollbarTrack: 'scrollbar-track-[#F5ECCE]/80 dark:scrollbar-track-[#1E222A]/80',
             messageTimestampText: 'opacity-70',
+        },
+        soundscapes: {
+            library: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748658336/librarysounds_caxbfr.mov',
+            night: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748658654/night_qnkzkz.mov',
+            fireplace: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748658326/Fireplace_hztxh2.mov',
+            rain: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748658330/rain.mp3_yyqqdk.mov',
         }
     },
     {
@@ -173,6 +202,12 @@ export const themes: Theme[] = [
             scrollbarThumb: 'scrollbar-thumb-[#00ADB5]/90 dark:scrollbar-thumb-[#00ADB5]/90',
             scrollbarTrack: 'scrollbar-track-[#222831]/80 dark:scrollbar-track-[#1a202c]/80',
             messageTimestampText: 'opacity-70',
+        },
+        soundscapes: {
+            library: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748658336/librarysounds_caxbfr.mov',
+            night: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748658654/night_qnkzkz.mov',
+            fireplace: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748658326/Fireplace_hztxh2.mov',
+            rain: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748658330/rain.mp3_yyqqdk.mov',
         }
     },
     {
@@ -214,6 +249,12 @@ export const themes: Theme[] = [
             scrollbarThumb: 'scrollbar-thumb-[#C4A777]/90 dark:scrollbar-thumb-[#C4A777]/90',
             scrollbarTrack: 'scrollbar-track-[#1A1A1A]/80 dark:scrollbar-track-[#0A0A0A]/80',
             messageTimestampText: 'opacity-70',
+        },
+        soundscapes: {
+            library: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748658336/librarysounds_caxbfr.mov',
+            night: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748658654/night_qnkzkz.mov',
+            fireplace: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748658326/Fireplace_hztxh2.mov',
+            rain: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748658330/rain.mp3_yyqqdk.mov',
         }
     }
     // Add more themes here as needed
