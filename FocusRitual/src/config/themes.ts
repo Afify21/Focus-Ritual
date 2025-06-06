@@ -65,43 +65,40 @@ export const themes: Theme[] = [
             break: ''
         },
         colors: {
-            // Applied colors from the provided palette
+            // Updated colors to match the provided gradient
             chatWindowBg: 'bg-[#000000]/90 dark:bg-[#000000]/90', // --darker
             chatHeaderBg: 'bg-[#002024]/90 dark:bg-[#002024]/90', // --dark
             chatHeaderText: 'text-[#04d9d9]', // --primary
             chatHeaderIcon: 'text-[#04d9d9]', // --primary
-            chatHeaderIconHoverBg: 'hover:bg-gray-800/95 dark:hover:bg-gray-800/95', // Using a dark gray for hover
+            chatHeaderIconHoverBg: 'hover:bg-[#002024]/95 dark:hover:bg-[#002024]/95',
             chatMessageListBg: 'bg-[#000000]/80 dark:bg-[#000000]/80', // --darker
 
             // Chat Input Area
             chatInputAreaBg: 'bg-[#002024]/90 dark:bg-[#002024]/90', // --dark
             chatInputBorder: 'border-[#04d9d9]', // --primary
-            chatInputBg: 'bg-[#002024]/95 dark:bg-[#002024]/95', // Slightly lighter dark for input field
-            chatInputText: 'text-[#FFFFFF]', // --light
-            chatInputPlaceholderText: 'placeholder-[#888888] dark:placeholder-[#888888]', // --gray-dark
+            chatInputBg: 'bg-[#002024]/95 dark:bg-[#002024]/95',
+            chatInputText: 'text-[#FFFFFF]',
+            chatInputPlaceholderText: 'placeholder-[#888888] dark:placeholder-[#888888]',
             chatSendButtonBg: 'bg-[#04d9d9]/90 dark:bg-[#04d9d9]/90', // --primary
-            chatSendButtonText: 'text-[#FFFFFF]', // --light
-            chatSendButtonHoverBg: 'hover:bg-[#2cfffe]/95 dark:hover:bg-[#2cfffe]/95', // --primary-light for hover
-            chatPromptButtonBg: 'bg-[#002024]/80 dark:bg-[#002024]/80', // --dark (for secondary button)
+            chatSendButtonText: 'text-[#FFFFFF]',
+            chatSendButtonHoverBg: 'hover:bg-[#04d9d9]/95 dark:hover:bg-[#04d9d9]/95',
+            chatPromptButtonBg: 'bg-[#002024]/80 dark:bg-[#002024]/80', // --dark
             chatPromptButtonText: 'text-[#04d9d9]', // --primary
-            chatPromptButtonHoverBg: 'hover:bg-gray-700/90 dark:hover:bg-gray-700/90', // Darker gray hover
+            chatPromptButtonHoverBg: 'hover:bg-[#002024]/90 dark:hover:bg-[#002024]/90',
 
             // Messages
-            userMessageBg: 'bg-[#04d9d9]/90 dark:bg-[#04d9d9]/90', // --primary for user messages
-            userMessageText: 'text-[#000000]', // --darker (contrast)
-            assistantMessageBg: 'bg-[#002024]/90 dark:bg-[#002024]/90', // --dark for assistant messages
-            assistantMessageText: 'text-[#FFFFFF]', // --light
-            assistantMessageCodeBg: 'bg-gray-700/90 dark:bg-gray-700/90', // A dark gray for code blocks
+            userMessageBg: 'bg-[#04d9d9]/90 dark:bg-[#04d9d9]/90', // --primary
+            userMessageText: 'text-[#000000]',
+            assistantMessageBg: 'bg-[#002024]/90 dark:bg-[#002024]/90', // --dark
+            assistantMessageText: 'text-[#FFFFFF]',
+            assistantMessageCodeBg: 'bg-[#002024]/90 dark:bg-[#002024]/90',
             assistantMessageCodeText: 'text-[#04d9d9]', // --primary
 
             // Scrollbar
             scrollbarThumb: 'scrollbar-thumb-[#002024]/90 dark:scrollbar-thumb-[#002024]/90', // --dark
             scrollbarTrack: 'scrollbar-track-[#000000]/80 dark:scrollbar-track-[#000000]/80', // --darker
 
-            // Other text (used elsewhere in UI, e.g., timestamps, secondary info)
-            messageTimestampText: 'text-[#BDBDBD]', // --gray
-
-            // Note: The --glow effect (box-shadow) needs to be applied in individual components using inline styles or a CSS class.
+            messageTimestampText: 'text-[#BDBDBD]',
         },
         soundscapes: {
             library: 'https://res.cloudinary.com/dmouna8ru/video/upload/v1748658336/librarysounds_caxbfr.mov',

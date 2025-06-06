@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';backg
 import Header from './components/Header';
 import Footer from './components/Footer';
 import LoginPage from './pages/LoginPage';
@@ -47,10 +47,8 @@ const App: React.FC = () => {
         console.log('Focus mode state changed:', state);
     };
 
-    const appBackgroundClass = currentTheme.id === 'default' ? 'default-gradient-background' : currentTheme.colors.chatWindowBg;
-
     return (
-        <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-black text-white">
+        <div className="min-h-screen flex flex-col text-white">
             <Header />
             <Routes>
                 <Route path="/login" element={<LoginPage />} />
