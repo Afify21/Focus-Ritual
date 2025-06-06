@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 /**
@@ -9,7 +9,8 @@ import { useAuth } from '../context/AuthContext';
  */
 const ProtectedRoute: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
-  
+  const location = useLocation();
+
   // While checking authentication status, show nothing or a loading spinner
   if (isLoading) {
     return (
@@ -18,13 +19,13 @@ const ProtectedRoute: React.FC = () => {
       </div>
     );
   }
-  
-  // If not authenticated, redirect to login
-  if (!isAuthenticated) {
+
+  // If not authenticated and trying to access a protected route, redirect to login
+  if (!isAuthenticated && location.pathname !== '/') {
     return <Navigate to="/login" replace />;
   }
-  
-  // If authenticated, render the child routes
+
+  // If authenticated or on main route, render the child routes
   return <Outlet />;
 };
 
