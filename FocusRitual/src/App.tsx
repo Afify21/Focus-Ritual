@@ -14,6 +14,7 @@ import CalendarPage from './pages/CalendarPage';
 import ChatAssistant from './components/ChatAssistant';
 import ThreeDBackground from './components/ThreeDBackground';
 import { useTheme } from './context/ThemeContext';
+import HabitSummary from './components/HabitSummary';
 
 const App: React.FC = () => {
     const [showYouTube, setShowYouTube] = useState(false);
@@ -68,21 +69,23 @@ const App: React.FC = () => {
                 <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/" element={(
                     <main className="container mx-auto px-4 py-8">
-                        <div className="space-y-8">
-                            <TimerSection />
-                            <FocusModeSection onGoToFocusMode={handleGoToFocusMode} />
-                            <MediaPlayerSection
-                                showYouTube={showYouTube}
-                                showSpotify={showSpotify}
-                                onToggleYouTube={() => setShowYouTube(!showYouTube)}
-                                onToggleSpotify={() => setShowSpotify(!showSpotify)}
-                            />
-                            <SoundscapeControls
-                                volume={volume}
-                                onVolumeChange={(e) => setVolume(Number(e.target.value))}
-                                selectedSound={selectedSound}
-                                onSoundSelect={handleSoundSelect}
-                            />
+                        <div className="grid grid-cols-1 lg:grid-cols-[3fr_1fr] gap-6">
+                            <div className="space-y-6">
+                                <div className="w-full">
+                                    <TimerSection />
+                                </div>
+                                <div className="w-1/2">
+                                    <SoundscapeControls
+                                        volume={volume}
+                                        onVolumeChange={(e) => setVolume(Number(e.target.value))}
+                                        selectedSound={selectedSound}
+                                        onSoundSelect={handleSoundSelect}
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-6">
+                                <HabitSummary />
+                            </div>
                         </div>
                     </main>
                 )} />

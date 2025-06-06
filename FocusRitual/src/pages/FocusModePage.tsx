@@ -32,8 +32,10 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
     const { currentTheme } = useTheme();
     const { colors } = currentTheme;
 
+    const pageBackgroundClass = currentTheme.id === 'default' ? 'default-gradient-background' : colors.chatWindowBg;
+
     return (
-        <div className={`min-h-screen p-4 relative ${colors.chatWindowBg} ${colors.chatInputText}`}>
+        <div className={`min-h-screen p-4 relative ${pageBackgroundClass} ${colors.chatInputText}`}>
             {showPaint && <Paint width={500} height={400} />}
             <div className="container mx-auto h-full">
                 <div className="flex justify-between items-center mb-4 relative z-50">
@@ -53,7 +55,7 @@ const FocusModePage: React.FC<FocusModePageProps> = ({
                         {/* Wrapper for Paint Button and PDF Viewer */}
                         <div className="relative">
                             {/* PDF Viewer Container with fixed height and overflow hidden */}
-                            <div className={`${colors.chatMessageListBg} backdrop-blur-md rounded-xl overflow-hidden h-[calc(60%-12px)]`}>
+                            <div className={`${colors.chatMessageListBg} backdrop-blur-sm rounded-xl overflow-hidden h-[calc(60%-12px)]`}>
                                 <PDFViewer />
                             </div>
                             {/* Paint Button - outside PDF Viewer container */}

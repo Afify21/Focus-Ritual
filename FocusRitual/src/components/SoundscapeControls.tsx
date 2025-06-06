@@ -63,40 +63,40 @@ const SoundscapeControls: React.FC<SoundscapeControlsProps> = ({
     }, [volume]); // Re-run effect when volume changes
 
     return (
-        <div className="gradient-bg rounded-xl p-6 mb-8 shadow-lg border border-gray-800">
-            <h3 className="text-xl font-bold mb-4 glow-teal flex items-center">
-                {/* Replace with actual icon component */}
+        <div className="gradient-bg rounded-lg p-4 shadow-lg border border-gray-800">
+            <h3 className="text-base font-bold mb-3 glow-teal flex items-center">
                 <i className="fas fa-volume-up text-teal-400 mr-2"></i>
-                Soundscapes
+                Ambient Sounds
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-2">
                 {soundscapes.map(sound => (
                     <button
                         key={sound.id}
                         onClick={() => onSoundSelect(sound.id === selectedSound ? null : sound.id)}
-                        className={`bg-gradient-to-b from-gray-800/50 hover:from-teal-900/20 to-gray-900/80 hover:to-teal-900/10 border border-gray-700/50 hover:border-teal-400/50 rounded-xl p-5 transition-all duration-300 group shadow hover:shadow-teal-500/10 backdrop-blur-sm ${selectedSound === sound.id ? 'from-teal-900/20 to-teal-900/10 border-teal-400/50' : ''
-                            }`}
+                        className={`bg-gradient-to-b from-gray-800/50 hover:from-teal-900/20 to-gray-900/80 hover:to-teal-900/10 border border-gray-700/50 hover:border-teal-400/50 rounded-lg p-2 transition-all duration-300 group shadow hover:shadow-teal-500/10 backdrop-blur-sm ${selectedSound === sound.id ? 'from-teal-900/20 to-teal-900/10 border-teal-400/50' : ''}`}
                     >
-                        <i className={`fas fa-${sound.icon} text-teal-400 text-2xl mb-2`}></i>
-                        <p className="font-medium">{sound.name}</p>
-                        <p className="text-sm text-gray-400 group-hover:text-gray-300">{sound.description}</p>
+                        <div className="flex flex-col items-center">
+                            <i className={`fas fa-${sound.icon} text-teal-400 text-lg mb-1`}></i>
+                            <div className="text-center">
+                                <p className="font-medium text-xs">{sound.name}</p>
+                                <p className="text-[10px] text-gray-400 group-hover:text-gray-300">{sound.description}</p>
+                            </div>
+                        </div>
                     </button>
                 ))}
             </div>
-            <div className="mt-6">
-                <div className="flex items-center space-x-4">
-                    {/* Replace with actual icon component */}
-                    <i className="fas fa-volume-off text-gray-400"></i>
+            <div className="mt-3">
+                <div className="flex items-center space-x-2">
+                    <i className="fas fa-volume-off text-gray-400 text-sm"></i>
                     <input
                         type="range"
                         min="0"
                         max="100"
                         value={volume}
                         onChange={onVolumeChange}
-                        className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-1.5 bg-gray-700 rounded appearance-none cursor-pointer"
                     />
-                    {/* Replace with actual icon component */}
-                    <i className="fas fa-volume-up text-teal-400"></i>
+                    <i className="fas fa-volume-up text-teal-400 text-sm"></i>
                 </div>
             </div>
         </div>
