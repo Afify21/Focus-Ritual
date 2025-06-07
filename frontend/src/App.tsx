@@ -1,28 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
 import TimerSection from './components/TimerSection';
-import FocusModeSection from './components/FocusModeSection';
-import MediaPlayerSection from './components/MediaPlayerSection';
 import SoundscapeControls from './components/SoundscapeControls';
-import FocusModePage from './pages/FocusModePage';
-import NewAnalyticsPage from './pages/NewAnalyticsPage';
-import CalendarPage from './pages/CalendarPage';
-import ChatAssistant from './components/ChatAssistant';
-import ThreeDBackground from './components/ThreeDBackground';
 import { useTheme } from './context/ThemeContext';
 import HabitSummary from './components/HabitSummary';
 import EnhancedTodoList from './components/EnhancedTodoList';
 import { ThemeSelector } from './components/ThemeSelector';
 import { PaintBrushIcon } from '@heroicons/react/24/outline';
-import HabitPage from './pages/HabitPage';
-import ProfilePage from './pages/ProfilePage';
-import SettingsPage from './pages/SettingsPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import Callback from './pages/Callback';
+
+const StylizedLoginPage = lazy(() => import('./pages/StylizedLoginPage'));
+const StylizedRegisterPage = lazy(() => import('./pages/StylizedRegisterPage'));
+const StylizedForgotPasswordPage = lazy(() => import('./pages/StylizedForgotPasswordPage'));
+const FocusModePage = lazy(() => import('./pages/FocusModePage'));
+const NewAnalyticsPage = lazy(() => import('./pages/NewAnalyticsPage'));
+const CalendarPage = lazy(() => import('./pages/CalendarPage'));
+const HabitPage = lazy(() => import('./pages/HabitPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const Callback = lazy(() => import('./pages/Callback'));
+const ChatAssistant = lazy(() => import('./components/ChatAssistant'));
 
 const App: React.FC = () => {
     const [showYouTube, setShowYouTube] = useState(false);
@@ -81,67 +79,73 @@ const App: React.FC = () => {
         <div className="min-h-screen flex flex-col text-white">
             <div id="particles" className="particles"></div>
             <Header />
-            <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                <Route path="/focus-mode" element={
-                    <FocusModePage
-                        onExitFocusMode={handleExitFocusMode}
-                        duration={25}
-                        onStateChange={handleStateChange}
-                        volume={volume / 100}
-                        selectedSound={selectedSound}
-                        onSoundSelect={handleSoundSelect}
-                        onVolumeChange={handleVolumeChange}
-                    />
-                } />
-                <Route path="/analytics" element={<NewAnalyticsPage />} />
-                <Route path="/calendar" element={<CalendarPage />} />
-                <Route path="/habits" element={<HabitPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route path="/callback" element={<Callback />} />
-                <Route path="/" element={(
-                    <main className="container mx-auto px-4 py-8 flex-grow">
-                        <div className="grid grid-cols-1 lg:grid-cols-[3fr_1fr] gap-6">
-                            <div className="space-y-6">
-                                <div className="w-full">
-                                    <TimerSection />
+            <Suspense fallback={<div className="flex-grow text-center p-8">Loading...</div>}>
+                <Routes>
+                    <Route path="/login" element={<StylizedLoginPage />} />
+                    <Route path="/stylized-login" element={<StylizedLoginPage />} />
+                    <Route path="/register" element={<StylizedRegisterPage />} />
+                    <Route path="/forgot-password" element={<StylizedForgotPasswordPage />} />
+                    <Route path="/focus-mode" element={
+                        <FocusModePage
+                            onExitFocusMode={handleExitFocusMode}
+                            duration={25}
+                            onStateChange={handleStateChange}
+                            volume={volume / 100}
+                            selectedSound={selectedSound}
+                            onSoundSelect={handleSoundSelect}
+                            onVolumeChange={handleVolumeChange}
+                        />
+                    } />
+                    <Route path="/analytics" element={<NewAnalyticsPage />} />
+                    <Route path="/calendar" element={<CalendarPage />} />
+                    <Route path="/habits" element={<HabitPage />} />
+                    <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/settings" element={<SettingsPage />} />
+                    <Route path="/callback" element={<Callback />} />
+                    <Route path="/challenges" element={<NewAnalyticsPage />} />
+                    <Route path="/" element={(
+                        <main className="container mx-auto px-4 py-8 flex-grow">
+                            <div className="grid grid-cols-1 lg:grid-cols-[3fr_1fr] gap-6">
+                                <div className="space-y-6">
+                                    <div className="w-full">
+                                        <TimerSection />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <SoundscapeControls
+                                                volume={volume}
+                                                onVolumeChange={(e) => setVolume(Number(e.target.value))}
+                                                selectedSound={selectedSound}
+                                                onSoundSelect={handleSoundSelect}
+                                            />
+                                        </div>
+                                        <div className={`${currentTheme.colors.chatMessageListBg} backdrop-blur-md rounded-xl p-4 relative h-full`}>
+                                            <h2 className={`text-base font-bold mb-3 glow-teal flex items-center`}>
+                                                <PaintBrushIcon className="w-5 h-5 text-teal-400 mr-2" />
+                                                Theme
+                                            </h2>
+                                            <ThemeSelector compact={true} />
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <SoundscapeControls
-                                            volume={volume}
-                                            onVolumeChange={(e) => setVolume(Number(e.target.value))}
-                                            selectedSound={selectedSound}
-                                            onSoundSelect={handleSoundSelect}
-                                        />
-                                    </div>
-                                    <div className={`${currentTheme.colors.chatMessageListBg} backdrop-blur-md rounded-xl p-4 relative h-full`}>
-                                        <h2 className={`text-base font-bold mb-3 glow-teal flex items-center`}>
-                                            <PaintBrushIcon className="w-5 h-5 text-teal-400 mr-2" />
-                                            Theme
-                                        </h2>
-                                        <ThemeSelector compact={true} />
-                                    </div>
+                                <div className="space-y-6">
+                                    <HabitSummary />
+                                    <EnhancedTodoList />
                                 </div>
                             </div>
-                            <div className="space-y-6">
-                                <HabitSummary />
-                                <EnhancedTodoList />
-                            </div>
-                        </div>
-                    </main>
-                )} />
-            </Routes>
+                        </main>
+                    )} />
+                </Routes>
+            </Suspense>
 
             <Footer />
 
             {/* Static Chat Assistant at bottom right */}
-            <div className="fixed bottom-4 right-4 z-[999999] pointer-events-none">
-                <ChatAssistant />
-            </div>
+            <Suspense fallback={null}>
+                <div className="fixed bottom-4 right-4 z-[999999] pointer-events-none">
+                    <ChatAssistant />
+                </div>
+            </Suspense>
         </div>
     );
 };

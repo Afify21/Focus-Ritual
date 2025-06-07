@@ -28,7 +28,10 @@
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
+
 /* Removed conflicting body styles */
+
+
 /*
 body {
     background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
@@ -39,7 +42,9 @@ body {
 }
 */
 
+
 /* Custom scrollbar */
+
 ::-webkit-scrollbar {
     width: 8px;
 }
@@ -53,7 +58,10 @@ body {
     border-radius: 4px;
 }
 
+
 /* Removed conflicting app-container styles */
+
+
 /*
 .app-container {
     display: grid;
@@ -63,7 +71,9 @@ body {
 }
 */
 
+
 /* Floating particles background */
+
 .particles {
     position: fixed;
     top: 0;
@@ -82,7 +92,10 @@ body {
     animation: float 15s infinite linear;
 }
 
+
 /* Removed all sidebar styles */
+
+
 /*
 .sidebar { ... }
 .logo { ... }
@@ -110,7 +123,9 @@ body {
 .user-menu li i { ... }
 */
 
+
 /* Adjusted main-content styles */
+
 .main-content {
     padding: 2rem 3rem;
     overflow-y: auto;
@@ -120,7 +135,9 @@ body {
     margin: 0 auto;
 }
 
+
 /* Header */
+
 .header {
     display: flex;
     justify-content: space-between;
@@ -201,8 +218,10 @@ body {
     color: var(--gray-dark);
 }
 
+
 /* Dashboard Stats */
-.dashboard-stats {
+
+.stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 1.5rem;
@@ -296,7 +315,9 @@ body {
     font-size: 0.7rem;
 }
 
+
 /* Section styles */
+
 .section {
     background: var(--glass);
     backdrop-filter: blur(10px);
@@ -572,7 +593,9 @@ body {
     background: rgba(4, 217, 217, 0.1);
 }
 
+
 /* AI Insights */
+
 .ai-insights {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -648,112 +671,82 @@ body {
     color: var(--primary-light);
 }
 
+
 /* Challenges */
+
 .challenges-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
 }
 
-.challenge-card {
-    background: linear-gradient(135deg, rgba(0, 32, 36, 0.7) 0%, rgba(0, 0, 0, 0.8) 100%);
-    border-radius: 16px;
-    padding: 1.75rem;
-    box-shadow: var(--shadow);
-    border: 1px solid rgba(4, 217, 217, 0.1);
+.challenge-item {
     transition: var(--transition);
-    position: relative;
-    overflow: hidden;
+    border: 1px solid rgba(4, 217, 217, 0.1);
 }
 
-.challenge-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-lg);
+.challenge-item:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow);
     border-color: rgba(4, 217, 217, 0.3);
 }
 
-.challenge-card::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: linear-gradient(to right, var(--primary), var(--primary-light));
+.challenge-item.completed {
+    border-color: rgba(245, 158, 11, 0.3);
+    background: linear-gradient(to bottom, rgba(245, 158, 11, 0.05), transparent);
 }
 
-.challenge-badge {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    padding: 0.25rem 0.75rem;
-    border-radius: 50px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+.show-all-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 }
 
-.badge-free {
-    background: rgba(0, 168, 168, 0.1);
-    color: var(--secondary-light);
-    border: 1px solid rgba(0, 168, 168, 0.2);
-}
 
-.badge-premium {
-    background: rgba(4, 217, 217, 0.1);
-    color: var(--primary-light);
-    border: 1px solid rgba(4, 217, 217, 0.2);
-}
+/* View mode toggle */
 
-.challenge-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin-bottom: 0.75rem;
-    padding-right: 2rem;
-}
-
-.challenge-desc {
-    font-size: 0.9rem;
-    color: var(--gray);
-    margin-bottom: 1.5rem;
-    line-height: 1.6;
-}
-
-.challenge-progress {
-    margin-bottom: 1.5rem;
-}
-
-.progress-text {
+.view-mode-toggle {
     display: flex;
-    justify-content: space-between;
-    font-size: 0.8rem;
-    color: var(--gray);
-    margin-bottom: 0.5rem;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+    margin-right: 1rem;
 }
 
-.progress-bar {
-    height: 6px;
-    background: rgba(15, 23, 42, 0.5);
-    border-radius: 3px;
-    overflow: hidden;
+.view-mode-button {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
 }
 
-.progress-fill {
-    height: 100%;
-    background: linear-gradient(to right, var(--primary), var(--primary-light));
-    border-radius: 3px;
-    transition: width 1s ease;
+.view-mode-button.active {
+    background-color: var(--primary);
+    color: black;
 }
+
+@media (min-width: 640px) {
+    .challenges-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .show-all-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .show-all-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
 
 /* Animations */
-@keyframes float {
 
+@keyframes float {
     0%,
     100% {
         transform: translateY(0);
     }
-
     50% {
         transform: translateY(-20px);
     }
@@ -764,19 +757,19 @@ body {
         opacity: 0.5;
         transform: scale(1);
     }
-
     50% {
         opacity: 1;
         transform: scale(1.05);
     }
-
     100% {
         opacity: 0.5;
         transform: scale(1);
     }
 }
 
+
 /* Media Queries */
+
 @media (max-width: 1200px) {
     .habit-tracker-grid {
         grid-template-columns: 1fr;
@@ -790,7 +783,6 @@ body {
         grid-template-columns: 1fr;
     }
     */
-
     /* Removed all sidebar media query styles */
     /*
     .sidebar { ... }
@@ -807,21 +799,17 @@ body {
     .main-content {
         padding: 2rem 1.5rem;
     }
-
     .header {
         flex-direction: column;
         align-items: flex-start;
         gap: 1.5rem;
     }
-
     .search-container {
         width: 100%;
     }
-
     .search-bar {
         width: 100%;
     }
-
     .ai-insights,
     .challenges-grid {
         grid-template-columns: 1fr;
@@ -832,20 +820,20 @@ body {
     .dashboard-stats {
         grid-template-columns: 1fr;
     }
-
     .section-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
     }
-
     .section-actions {
         width: 100%;
         justify-content: flex-end;
     }
 }
 
+
 /* Stats Grid */
+
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -853,7 +841,9 @@ body {
     margin-bottom: 2rem;
 }
 
+
 /* Focus Analytics Section */
+
 .focus-analytics {
     margin-bottom: 2rem;
 }
@@ -877,7 +867,9 @@ body {
     height: 300px;
 }
 
+
 /* AI Insights Section */
+
 .ai-insights {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -933,4 +925,324 @@ body {
     font-size: 0.8rem;
     margin-right: 0.5rem;
     margin-bottom: 0.5rem;
+}
+
+
+/* Chart Styles */
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin-top: 1rem;
+}
+
+.y-axis-labels {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    color: var(--gray);
+    font-size: 0.75rem;
+    text-align: right;
+    padding-right: 8px;
+}
+
+.chart-svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+polyline {
+    fill: none;
+    stroke: var(--primary);
+    stroke-width: 2;
+}
+
+circle.data-point {
+    fill: var(--primary);
+    r: 3;
+}
+
+circle.data-point:hover {
+    r: 5;
+    fill: var(--accent);
+    cursor: pointer;
+}
+
+.x-axis-labels {
+    position: absolute;
+    bottom: -25px;
+    left: 40px;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    color: var(--gray);
+    font-size: 0.75rem;
+}
+
+.grid-line {
+    stroke: rgba(255, 255, 255, 0.1);
+    stroke-width: 1;
+}
+
+
+/* Time Range Selector */
+
+.time-range-selector {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.time-range-button {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.time-range-button.active {
+    background-color: var(--primary);
+    color: var(--dark);
+}
+
+.time-range-button:not(.active) {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--gray);
+}
+
+.time-range-button:not(.active):hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: var(--light);
+}
+
+
+/* Chart Tooltip */
+
+.chart-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    pointer-events: none;
+    z-index: 10;
+    transform: translate(-50%, -100%);
+    margin-top: -10px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--primary);
+}
+
+.chart-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid rgba(0, 0, 0, 0.8);
+}
+
+
+/* Page container and header */
+
+.header-section {
+    margin-bottom: 2rem;
+}
+
+.welcome-title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--light);
+    margin-bottom: 0.5rem;
+}
+
+.welcome-subtitle {
+    color: var(--gray);
+    font-size: 0.95rem;
+}
+
+
+/* Stat cards */
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.stat-card-item {
+    background: var(--glass);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.stat-card-item .stat-title {
+    color: var(--gray);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.stat-card-item .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--light);
+}
+
+.stat-card-item .stat-value .stat-unit {
+    font-size: 1.2rem;
+    color: var(--gray);
+}
+
+.stat-card-item .stat-description {
+    font-size: 0.8rem;
+    color: var(--gray-dark);
+    margin-top: 0.25rem;
+}
+
+
+/* Time Range Buttons */
+
+.time-range-btn {
+    background: transparent;
+    border: 1px solid var(--gray-dark);
+    color: var(--gray);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.time-range-btn:hover {
+    background: var(--primary);
+    color: var(--darker);
+    border-color: var(--primary);
+}
+
+.time-range-btn.active {
+    background: var(--primary);
+    color: var(--darker);
+    border-color: var(--primary);
+}
+
+
+/* Charts */
+
+.chart-card {
+    background: var(--glass);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.chart-title {
+    color: var(--light);
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+}
+
+.chart-container {
+    position: relative;
+}
+
+
+/* AI Insights */
+
+.ai-insights-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.insight-card-item {
+    background: var(--glass);
+    padding: 1rem;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+}
+
+.insight-icon {
+    font-size: 1.5rem;
+    color: var(--primary-light);
+    margin-bottom: 1rem;
+}
+
+.insight-title {
+    color: var(--light);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.insight-text {
+    color: var(--gray);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    flex-grow: 1;
+}
+
+.insight-tags {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.insight-tag {
+    background: rgba(4, 217, 217, 0.2);
+    color: var(--primary-light);
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+}
+
+
+/* Today's Habits */
+
+.todays-habits-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.habit-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    color: var(--light);
+}
+
+.habit-check-icon {
+    color: var(--primary);
+    width: 20px;
+    height: 20px;
+}
+
+
+/* Calendar in Today's Habits */
+
+.habit-calendar .calendar-grid.days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+}
+
+.habit-calendar .day-name {
+    text-align: center;
+    color: var(--gray-dark);
+    font-size: 0.8rem;
+    text-transform: uppercase;
 }

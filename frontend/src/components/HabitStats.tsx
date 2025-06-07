@@ -1,12 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeftIcon } from '@heroicons/react/24/solid';
-import HabitTracker from '../components/HabitTracker';
-import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../context/ThemeContext';
-import Analytics from '../components/Analytics';
-
-// Define tab type to fix linter errors
-type TabType = 'habits' | 'stats' | 'analytics';
 
 interface Habit {
     id: string;
@@ -24,12 +16,12 @@ interface Habit {
     createdAt: string;
 }
 
-const HabitPage: React.FC = () => {
-    const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<TabType>('habits');
-    const [habits, setHabits] = useState<Habit[]>([]);
+interface HabitStatsProps {
+    habits: Habit[];
+}
+
+const HabitStats: React.FC<HabitStatsProps> = ({ habits }) => {
     const [statsPeriod, setStatsPeriod] = useState<'week' | 'month'>('week');
-    const { currentTheme } = useTheme();
     const [insights, setInsights] = useState<{
         loading: boolean;
         data: {
@@ -41,36 +33,6 @@ const HabitPage: React.FC = () => {
         loading: false,
         data: null
     });
-
-    // Load habits when component mounts
-    useEffect(() => {
-        const loadHabits = () => {
-            const storedHabits = localStorage.getItem('focus-ritual-habits');
-            if (storedHabits) {
-                setHabits(JSON.parse(storedHabits));
-            }
-        };
-
-        // Load habits initially
-        loadHabits();
-
-        // Listen for storage events (when localStorage changes)
-        const handleStorageChange = (e: StorageEvent) => {
-            if (e.key === 'focus-ritual-habits') {
-                loadHabits();
-            }
-        };
-
-        window.addEventListener('storage', handleStorageChange);
-
-        // Set interval to check for changes (backup for same-window changes)
-        const interval = setInterval(loadHabits, 1000);
-
-        return () => {
-            window.removeEventListener('storage', handleStorageChange);
-            clearInterval(interval);
-        };
-    }, []);
 
     // Format date to YYYY-MM-DD
     const formatDate = (date: Date = new Date()): string => {
@@ -248,153 +210,112 @@ const HabitPage: React.FC = () => {
         const insights = [];
 
         // Time of day insight
-        insights.push(`You're most productive during the ${timeOfDay}. Consider scheduling your most challenging tasks during this time.`);
+        insights.push(`You tend to be most productive in the ${timeOfDay}, especially around ${hourDescription}.`);
 
-        // Peak hour insight
-        insights.push(`Your peak productivity hour is around ${hourDescription}. This might be the best time for deep work or important tasks.`);
+        // Day of week insight
+        insights.push(`Your most active day for habits is ${days[maxDay]}, while you are least active on ${days[minDay]}.`);
 
-        // Day of week insights
-        if (maxDay !== minDay) {
-            const productivityGap = dayCompletions[maxDay] - dayCompletions[minDay];
-            if (productivityGap > 2) {
-                insights.push(`You're significantly more productive on ${days[maxDay]}s compared to ${days[minDay]}s. Consider adjusting your schedule to take advantage of this pattern.`);
-            }
-        }
-
-        // Focus duration insights
-        const consecutiveCompletions = habits.reduce((max, habit) => {
-            let current = 0;
-            let maxConsecutive = 0;
-            Object.values(habit.completionHistory).forEach(completed => {
-                if (completed) {
-                    current++;
-                    maxConsecutive = Math.max(maxConsecutive, current);
-                } else {
-                    current = 0;
-                }
-            });
-            return Math.max(max, maxConsecutive);
-        }, 0);
-
-        if (consecutiveCompletions > 0) {
-            if (consecutiveCompletions <= 2) {
-                insights.push("You tend to work in shorter bursts. The Pomodoro technique (25-minute work sessions) might be more effective for you than longer sessions.");
-            } else if (consecutiveCompletions <= 4) {
-                insights.push("You work well in moderate-length sessions. Consider using 45-minute work blocks with 15-minute breaks.");
-            } else {
-                insights.push("You can maintain focus for extended periods. You might benefit from longer 90-minute deep work sessions.");
-            }
-        }
-
-        // Break pattern insights
-        const breakPatterns = habits.reduce<number[]>((patterns, habit) => {
-            let lastCompletion: string | null = null;
-            Object.entries(habit.completionHistory).forEach(([dateStr, completed]) => {
-                if (completed) {
-                    if (lastCompletion) {
-                        const hours = (new Date(dateStr).getTime() - new Date(lastCompletion).getTime()) / (1000 * 60 * 60);
-                        if (hours > 1) patterns.push(hours);
-                    }
-                    lastCompletion = dateStr;
-                }
-            });
-            return patterns;
-        }, []);
-
-        if (breakPatterns.length > 0) {
-            const avgBreakDuration = breakPatterns.reduce((sum, hours) => sum + hours, 0) / breakPatterns.length;
-            if (avgBreakDuration > 4) {
-                insights.push("You tend to take longer breaks between work sessions. Consider implementing more structured, shorter breaks to maintain momentum.");
-            } else if (avgBreakDuration < 1) {
-                insights.push("You take very short breaks between sessions. Remember to take longer breaks occasionally to prevent burnout.");
-            }
-        }
-
-        return insights.join(" ");
+        return insights.join(' ');
     };
 
     const generateMockRecommendations = (habits: Habit[]): string[] => {
+        const recommendations: string[] = [];
+
         if (habits.length === 0) {
-            return [
-                "Start with a simple daily habit like drinking water or a short meditation",
-                "Track one habit consistently before adding more",
-                "Set reminders to help you remember your new habits"
-            ];
+            recommendations.push("Create a new habit to start your journey.");
+            return recommendations;
         }
 
-        const recommendations = [];
-
-        // Check category distribution
-        const categories = habits.map(h => h.category);
-        const uniqueCategories = new Set(categories);
-
-        if (uniqueCategories.size <= 2 && habits.length > 3) {
-            recommendations.push("Consider diversifying your habits across more life categories for better balance.");
+        const avgCompletion = calculateCompletionRate();
+        if (avgCompletion < 50) {
+            recommendations.push("Your completion rate is below 50%. Try setting smaller, more achievable habits to build momentum.");
         }
 
-        // Check for streaks
-        const hasLowStreaks = habits.some(h => h.streak < 3);
-        if (hasLowStreaks) {
-            recommendations.push("Some of your habits have low streaks. Try focusing on consistent completion before adding new habits.");
+        const avgStreak = calculateAverageStreak();
+        if (avgStreak < 3) {
+            recommendations.push("Focus on consistency. Even a small action every day helps build a streak.");
         }
 
-        // Check for habit tracking consistency
-        const completionsCount = habits.reduce((sum, habit) => {
-            return sum + Object.values(habit.completionHistory).filter(val => val).length;
-        }, 0);
-
-        if (completionsCount < habits.length * 3) {
-            recommendations.push("Your habit tracking is inconsistent. Consider setting a daily reminder to track your habits.");
-        }
-
-        // Add generic recommendations if needed
-        if (recommendations.length < 3) {
-            const genericRecommendations = [
-                "Stack new habits onto existing routines to increase success rate",
-                "Start with 'mini habits' that take less than 2 minutes to complete",
-                "Track your progress visually to stay motivated",
-                "Share your habit goals with someone to increase accountability",
-                "Celebrate small wins to build positive momentum"
-            ];
-
-            while (recommendations.length < 3) {
-                const rnd = Math.floor(Math.random() * genericRecommendations.length);
-                recommendations.push(genericRecommendations[rnd]);
-                genericRecommendations.splice(rnd, 1);
-            }
+        const eveningHabits = habits.filter(h => h.category.toLowerCase().includes('evening')).length;
+        if (eveningHabits === 0) {
+            recommendations.push("Consider adding an evening habit, like 'Read for 15 minutes', to wind down your day.");
         }
 
         return recommendations;
     };
 
-    const pageClasses = `
-        min-h-screen 
-        ${currentTheme.colors.chatMessageListBg} 
-        ${currentTheme.colors.userMessageText} 
-        py-8 px-4 sm:px-6 lg:px-8
-    `;
-
-    const containerClasses = `
-        max-w-4xl mx-auto 
-        ${currentTheme.colors.chatWindowBg} 
-        shadow-lg rounded-xl
-    `;
+    useEffect(() => {
+        if (habits.length > 0) {
+            getAIInsights();
+        }
+    }, [habits]);
 
     return (
-        <div className={pageClasses}>
-            <div className={containerClasses}>
-                <header className={`p-4 sm:p-6 border-b ${currentTheme.colors.chatInputBorder} flex justify-between items-center`}>
-                    <button onClick={() => navigate(-1)} className="flex items-center space-x-2">
-                        <ArrowLeftIcon className="w-5 h-5" />
-                        <h1 className="text-2xl sm:text-3xl font-bold">Habit Dashboard</h1>
-                    </button>
-                </header>
-                <main className="p-4 sm:p-6">
-                    <HabitTracker />
-                </main>
+        <div>
+            {/* Stats Section */}
+            <div className="mb-6">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-semibold">Statistics</h3>
+                    <div className="flex space-x-2">
+                        {['week', 'month'].map((p) => (
+                            <button
+                                key={p}
+                                onClick={() => setStatsPeriod(p as 'week' | 'month')}
+                                className={`px-3 py-1 text-sm rounded-md ${statsPeriod === p ? 'bg-blue-500 text-white' : 'bg-gray-700'}`}
+                            >
+                                {p.charAt(0).toUpperCase() + p.slice(1)}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                    <div className="bg-gray-800 p-4 rounded-lg">
+                        <p className="text-gray-400">Completion Rate</p>
+                        <p className="text-2xl font-bold">{calculateCompletionRate()}%</p>
+                    </div>
+                    <div className="bg-gray-800 p-4 rounded-lg">
+                        <p className="text-gray-400">Longest Streak</p>
+                        <p className="text-2xl font-bold">{calculateLongestStreak()} days</p>
+                    </div>
+                    <div className="bg-gray-800 p-4 rounded-lg">
+                        <p className="text-gray-400">Average Streak</p>
+                        <p className="text-2xl font-bold">{calculateAverageStreak()} days</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* AI Insights Section */}
+            <div>
+                <h3 className="text-xl font-semibold mb-4">AI Insights</h3>
+                {insights.loading ? (
+                    <div className="text-center p-8">
+                        <p>Generating insights...</p>
+                    </div>
+                ) : insights.data ? (
+                    <div className="space-y-4">
+                        <div className="bg-gray-800 p-4 rounded-lg">
+                            <h4 className="font-bold mb-2">Streak Analysis</h4>
+                            <p>{insights.data.streak_analysis}</p>
+                        </div>
+                        <div className="bg-gray-800 p-4 rounded-lg">
+                            <h4 className="font-bold mb-2">Pattern Analysis</h4>
+                            <p>{insights.data.pattern_analysis}</p>
+                        </div>
+                        <div className="bg-gray-800 p-4 rounded-lg">
+                            <h4 className="font-bold mb-2">Recommendations</h4>
+                            <ul className="list-disc list-inside">
+                                {insights.data.recommendations.map((rec, index) => (
+                                    <li key={index}>{rec}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
+                ) : (
+                    <p>No insights available.</p>
+                )}
             </div>
         </div>
     );
 };
 
-export default HabitPage;
+export default HabitStats; 

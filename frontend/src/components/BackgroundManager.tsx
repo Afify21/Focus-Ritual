@@ -15,7 +15,7 @@ interface BackgroundManagerProps {
 
 const VIDEO_ROTATION_INTERVAL = 10 * 60 * 1000; // 10 minutes in milliseconds
 
-export const BackgroundManager: React.FC<BackgroundManagerProps> = ({
+const BackgroundManagerComponent: React.FC<BackgroundManagerProps> = ({
     isFocusMode,
     isPlaying,
     isBreak,
@@ -78,17 +78,23 @@ export const BackgroundManager: React.FC<BackgroundManagerProps> = ({
 
     // Handle background rotation every 10 minutes for themes with multiple focus videos
     useEffect(() => {
-        if (!isBreak && isPlaying && Array.isArray(currentTheme.backgrounds.focus)) {
-            const interval = setInterval(() => {
+        let interval: NodeJS.Timeout | undefined;
+
+        if (!isBreak && isPlaying && Array.isArray(currentTheme.backgrounds.focus) && currentTheme.backgrounds.focus.length > 1) {
+            interval = setInterval(() => {
                 setCurrentFocusBackgroundIndex((prevIndex) =>
-                    (prevIndex + 1) % currentTheme.backgrounds.focus.length
+                    (prevIndex + 1) % (currentTheme.backgrounds.focus as string[]).length
                 );
             }, VIDEO_ROTATION_INTERVAL);
-
-            return () => clearInterval(interval);
         } else {
             setCurrentFocusBackgroundIndex(0);
         }
+
+        return () => {
+            if (interval) {
+                clearInterval(interval);
+            }
+        };
     }, [isBreak, isPlaying, currentTheme.backgrounds.focus]);
 
     // Update background when break state, playing state, or theme changes
@@ -164,3 +170,5 @@ export const BackgroundManager: React.FC<BackgroundManagerProps> = ({
         </div>
     );
 };
+
+export const BackgroundManager = React.memo(BackgroundManagerComponent);

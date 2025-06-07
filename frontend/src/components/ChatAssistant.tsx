@@ -32,9 +32,24 @@ const ChatAssistant: React.FC = () => {
         const checkFocusMode = () => {
             setIsInFocusMode(window.location.pathname === '/focus');
         };
+
+        const handlePathChange = () => {
+            checkFocusMode();
+        };
+
+        // Initial check
         checkFocusMode();
-        window.addEventListener('popstate', checkFocusMode);
-        return () => window.removeEventListener('popstate', checkFocusMode);
+
+        // Listen for route changes
+        window.addEventListener('pathchange', handlePathChange);
+
+        // Fallback for direct URL changes or browser back/forward
+        window.addEventListener('popstate', handlePathChange);
+
+        return () => {
+            window.removeEventListener('pathchange', handlePathChange);
+            window.removeEventListener('popstate', handlePathChange);
+        };
     }, []);
 
     const scrollToBottom = () => {
@@ -403,4 +418,4 @@ const ChatAssistant: React.FC = () => {
     );
 };
 
-export default ChatAssistant; 
+export default React.memo(ChatAssistant); 

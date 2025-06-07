@@ -65,11 +65,20 @@ const Soundscape: React.FC<SoundscapeProps> = ({
 
     // Preload ambient sounds
     useEffect(() => {
+        const preloadedAudios: HTMLAudioElement[] = [];
         sounds.forEach(sound => {
             const audio = document.createElement('audio');
             audio.preload = 'auto';
             audio.src = sound.audioUrl;
+            preloadedAudios.push(audio);
         });
+
+        return () => {
+            preloadedAudios.forEach(audio => {
+                audio.src = '';
+                audio.removeAttribute('src');
+            });
+        };
     }, []); // Empty dependency array means this runs once on mount
 
     useEffect(() => {
@@ -154,4 +163,4 @@ const Soundscape: React.FC<SoundscapeProps> = ({
     );
 };
 
-export default Soundscape; 
+export default React.memo(Soundscape); 
