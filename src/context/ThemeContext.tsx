@@ -1,31 +1,27 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-
-type Theme = 'light' | 'dark';
+import React, { createContext, useContext, useState } from 'react';
+import { Theme, themes } from '../config/themes';
 
 interface ThemeContextType {
-    theme: Theme;
-    toggleTheme: () => void;
+    currentTheme: Theme;
+    setTheme: (themeId: string) => void;
+    availableThemes: Theme[];
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [theme, setTheme] = useState<Theme>(() => {
-        const savedTheme = localStorage.getItem('theme');
-        return (savedTheme as Theme) || 'dark';
-    });
+    const [currentTheme, setCurrentTheme] = useState<Theme>(themes[0]);
+    const [availableThemes] = useState<Theme[]>(themes);
 
-    useEffect(() => {
-        localStorage.setItem('theme', theme);
-        document.documentElement.classList.toggle('dark', theme === 'dark');
-    }, [theme]);
-
-    const toggleTheme = () => {
-        setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+    const setTheme = (themeId: string) => {
+        const theme = themes.find(t => t.id === themeId);
+        if (theme) {
+            setCurrentTheme(theme);
+        }
     };
 
     return (
-        <ThemeContext.Provider value={{ theme, toggleTheme }}>
+        <ThemeContext.Provider value={{ currentTheme, setTheme, availableThemes }}>
             {children}
         </ThemeContext.Provider>
     );

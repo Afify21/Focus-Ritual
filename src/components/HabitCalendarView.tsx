@@ -41,22 +41,22 @@ const HabitCalendarView: React.FC<HabitCalendarViewProps> = ({ habits, onToggleD
     };
 
     return (
-        <div className="habit-calendar">
-            <div className="calendar-header">
-                <div className="calendar-title">
+        <div className="habit-calendar-view">
+            <div className="habit-calendar-view-header">
+                <div className="habit-calendar-view-title">
                     {format(currentDate, 'MMMM yyyy')}
                 </div>
-                <div className="calendar-nav">
+                <div className="habit-calendar-view-nav">
                     <button
                         onClick={() => setCurrentDate(subMonths(currentDate, 1))}
-                        className="calendar-nav-btn"
+                        className="habit-calendar-view-nav-btn"
                         title="Previous month"
                     >
                         <i className="fas fa-chevron-left"></i>
                     </button>
                     <button
                         onClick={() => setCurrentDate(addMonths(currentDate, 1))}
-                        className="calendar-nav-btn"
+                        className="habit-calendar-view-nav-btn"
                         title="Next month"
                     >
                         <i className="fas fa-chevron-right"></i>
@@ -64,18 +64,18 @@ const HabitCalendarView: React.FC<HabitCalendarViewProps> = ({ habits, onToggleD
                 </div>
             </div>
 
-            <div className="calendar-grid">
+            <div className="habit-calendar-view-grid">
                 {getDaysInMonth().map((date, index) => (
                     <div
                         key={index}
-                        className="calendar-day"
+                        className="habit-calendar-view-day"
                         onClick={() => date && onToggleDate(date)}
                     >
-                        <div className="day-name">{getDayName(date)}</div>
-                        <div className={`day-number ${date ? (
-                                isToday(date) ? 'current' :
-                                    isDateCompleted(date) ? 'completed' : ''
-                            ) : ''
+                        <div className="habit-calendar-view-day-name">{getDayName(date)}</div>
+                        <div className={`habit-calendar-view-day-number ${date ? (
+                            isToday(date) ? 'current' :
+                                isDateCompleted(date) ? 'completed' : ''
+                        ) : ''
                             }`}>
                             {date ? format(date, 'd') : ''}
                         </div>

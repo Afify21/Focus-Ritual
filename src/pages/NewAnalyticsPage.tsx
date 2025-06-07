@@ -65,8 +65,8 @@ const NewAnalyticsPage: React.FC = () => {
                                     <button
                                         onClick={() => toggleHabitCompletion(habit.id)}
                                         className={`h-5 w-5 rounded mr-3 flex items-center justify-center border ${habit.completionHistory.includes(format(new Date(), 'yyyy-MM-dd'))
-                                                ? 'border-green-500 bg-green-500/20'
-                                                : 'border-slate-400'
+                                            ? 'border-green-500 bg-green-500/20'
+                                            : 'border-slate-400'
                                             }`}
                                     >
                                         {habit.completionHistory.includes(format(new Date(), 'yyyy-MM-dd')) && (

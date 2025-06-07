@@ -1,45 +1,81 @@
-import React, { useState, useEffect, ChangeEvent } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import Header from 'components/Header';
-import Footer from 'components/Footer';
-import LoginPage from 'pages/LoginPage';
-import RegisterPage from 'pages/RegisterPage';
-import TimerSection from 'components/TimerSection';
-import FocusModeSection from 'components/FocusModeSection';
-import MediaPlayerSection from 'components/MediaPlayerSection';
-import SoundscapeControls from 'components/SoundscapeControls';
-import FocusModePage from 'pages/FocusModePage';
-import NewAnalyticsPage from 'pages/NewAnalyticsPage';
-import CalendarPage from 'pages/CalendarPage';
-import ChatAssistant from 'components/ChatAssistant';
-import ThreeDBackground from 'components/ThreeDBackground';
-import { useTheme } from '../context/ThemeContext';
-import HabitSummary from 'components/HabitSummary';
-import EnhancedTodoList from 'components/EnhancedTodoList';
-import ThemeSelector from 'components/ThemeSelector';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import TimerSection from './components/TimerSection';
+import FocusModeSection from './components/FocusModeSection';
+import MediaPlayerSection from './components/MediaPlayerSection';
+import SoundscapeControls from './components/SoundscapeControls';
+import FocusModePage from './pages/FocusModePage';
+import NewAnalyticsPage from './pages/NewAnalyticsPage';
+import CalendarPage from './pages/CalendarPage';
+import ChatAssistant from './components/ChatAssistant';
+import ThreeDBackground from './components/ThreeDBackground';
+import { useTheme } from './context/ThemeContext';
+import HabitSummary from './components/HabitSummary';
+import EnhancedTodoList from './components/EnhancedTodoList';
+import { ThemeSelector } from './components/ThemeSelector';
+import { PaintBrushIcon } from '@heroicons/react/24/outline';
 
 const App: React.FC = () => {
-    const [volume, setVolume] = useState<number>(50);
-    const [selectedSound, setSelectedSound] = useState<string | null>(null)    const { theme, currentTheme } = useTheme();
-    const appBackgroundClass = theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100';
+    const [showYouTube, setShowYouTube] = useState(false);
+    const [showSpotify, setShowSpotify] = useState(false);
+    const [volume, setVolume] = useState(50);
+    const [selectedSound, setSelectedSound] = useState<string | null>(null);
+    const navigate = useNavigate();
+    const { currentTheme } = useTheme();
 
-    const handleSoundSelect = (soundId: string | null) => {
-        setSelectedSound(soundId);
+    // Initialize particles
+    useEffect(() => {
+        const particlesContainer = document.getElementById('particles');
+        if (particlesContainer) {
+            const particleCount = 30;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+
+                const size = Math.random() * 4 + 2;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
+                particle.style.opacity = (Math.random() * 0.5 + 0.3).toString();
+                const duration = Math.random() * 10 + 10;
+                particle.style.animationDuration = `${duration.toString()}s`;
+                particle.style.animationDelay = `${(Math.random() * 10).toString()}s`;
+
+                particlesContainer.appendChild(particle);
+            }
+        }
+    }, []);
+
+    const handleVolumeChange = (newVolume: number) => {
+        setVolume(newVolume * 100);
+    };
+
+    const handleSoundSelect = (sound: string | null) => {
+        setSelectedSound(sound);
+    };
+
+    const handleGoToFocusMode = () => {
+        navigate('/focus-mode');
     };
 
     const handleExitFocusMode = () => {
-        // Implementation
+        navigate('/');
     };
 
-    const handleStateChange = (newState: any) => {
-        // Implementation
+    const handleStateChange = (state: string) => {
+        console.log('Focus mode state changed:', state);
     };
 
     return (
-        <div className={`min-h-screen text-white ${appBackgroundClass}`}>
-            <ThreeDBackground />
+        <div className="min-h-screen flex flex-col text-white">
+            <div id="particles" className="particles"></div>
             <Header />
-
             <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
@@ -51,13 +87,13 @@ const App: React.FC = () => {
                         volume={volume / 100}
                         selectedSound={selectedSound}
                         onSoundSelect={handleSoundSelect}
-                        onVolumeChange={setVolume}
+                        onVolumeChange={handleVolumeChange}
                     />
                 } />
                 <Route path="/analytics" element={<NewAnalyticsPage />} />
                 <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/" element={(
-                    <main className="container mx-auto px-4 py-8">
+                    <main className="container mx-auto px-4 py-8 flex-grow">
                         <div className="grid grid-cols-1 lg:grid-cols-[3fr_1fr] gap-6">
                             <div className="space-y-6">
                                 <div className="w-full">
@@ -67,16 +103,17 @@ const App: React.FC = () => {
                                     <div>
                                         <SoundscapeControls
                                             volume={volume}
-                                            onVolumeChange={(e: ChangeEvent<HTMLInputElement>) => setVolume(Number(e.target.value))}
+                                            onVolumeChange={(e) => setVolume(Number(e.target.value))}
                                             selectedSound={selectedSound}
                                             onSoundSelect={handleSoundSelect}
                                         />
                                     </div>
-                                    <div>
-                                        <div className={`${currentTheme.colors.chatMessageListBg} rounded-lg p-4 shadow-lg border border-gray-800`}>
-                                            <h3 className="text-lg font-semibold mb-4">Theme</h3>
-                                            <ThemeSelector />
-                                        </div>
+                                    <div className={`${currentTheme.colors.chatMessageListBg} backdrop-blur-md rounded-xl p-4 relative h-full`}>
+                                        <h2 className={`text-base font-bold mb-3 glow-teal flex items-center`}>
+                                            <PaintBrushIcon className="w-5 h-5 text-teal-400 mr-2" />
+                                            Theme
+                                        </h2>
+                                        <ThemeSelector compact={true} />
                                     </div>
                                 </div>
                             </div>
@@ -92,7 +129,7 @@ const App: React.FC = () => {
             <Footer />
 
             {/* Static Chat Assistant at bottom right */}
-            <div className="fixed bottom-4 right-4 z-[999999]">
+            <div className="fixed bottom-4 right-4 z-[999999] pointer-events-none">
                 <ChatAssistant />
             </div>
         </div>

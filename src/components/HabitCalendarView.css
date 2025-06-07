@@ -25,31 +25,33 @@
     --glow: 0 0 15px rgba(4, 217, 217, 0.5);
 }
 
-.habit-calendar {
+.habit-calendar-view {
     background: rgba(0, 0, 0, 0.3);
     border-radius: 12px;
     padding: 1rem;
+    max-width: 800px;
+    margin: 2rem auto;
 }
 
-.calendar-header {
+.habit-calendar-view-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
 }
 
-.calendar-title {
+.habit-calendar-view-title {
     font-size: 1.25rem;
     font-weight: 500;
     color: var(--light);
 }
 
-.calendar-nav {
+.habit-calendar-view-nav {
     display: flex;
     gap: 0.5rem;
 }
 
-.calendar-nav-btn {
+.habit-calendar-view-nav-btn {
     background: none;
     border: none;
     color: var(--light);
@@ -59,17 +61,17 @@
     transition: var(--transition);
 }
 
-.calendar-nav-btn:hover {
+.habit-calendar-view-nav-btn:hover {
     background: rgba(255, 255, 255, 0.1);
 }
 
-.calendar-grid {
+.habit-calendar-view-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 0.5rem;
 }
 
-.calendar-day {
+.habit-calendar-view-day {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -79,30 +81,44 @@
     transition: var(--transition);
 }
 
-.calendar-day:hover {
+.habit-calendar-view-day:hover {
     background: rgba(255, 255, 255, 0.1);
 }
 
-.day-name {
+.habit-calendar-view-day-name {
     font-size: 0.75rem;
     color: var(--gray);
     margin-bottom: 0.25rem;
 }
 
-.day-number {
+.habit-calendar-view-day-number {
     font-size: 0.875rem;
     color: var(--light);
     font-weight: 500;
 }
 
-.day-number.completed {
+.habit-calendar-view-day-number.completed {
     color: var(--primary);
 }
 
-.day-number.current {
+.habit-calendar-view-day-number.current {
     color: var(--light);
     background: var(--primary);
     padding: 0.25rem 0.5rem;
     border-radius: 0.25rem;
     box-shadow: var(--glow);
+}
+
+.calendar-header-title {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    color: var(--light);
+    text-align: center;
+}
+
+.calendar-description {
+    color: var(--gray);
+    text-align: center;
+    margin-bottom: 2rem;
 }
