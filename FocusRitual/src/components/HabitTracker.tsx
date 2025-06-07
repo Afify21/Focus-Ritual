@@ -3,24 +3,8 @@ import { CheckIcon, PlusIcon, TrashIcon, SparklesIcon, CalendarIcon, FolderIcon,
 import NotificationSettings from './NotificationSettings';
 import { HabitReminderService } from '../services/HabitReminderService';
 import { useTheme } from '../context/ThemeContext';
-
-interface Habit {
-  id: string;
-  name: string;
-  description?: string;
-  category: string;
-  frequency: {
-    type: 'daily' | 'weekly' | 'custom';
-    days?: number[]; // [0,1,2,3,4,5,6] for specific days of week
-    time?: string;
-  };
-  completionHistory: {
-    [date: string]: boolean;
-  };
-  streak: number;
-  color?: string;
-  createdAt: string;
-}
+import { Habit } from '../services/DataService';
+import DataService from '../services/DataService';
 
 interface Achievement {
   id: string;
@@ -51,7 +35,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
   const [habits, setHabits] = useState<Habit[]>(() => {
     const savedHabits = localStorage.getItem('focus-ritual-habits');
     const parsedHabits = savedHabits ? JSON.parse(savedHabits) : [];
-    
+
     // Handle migration of existing habits - ensure backward compatibility
     return parsedHabits.map((habit: any) => ({
       ...habit,
@@ -65,14 +49,15 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
       }
     }));
   });
-  
+
   const [showForm, setShowForm] = useState(false);
   const [newHabit, setNewHabit] = useState({
     name: '',
     description: '',
     category: 'other',
-    frequency: { 
-      type: 'daily' as 'daily' | 'weekly' | 'custom', 
+    goalDuration: 7, // Default to 7 days
+    frequency: {
+      type: 'daily' as 'daily' | 'weekly' | 'custom',
       days: [] as number[],
       time: ''
     }
@@ -157,7 +142,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
   useEffect(() => {
     // Start the habit reminder checks
     const stopReminders = HabitReminderService.startReminderChecks(() => habits);
-    
+
     // Clean up on unmount
     return () => {
       stopReminders();
@@ -177,21 +162,21 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
           ...habit.completionHistory,
           [today]: !wasCompleted
         };
-        
+
         // Fixed streak calculation - only count unique consecutive days
         let streak = 0;
         const currentDate = new Date();
         let consecutiveDays = true;
-        
+
         // Start from today and go backwards
         for (let i = 0; consecutiveDays && i < 100; i++) { // Check up to 100 days back
           const checkDate = new Date();
           checkDate.setDate(currentDate.getDate() - i);
           const dateStr = formatDate(checkDate);
-          
+
           // For today, use the new completion status
           const isCompleted = i === 0 ? newCompletionHistory[dateStr] : habit.completionHistory[dateStr];
-          
+
           if (isCompleted) {
             streak++;
           } else {
@@ -199,7 +184,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
             consecutiveDays = false;
           }
         }
-        
+
         return {
           ...habit,
           completionHistory: newCompletionHistory,
@@ -212,23 +197,26 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
 
   const addHabit = () => {
     if (newHabit.name.trim() === '') return;
-    
+
     const habit: Habit = {
       id: Date.now().toString(),
       name: newHabit.name.trim(),
       description: newHabit.description,
       category: newHabit.category,
       frequency: newHabit.frequency,
+      goalDuration: newHabit.goalDuration,
+      goalCompleted: false,
       completionHistory: {},
       streak: 0,
       createdAt: new Date().toISOString()
     };
-    
+
     setHabits([...habits, habit]);
     setNewHabit({
       name: '',
       description: '',
       category: 'other',
+      goalDuration: 7,
       frequency: { type: 'daily', days: [], time: '' }
     });
     setShowForm(false);
@@ -249,12 +237,12 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ 
-            habits, 
-            goals: userGoals 
+          body: JSON.stringify({
+            habits,
+            goals: userGoals
           }),
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           if (data.success) {
@@ -267,7 +255,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
         console.log('API error, using fallback recommendations:', apiError);
         // Fallback to simulated recommendations if the API fails
         await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API delay
-        
+
         const recommendations = [
           "Based on your habit patterns, consider adding a '5-minute morning meditation' habit to start your day focused.",
           "I notice you're building reading habits. Try adding a 'Summarize what I read' habit to improve retention.",
@@ -275,7 +263,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
           "Adding a 'Review tomorrow's tasks' evening habit could help you better prepare for each day.",
           "Consider a 'Take a short walk' habit after long focus sessions to refresh your mind."
         ];
-        
+
         setAiRecommendation(recommendations[Math.floor(Math.random() * recommendations.length)]);
       }
     } catch (error) {
@@ -287,8 +275,8 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
   };
 
   // Filter habits by selected category
-  const filteredHabits = selectedCategory 
-    ? habits.filter(habit => habit.category === selectedCategory) 
+  const filteredHabits = selectedCategory
+    ? habits.filter(habit => habit.category === selectedCategory)
     : habits;
 
   const getCategoryDetails = (categoryId: string) => {
@@ -300,7 +288,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
     let updatedAchievements = [...achievements];
     let newAchievementUnlocked = false;
     let latestAchievement: Achievement | null = null;
-    
+
     // First habit achievement
     const firstHabitAchievement = updatedAchievements.find(a => a.id === 'first-habit');
     if (firstHabitAchievement && !firstHabitAchievement.unlocked && habits.length > 0) {
@@ -315,7 +303,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
     if (fiveHabitsAchievement) {
       const habitCount = habits.length;
       fiveHabitsAchievement.progress = habitCount;
-      
+
       if (!fiveHabitsAchievement.unlocked && habitCount >= 5) {
         fiveHabitsAchievement.unlocked = true;
         fiveHabitsAchievement.date = new Date().toISOString();
@@ -326,12 +314,12 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
 
     // Streak achievements
     const maxStreak = Math.max(...habits.map(h => h.streak));
-    
+
     // 3-day streak
     const threeDayStreakAchievement = updatedAchievements.find(a => a.id === 'three-day-streak');
     if (threeDayStreakAchievement) {
       threeDayStreakAchievement.progress = maxStreak;
-      
+
       if (!threeDayStreakAchievement.unlocked && maxStreak >= 3) {
         threeDayStreakAchievement.unlocked = true;
         threeDayStreakAchievement.date = new Date().toISOString();
@@ -344,7 +332,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
     const sevenDayStreakAchievement = updatedAchievements.find(a => a.id === 'seven-day-streak');
     if (sevenDayStreakAchievement) {
       sevenDayStreakAchievement.progress = maxStreak;
-      
+
       if (!sevenDayStreakAchievement.unlocked && maxStreak >= 7) {
         sevenDayStreakAchievement.unlocked = true;
         sevenDayStreakAchievement.date = new Date().toISOString();
@@ -362,13 +350,13 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
         const checkDate = new Date();
         checkDate.setDate(checkDate.getDate() - i);
         const dateStr = formatDate(checkDate);
-        
+
         const allCompleted = habits.every(habit => habit.completionHistory[dateStr]);
         if (allCompleted) perfectDays++;
       }
-      
+
       perfectWeekAchievement.progress = perfectDays;
-      
+
       if (!perfectWeekAchievement.unlocked && perfectDays >= 7) {
         perfectWeekAchievement.unlocked = true;
         perfectWeekAchievement.date = new Date().toISOString();
@@ -381,7 +369,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
     if (newAchievementUnlocked) {
       setAchievements(updatedAchievements);
       setRecentAchievement(latestAchievement);
-      
+
       // Clear notification after 5 seconds
       setTimeout(() => {
         setRecentAchievement(null);
@@ -396,7 +384,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
         <div className="flex items-center">
           <h2 className="text-lg sm:text-xl font-bold">My Habits</h2>
         </div>
-        
+
         <div className="flex flex-wrap gap-1.5">
           <button
             onClick={() => setShowNotificationSettings(!showNotificationSettings)}
@@ -405,7 +393,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
           >
             <BellIcon className="h-4 w-4" />
           </button>
-          
+
           <button
             onClick={() => setShowAchievements(true)}
             className={`p-1.5 rounded-full ${currentTheme.colors.chatPromptButtonBg} ${currentTheme.colors.chatPromptButtonHoverBg} ${currentTheme.colors.chatPromptButtonText}`}
@@ -413,7 +401,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
           >
             <TrophyIcon className="h-4 w-4" />
           </button>
-          
+
           <button
             onClick={fetchAiRecommendation}
             className={`p-1.5 rounded-full ${currentTheme.colors.chatPromptButtonBg} ${currentTheme.colors.chatPromptButtonHoverBg} ${currentTheme.colors.chatPromptButtonText}`}
@@ -421,7 +409,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
           >
             <SparklesIcon className="h-4 w-4 text-yellow-400" />
           </button>
-          
+
           <button
             onClick={() => setShowForm(true)}
             className="p-1.5 rounded-full bg-green-600 hover:bg-green-500 text-white"
@@ -431,18 +419,17 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
           </button>
         </div>
       </div>
-      
+
       {/* Category filters */}
       {!compact && (
         <div className="mb-3 overflow-x-auto pb-1 no-scrollbar">
           <div className="flex space-x-1.5 whitespace-nowrap">
             <button
               onClick={() => setSelectedCategory(null)}
-              className={`px-2 py-1 text-xs rounded-full ${
-                selectedCategory === null
-                  ? `${currentTheme.colors.chatSendButtonBg} text-${currentTheme.colors.chatSendButtonText.replace('text-', '')}`
-                  : `${currentTheme.colors.chatPromptButtonBg} ${currentTheme.colors.chatPromptButtonText}`
-              }`}
+              className={`px-2 py-1 text-xs rounded-full ${selectedCategory === null
+                ? `${currentTheme.colors.chatSendButtonBg} text-${currentTheme.colors.chatSendButtonText.replace('text-', '')}`
+                : `${currentTheme.colors.chatPromptButtonBg} ${currentTheme.colors.chatPromptButtonText}`
+                }`}
             >
               All
             </button>
@@ -450,11 +437,10 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`px-2 py-1 text-xs rounded-full ${
-                  selectedCategory === category.id
-                    ? `${category.color.replace('bg-', 'bg-')} text-white`
-                    : `${currentTheme.colors.chatPromptButtonBg} ${currentTheme.colors.chatPromptButtonText}`
-                }`}
+                className={`px-2 py-1 text-xs rounded-full ${selectedCategory === category.id
+                  ? `${category.color.replace('bg-', 'bg-')} text-white`
+                  : `${currentTheme.colors.chatPromptButtonBg} ${currentTheme.colors.chatPromptButtonText}`
+                  }`}
               >
                 {category.name}
               </button>
@@ -462,7 +448,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
           </div>
         </div>
       )}
-      
+
       {showNotificationSettings && (
         <div className="mb-3 scale-95 origin-top">
           <NotificationSettings />
@@ -490,7 +476,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
               <TrophyIcon className="h-4 w-4 mr-1 text-yellow-400" />
               Your Achievements
             </h4>
-            <button 
+            <button
               onClick={() => setShowAchievements(false)}
               className="text-xs text-slate-400 hover:text-white"
             >
@@ -499,13 +485,12 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             {achievements.map(achievement => (
-              <div 
+              <div
                 key={achievement.id}
-                className={`p-2 rounded border ${
-                  achievement.unlocked 
-                    ? 'bg-slate-600/70 border-yellow-500/50 text-white' 
-                    : 'bg-slate-700/30 border-slate-600 text-slate-400'
-                }`}
+                className={`p-2 rounded border ${achievement.unlocked
+                  ? 'bg-slate-600/70 border-yellow-500/50 text-white'
+                  : 'bg-slate-700/30 border-slate-600 text-slate-400'
+                  }`}
               >
                 <div className="flex items-center">
                   <div className="text-2xl mr-3 flex-shrink-0">{achievement.icon}</div>
@@ -516,8 +501,8 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
                     <div className="text-xs">{achievement.description}</div>
                     {achievement.threshold && (
                       <div className="mt-1 h-1 bg-slate-700 rounded-full">
-                        <div 
-                          className="h-full bg-yellow-500 rounded-full" 
+                        <div
+                          className="h-full bg-yellow-500 rounded-full"
                           style={{ width: `${Math.min(100, (achievement.progress || 0) / achievement.threshold * 100)}%` }}
                         ></div>
                       </div>
@@ -594,7 +579,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
               type="text"
               placeholder="Habit name"
               value={newHabit.name}
-              onChange={e => setNewHabit({...newHabit, name: e.target.value})}
+              onChange={e => setNewHabit({ ...newHabit, name: e.target.value })}
               className="w-full px-3 py-2 bg-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
             />
           </div>
@@ -602,7 +587,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
             <textarea
               placeholder="Description (optional)"
               value={newHabit.description}
-              onChange={e => setNewHabit({...newHabit, description: e.target.value})}
+              onChange={e => setNewHabit({ ...newHabit, description: e.target.value })}
               className="w-full px-3 py-2 bg-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
               rows={2}
             />
@@ -612,7 +597,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
               <label className="block text-sm text-slate-300 mb-1">Category</label>
               <select
                 value={newHabit.category}
-                onChange={e => setNewHabit({...newHabit, category: e.target.value})}
+                onChange={e => setNewHabit({ ...newHabit, category: e.target.value })}
                 className="w-full px-3 py-2 bg-slate-600 rounded text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
               >
                 {CATEGORIES.map(category => (
@@ -621,27 +606,18 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
               </select>
             </div>
             <div>
-              <label className="block text-sm text-slate-300 mb-1">Frequency</label>
-              <select
-                value={newHabit.frequency.type}
-                onChange={e => setNewHabit({
-                  ...newHabit, 
-                  frequency: {
-                    ...newHabit.frequency, 
-                    type: e.target.value as 'daily' | 'weekly' | 'custom',
-                    // Reset days when changing frequency type
-                    days: e.target.value === 'custom' ? [] : newHabit.frequency.days
-                  }
-                })}
+              <label className="block text-sm text-slate-300 mb-1">Goal Duration (days)</label>
+              <input
+                type="number"
+                min="1"
+                max="365"
+                value={newHabit.goalDuration}
+                onChange={e => setNewHabit({ ...newHabit, goalDuration: parseInt(e.target.value) || 7 })}
                 className="w-full px-3 py-2 bg-slate-600 rounded text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
-              >
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="custom">Custom</option>
-              </select>
+              />
             </div>
           </div>
-          
+
           {/* Advanced scheduling options */}
           {newHabit.frequency.type === 'weekly' && (
             <div className="mb-3">
@@ -655,7 +631,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
                       const days = newHabit.frequency.days.includes(index)
                         ? newHabit.frequency.days.filter(d => d !== index)
                         : [...newHabit.frequency.days, index];
-                      
+
                       setNewHabit({
                         ...newHabit,
                         frequency: {
@@ -664,11 +640,10 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
                         }
                       });
                     }}
-                    className={`px-3 py-1 text-sm rounded-full ${
-                      newHabit.frequency.days.includes(index)
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-slate-600 text-slate-300'
-                    }`}
+                    className={`px-3 py-1 text-sm rounded-full ${newHabit.frequency.days.includes(index)
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-600 text-slate-300'
+                      }`}
                   >
                     {day}
                   </button>
@@ -676,7 +651,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
               </div>
             </div>
           )}
-          
+
           {newHabit.frequency.type === 'custom' && (
             <div className="mb-3">
               <label className="block text-sm text-slate-300 mb-2">Select Days</label>
@@ -689,7 +664,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
                       const days = newHabit.frequency.days.includes(index)
                         ? newHabit.frequency.days.filter(d => d !== index)
                         : [...newHabit.frequency.days, index];
-                      
+
                       setNewHabit({
                         ...newHabit,
                         frequency: {
@@ -698,11 +673,10 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
                         }
                       });
                     }}
-                    className={`px-3 py-1 text-sm rounded-full ${
-                      newHabit.frequency.days.includes(index)
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-slate-600 text-slate-300'
-                    }`}
+                    className={`px-3 py-1 text-sm rounded-full ${newHabit.frequency.days.includes(index)
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-600 text-slate-300'
+                      }`}
                   >
                     {day}
                   </button>
@@ -710,7 +684,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
               </div>
             </div>
           )}
-          
+
           <div className="mb-3">
             <label className="block text-sm text-slate-300 mb-1">Reminder Time (Optional)</label>
             <input
@@ -726,7 +700,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
               className="w-full px-3 py-2 bg-slate-600 rounded text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
             />
           </div>
-          
+
           <div className="flex justify-end space-x-2">
             <button
               onClick={() => setShowForm(false)}
@@ -737,7 +711,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
             <button
               onClick={addHabit}
               className="px-3 py-1 bg-green-600 hover:bg-green-500 rounded text-white disabled:opacity-50"
-              disabled={newHabit.name.trim() === '' || 
+              disabled={newHabit.name.trim() === '' ||
                 (newHabit.frequency.type !== 'daily' && newHabit.frequency.days.length === 0)}
             >
               Save Habit
@@ -750,7 +724,7 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
       <div className={`space-y-1.5 ${compact ? 'max-h-[160px]' : 'max-h-[250px] sm:max-h-[350px] md:max-h-[450px]'} overflow-y-auto`}>
         {filteredHabits.length === 0 ? (
           <p className="text-slate-400 text-center py-3 italic text-sm">
-            {habits.length === 0 ? 
+            {habits.length === 0 ?
               "No habits tracked yet. Add one to get started!" :
               "No habits in this category. Add one or select a different category."
             }
@@ -760,23 +734,21 @@ const HabitTracker: React.FC<HabitTrackerProps> = ({ compact = false }) => {
             const today = formatDate();
             const isCompletedToday = habit.completionHistory[today];
             const category = getCategoryDetails(habit.category);
-            
+
             return (
-              <div 
+              <div
                 key={habit.id}
-                className={`p-2 rounded-lg ${
-                  isCompletedToday 
-                    ? `${currentTheme.colors.assistantMessageBg} border-l-4 border-green-500` 
-                    : currentTheme.colors.chatPromptButtonBg
-                }`}
+                className={`p-2 rounded-lg ${isCompletedToday
+                  ? `${currentTheme.colors.assistantMessageBg} border-l-4 border-green-500`
+                  : currentTheme.colors.chatPromptButtonBg
+                  }`}
               >
                 <div className="flex justify-between items-center flex-wrap gap-1.5">
                   <div className="flex items-center flex-1 min-w-0">
                     <button
                       onClick={() => toggleHabitCompletion(habit.id)}
-                      className={`h-4 w-4 flex-shrink-0 rounded mr-2 flex items-center justify-center ${
-                        isCompletedToday ? 'bg-green-600' : 'border border-slate-400'
-                      }`}
+                      className={`h-4 w-4 flex-shrink-0 rounded mr-2 flex items-center justify-center ${isCompletedToday ? 'bg-green-600' : 'border border-slate-400'
+                        }`}
                     >
                       {isCompletedToday && <CheckIcon className="h-2.5 w-2.5 text-white" />}
                     </button>

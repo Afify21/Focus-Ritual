@@ -20,8 +20,7 @@ import ThemeSelector from 'components/ThemeSelector';
 
 const App: React.FC = () => {
     const [volume, setVolume] = useState<number>(50);
-    const [selectedSound, setSelectedSound] = useState<string | null>(null);
-    const { theme } = useTheme();
+    const [selectedSound, setSelectedSound] = useState<string | null>(null)    const { theme, currentTheme } = useTheme();
     const appBackgroundClass = theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100';
 
     const handleSoundSelect = (soundId: string | null) => {
@@ -74,7 +73,7 @@ const App: React.FC = () => {
                                         />
                                     </div>
                                     <div>
-                                        <div className="gradient-bg rounded-lg p-4 shadow-lg border border-gray-800">
+                                        <div className={`${currentTheme.colors.chatMessageListBg} rounded-lg p-4 shadow-lg border border-gray-800`}>
                                             <h3 className="text-lg font-semibold mb-4">Theme</h3>
                                             <ThemeSelector />
                                         </div>

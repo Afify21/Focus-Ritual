@@ -16,6 +16,9 @@ interface Habit {
   streak: number;
   color?: string;
   createdAt: string;
+  goalCompleted: boolean;
+  goalCompletedAt: string;
+  goalDuration: number;
 }
 
 const HabitSummary: React.FC = () => {
@@ -66,10 +69,16 @@ const HabitSummary: React.FC = () => {
           }
         }
 
+        // Check if goal is completed
+        const goalCompleted = !habit.goalCompleted && streak >= habit.goalDuration;
+        const goalCompletedAt = goalCompleted ? new Date().toISOString() : habit.goalCompletedAt;
+
         return {
           ...habit,
           completionHistory: newCompletionHistory,
-          streak: streak
+          streak: streak,
+          goalCompleted: goalCompleted || habit.goalCompleted,
+          goalCompletedAt
         };
       }
       return habit;

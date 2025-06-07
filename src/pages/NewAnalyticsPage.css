@@ -1,0 +1,46 @@
+/* Goals Section */
+.goals-container {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.goals-list {
+    margin-bottom: 1rem;
+}
+
+.goal-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.goal-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.goal-item button {
+    opacity: 0.7;
+    transition: all 0.2s ease;
+}
+
+.goal-item:hover button {
+    opacity: 1;
+}
+
+.goal-item input[type="text"] {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.goal-item input[type="text"]:focus {
+    outline: none;
+    border-color: rgba(4, 217, 217, 0.5);
+    box-shadow: 0 0 0 2px rgba(4, 217, 217, 0.2);
+}

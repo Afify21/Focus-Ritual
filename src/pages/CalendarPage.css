@@ -1,0 +1,116 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+:root {
+    --primary: #04d9d9;
+    --primary-light: #2cfffe;
+    --primary-dark: #00a8a8;
+    --secondary: #00a8a8;
+    --secondary-light: #04d9d9;
+    --dark: #002024;
+    --darker: #000000;
+    --light: #FFFFFF;
+    --gray: #BDBDBD;
+    --gray-dark: #888888;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.4);
+    --transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    --glass: rgba(0, 32, 36, 0.7);
+    --glow: 0 0 15px rgba(4, 217, 217, 0.5);
+}
+
+.calendar-page {
+    padding: 2rem;
+    min-height: 100vh;
+    background: var(--dark);
+}
+
+.habit-calendar {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    padding: 1rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.calendar-title {
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: var(--light);
+}
+
+.calendar-nav {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.calendar-nav-btn {
+    background: none;
+    border: none;
+    color: var(--light);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    transition: var(--transition);
+}
+
+.calendar-nav-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+}
+
+.calendar-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 0.5rem;
+    transition: var(--transition);
+}
+
+.calendar-day:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.day-name {
+    font-size: 0.75rem;
+    color: var(--gray);
+    margin-bottom: 0.25rem;
+}
+
+.day-number {
+    font-size: 0.875rem;
+    color: var(--light);
+    font-weight: 500;
+}
+
+.day-number.completed {
+    color: var(--primary);
+}
+
+.day-number.current {
+    color: var(--light);
+    background: var(--primary);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    box-shadow: var(--glow);
+}

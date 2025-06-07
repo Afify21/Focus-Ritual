@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../../src/context/ThemeContext';
 
 const TimerSection: React.FC = () => {
     const [minutes, setMinutes] = useState(25);
@@ -9,6 +10,7 @@ const TimerSection: React.FC = () => {
     const [completedSessions, setCompletedSessions] = useState(0);
     const [isFocusModeReady, setIsFocusModeReady] = useState(false);
     const navigate = useNavigate();
+    const { currentTheme } = useTheme();
 
     useEffect(() => {
         let timerId: NodeJS.Timeout | null = null;
@@ -75,7 +77,7 @@ const TimerSection: React.FC = () => {
     };
 
     return (
-        <div className="gradient-bg rounded-xl p-8 mb-6 shadow-lg border border-gray-800 relative">
+        <div className={`${currentTheme.colors.chatMessageListBg} rounded-xl p-8 mb-6 shadow-lg border border-gray-800 relative`}>
             <div className="flex justify-end items-start mb-8">
                 <button
                     onClick={handleFocusModeToggle}
@@ -160,7 +162,7 @@ const TimerSection: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="mt-4 bg-gray-900/90 text-white px-4 py-2 rounded-lg shadow text-base border border-teal-700/40">
+                <div className={`mt-4 ${currentTheme.colors.chatMessageListBg} text-white px-4 py-2 rounded-lg shadow text-base border border-teal-700/40`}>
                     Completed Sessions: {completedSessions}
                 </div>
             </div>

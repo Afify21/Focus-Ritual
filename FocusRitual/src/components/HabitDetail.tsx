@@ -1,26 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronRightIcon, PencilIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/solid';
-import HabitCalendar from './HabitCalendar';
+import { useParams } from 'react-router-dom';
+import { Habit } from '../services/DataService';
 import FocusAnalytics from './FocusAnalytics';
 import FocusSessionTracker from './FocusSessionTracker';
 import { FocusAnalyticsService } from '../services/FocusAnalyticsService';
-
-interface Habit {
-  id: string;
-  name: string;
-  description?: string;
-  category: string;
-  frequency: {
-    type: 'daily' | 'weekly' | 'custom';
-    days?: number[]; // [0,1,2,3,4,5,6] for specific days of week
-  };
-  completionHistory: {
-    [date: string]: boolean;
-  };
-  streak: number;
-  color?: string;
-  createdAt: string;
-}
+import HabitCalendar from './HabitCalendar';
+import DataService from '../services/DataService';
 
 // Predefined categories with colors
 const CATEGORIES = [

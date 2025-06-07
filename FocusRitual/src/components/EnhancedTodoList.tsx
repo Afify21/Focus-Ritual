@@ -72,7 +72,7 @@ const EnhancedTodoList: React.FC = () => {
     setNewTaskTitle('');
     setNewTaskPriority('medium');
     setNewTaskDueDate('');
-    
+
     // Focus back on input
     if (newTaskInputRef.current) {
       newTaskInputRef.current.focus();
@@ -96,7 +96,7 @@ const EnhancedTodoList: React.FC = () => {
     setNewTaskTitle(task.title);
     setNewTaskPriority(task.priority);
     setNewTaskDueDate(task.dueDate || '');
-    
+
     // Focus on input
     if (newTaskInputRef.current) {
       newTaskInputRef.current.focus();
@@ -114,7 +114,7 @@ const EnhancedTodoList: React.FC = () => {
   const getFilteredAndSortedTasks = () => {
     // First apply filters
     let filteredTasks = [...tasks];
-    
+
     if (filterBy === 'completed') {
       filteredTasks = filteredTasks.filter(task => task.completed);
     } else if (filterBy === 'active') {
@@ -122,7 +122,7 @@ const EnhancedTodoList: React.FC = () => {
     } else if (filterBy === 'highPriority') {
       filteredTasks = filteredTasks.filter(task => task.priority === 'high');
     }
-    
+
     // Then sort
     return filteredTasks.sort((a, b) => {
       if (sortBy === 'priority') {
@@ -168,29 +168,29 @@ const EnhancedTodoList: React.FC = () => {
 
   const isDueSoon = (dueDate?: string) => {
     if (!dueDate) return false;
-    
+
     const today = new Date();
     const due = new Date(dueDate);
     const diffTime = due.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     return diffDays >= 0 && diffDays <= 2;
   };
 
   const isOverdue = (dueDate?: string) => {
     if (!dueDate) return false;
-    
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const due = new Date(dueDate);
-    
+
     return due < today;
   };
 
   return (
-    <div className={`${currentTheme.colors.chatMessageListBg} backdrop-blur-sm p-4 rounded-xl shadow-xl`}>
+    <div className="gradient-bg backdrop-blur-sm p-4 rounded-xl shadow-xl border border-gray-800 relative">
       <h2 className="text-lg font-bold mb-4">Task List</h2>
-      
+
       {/* Input form for new/edit task */}
       <div className="mb-4 space-y-3">
         <div className="flex">
@@ -215,47 +215,44 @@ const EnhancedTodoList: React.FC = () => {
             {editingTask ? 'Save' : 'Add'}
           </button>
         </div>
-        
+
         <div className="flex space-x-2">
           <div className="flex-1">
             <label className="block text-xs text-slate-400 mb-1">Priority</label>
             <div className="flex space-x-1">
               <button
                 onClick={() => setNewTaskPriority('low')}
-                className={`flex-1 py-1 text-xs rounded ${
-                  newTaskPriority === 'low' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-slate-700 text-slate-300'
-                }`}
+                className={`flex-1 py-1 text-xs rounded ${newTaskPriority === 'low'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-700 text-slate-300'
+                  }`}
                 aria-pressed={newTaskPriority === 'low'}
               >
                 Low
               </button>
               <button
                 onClick={() => setNewTaskPriority('medium')}
-                className={`flex-1 py-1 text-xs rounded ${
-                  newTaskPriority === 'medium' 
-                    ? 'bg-yellow-600 text-white' 
-                    : 'bg-slate-700 text-slate-300'
-                }`}
+                className={`flex-1 py-1 text-xs rounded ${newTaskPriority === 'medium'
+                  ? 'bg-yellow-600 text-white'
+                  : 'bg-slate-700 text-slate-300'
+                  }`}
                 aria-pressed={newTaskPriority === 'medium'}
               >
                 Medium
               </button>
               <button
                 onClick={() => setNewTaskPriority('high')}
-                className={`flex-1 py-1 text-xs rounded ${
-                  newTaskPriority === 'high' 
-                    ? 'bg-red-600 text-white' 
-                    : 'bg-slate-700 text-slate-300'
-                }`}
+                className={`flex-1 py-1 text-xs rounded ${newTaskPriority === 'high'
+                  ? 'bg-red-600 text-white'
+                  : 'bg-slate-700 text-slate-300'
+                  }`}
                 aria-pressed={newTaskPriority === 'high'}
               >
                 High
               </button>
             </div>
           </div>
-          
+
           <div className="flex-1">
             <label className="block text-xs text-slate-400 mb-1">Due Date (Optional)</label>
             <input
@@ -267,7 +264,7 @@ const EnhancedTodoList: React.FC = () => {
             />
           </div>
         </div>
-        
+
         {editingTask && (
           <div className="flex justify-end">
             <button
@@ -279,13 +276,13 @@ const EnhancedTodoList: React.FC = () => {
           </div>
         )}
       </div>
-      
+
       {/* Task filter and sort controls */}
       <div className="flex justify-between items-center mb-3">
         <div className="text-sm text-slate-400">
           {getCompletedCount()} of {tasks.length} completed
         </div>
-        
+
         <div className="flex space-x-2">
           <div className="relative">
             <button
@@ -300,9 +297,9 @@ const EnhancedTodoList: React.FC = () => {
               <ArrowsUpDownIcon className="h-3 w-3" />
               <span>Sort</span>
             </button>
-            
+
             {showSortOptions && (
-              <div 
+              <div
                 id="sort-options"
                 className="absolute right-0 mt-1 w-40 bg-slate-800 rounded shadow-lg z-10"
               >
@@ -312,9 +309,8 @@ const EnhancedTodoList: React.FC = () => {
                       setSortBy('priority');
                       setShowSortOptions(false);
                     }}
-                    className={`block px-4 py-2 text-left text-xs w-full hover:bg-slate-700 ${
-                      sortBy === 'priority' ? 'bg-slate-700' : ''
-                    }`}
+                    className={`block px-4 py-2 text-left text-xs w-full hover:bg-slate-700 ${sortBy === 'priority' ? 'bg-slate-700' : ''
+                      }`}
                     aria-current={sortBy === 'priority'}
                   >
                     Priority
@@ -324,9 +320,8 @@ const EnhancedTodoList: React.FC = () => {
                       setSortBy('dueDate');
                       setShowSortOptions(false);
                     }}
-                    className={`block px-4 py-2 text-left text-xs w-full hover:bg-slate-700 ${
-                      sortBy === 'dueDate' ? 'bg-slate-700' : ''
-                    }`}
+                    className={`block px-4 py-2 text-left text-xs w-full hover:bg-slate-700 ${sortBy === 'dueDate' ? 'bg-slate-700' : ''
+                      }`}
                     aria-current={sortBy === 'dueDate'}
                   >
                     Due Date
@@ -336,9 +331,8 @@ const EnhancedTodoList: React.FC = () => {
                       setSortBy('createdAt');
                       setShowSortOptions(false);
                     }}
-                    className={`block px-4 py-2 text-left text-xs w-full hover:bg-slate-700 ${
-                      sortBy === 'createdAt' ? 'bg-slate-700' : ''
-                    }`}
+                    className={`block px-4 py-2 text-left text-xs w-full hover:bg-slate-700 ${sortBy === 'createdAt' ? 'bg-slate-700' : ''
+                      }`}
                     aria-current={sortBy === 'createdAt'}
                   >
                     Recently Added
@@ -347,7 +341,7 @@ const EnhancedTodoList: React.FC = () => {
               </div>
             )}
           </div>
-          
+
           <div className="relative">
             <button
               onClick={() => {
@@ -361,9 +355,9 @@ const EnhancedTodoList: React.FC = () => {
               <FunnelIcon className="h-3 w-3" />
               <span>Filter</span>
             </button>
-            
+
             {showFilterOptions && (
-              <div 
+              <div
                 id="filter-options"
                 className="absolute right-0 mt-1 w-40 bg-slate-800 rounded shadow-lg z-10"
               >
@@ -373,9 +367,8 @@ const EnhancedTodoList: React.FC = () => {
                       setFilterBy('all');
                       setShowFilterOptions(false);
                     }}
-                    className={`block px-4 py-2 text-left text-xs w-full hover:bg-slate-700 ${
-                      filterBy === 'all' ? 'bg-slate-700' : ''
-                    }`}
+                    className={`block px-4 py-2 text-left text-xs w-full hover:bg-slate-700 ${filterBy === 'all' ? 'bg-slate-700' : ''
+                      }`}
                     aria-current={filterBy === 'all'}
                   >
                     All Tasks
@@ -385,9 +378,8 @@ const EnhancedTodoList: React.FC = () => {
                       setFilterBy('active');
                       setShowFilterOptions(false);
                     }}
-                    className={`block px-4 py-2 text-left text-xs w-full hover:bg-slate-700 ${
-                      filterBy === 'active' ? 'bg-slate-700' : ''
-                    }`}
+                    className={`block px-4 py-2 text-left text-xs w-full hover:bg-slate-700 ${filterBy === 'active' ? 'bg-slate-700' : ''
+                      }`}
                     aria-current={filterBy === 'active'}
                   >
                     Active Only
@@ -397,9 +389,8 @@ const EnhancedTodoList: React.FC = () => {
                       setFilterBy('completed');
                       setShowFilterOptions(false);
                     }}
-                    className={`block px-4 py-2 text-left text-xs w-full hover:bg-slate-700 ${
-                      filterBy === 'completed' ? 'bg-slate-700' : ''
-                    }`}
+                    className={`block px-4 py-2 text-left text-xs w-full hover:bg-slate-700 ${filterBy === 'completed' ? 'bg-slate-700' : ''
+                      }`}
                     aria-current={filterBy === 'completed'}
                   >
                     Completed Only
@@ -409,9 +400,8 @@ const EnhancedTodoList: React.FC = () => {
                       setFilterBy('highPriority');
                       setShowFilterOptions(false);
                     }}
-                    className={`block px-4 py-2 text-left text-xs w-full hover:bg-slate-700 ${
-                      filterBy === 'highPriority' ? 'bg-slate-700' : ''
-                    }`}
+                    className={`block px-4 py-2 text-left text-xs w-full hover:bg-slate-700 ${filterBy === 'highPriority' ? 'bg-slate-700' : ''
+                      }`}
                     aria-current={filterBy === 'highPriority'}
                   >
                     High Priority
@@ -422,7 +412,7 @@ const EnhancedTodoList: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Task list */}
       <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
         {getFilteredAndSortedTasks().length === 0 ? (
@@ -433,13 +423,12 @@ const EnhancedTodoList: React.FC = () => {
           </div>
         ) : (
           getFilteredAndSortedTasks().map(task => (
-            <div 
-              key={task.id} 
-              className={`p-3 rounded-lg ${
-                task.completed 
-                  ? `${currentTheme.colors.assistantMessageBg} border-l-4 border-green-500` 
-                  : currentTheme.colors.userMessageBg
-              }`}
+            <div
+              key={task.id}
+              className={`p-3 rounded-lg ${task.completed
+                ? `${currentTheme.colors.assistantMessageBg} border-l-4 border-green-500`
+                : currentTheme.colors.userMessageBg
+                }`}
             >
               <div className="flex items-start">
                 <input
@@ -449,10 +438,10 @@ const EnhancedTodoList: React.FC = () => {
                   className="mr-3 mt-1 h-4 w-4 rounded border-slate-600 cursor-pointer"
                   aria-label={`Mark "${task.title}" as ${task.completed ? 'incomplete' : 'complete'}`}
                 />
-                
+
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center">
-                    <span 
+                    <span
                       className={`mr-2 h-2 w-2 rounded-full flex-shrink-0 ${getPriorityColor(task.priority)}`}
                       aria-hidden="true"
                     ></span>
@@ -460,27 +449,26 @@ const EnhancedTodoList: React.FC = () => {
                       {task.title}
                     </span>
                   </div>
-                  
+
                   {task.dueDate && (
-                    <div className={`flex items-center mt-1 text-xs ${
-                      isOverdue(task.dueDate) 
-                        ? 'text-red-400' 
-                        : isDueSoon(task.dueDate) 
-                          ? 'text-yellow-400' 
-                          : 'text-slate-400'
-                    }`}>
+                    <div className={`flex items-center mt-1 text-xs ${isOverdue(task.dueDate)
+                      ? 'text-red-400'
+                      : isDueSoon(task.dueDate)
+                        ? 'text-yellow-400'
+                        : 'text-slate-400'
+                      }`}>
                       <CalendarIcon className="h-3 w-3 mr-1" />
                       <span>
-                        {isOverdue(task.dueDate) 
-                          ? `Overdue: ${formattedDueDate(task.dueDate)}` 
-                          : isDueSoon(task.dueDate) 
-                            ? `Due soon: ${formattedDueDate(task.dueDate)}` 
+                        {isOverdue(task.dueDate)
+                          ? `Overdue: ${formattedDueDate(task.dueDate)}`
+                          : isDueSoon(task.dueDate)
+                            ? `Due soon: ${formattedDueDate(task.dueDate)}`
                             : `Due: ${formattedDueDate(task.dueDate)}`}
                       </span>
                     </div>
                   )}
                 </div>
-                
+
                 <div className="flex space-x-1 ml-2">
                   <button
                     onClick={() => editTask(task)}

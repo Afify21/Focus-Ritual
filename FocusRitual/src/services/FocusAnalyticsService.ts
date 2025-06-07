@@ -1,4 +1,4 @@
-import { Habit } from './HabitReminderService';
+import { Habit } from './DataService';
 
 interface FocusPattern {
     averageFocusDuration: number;
